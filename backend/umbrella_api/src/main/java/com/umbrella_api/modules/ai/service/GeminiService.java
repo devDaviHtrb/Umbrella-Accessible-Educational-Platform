@@ -2,7 +2,6 @@ package com.umbrella_api.modules.ai.service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.umbrella_api.modules.utils.WebClient.WebClientService;
@@ -13,7 +12,7 @@ import java.util.Map;
 @Service
 public class GeminiService {
 
-    private final WebClient webClient;
+    private final WebClientService webClientService;
 
     @Value("${gemini.api.key}")
     private String apiKey;
@@ -21,8 +20,8 @@ public class GeminiService {
     @Value("${gemini.api.url}")
     private String geminiUrl;
 
-    public GeminiService(WebClient.Builder builder) {
-        this.webClient = builder.build();
+    public GeminiService(WebClientService webClientService) {
+        this.webClientService = webClientService;
     }
 
     public Map<String, Object> requestAi(String text) {
@@ -34,8 +33,6 @@ public class GeminiService {
                         Map.of(
                                 "parts", List.of(
                                         Map.of("text", text)))));
-
-        WebClientService webClientService = WebClientService.getInstance();
 
         try {
             JsonNode response = webClientService.makeRequest(body, apiUrl, "post");
