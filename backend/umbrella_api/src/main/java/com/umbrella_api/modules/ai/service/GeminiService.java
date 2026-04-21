@@ -57,7 +57,7 @@ public class GeminiService {
 
             return Map.of(
                     "code", 500,
-                    "reply", null,
+                    "reply", "",
                     "provider", "gemini",
                     "error", e.getMessage());
         }

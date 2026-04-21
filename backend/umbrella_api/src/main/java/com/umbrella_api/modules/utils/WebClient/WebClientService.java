@@ -13,7 +13,6 @@ import com.umbrella_api.modules.utils.WebClient.internal.impl.RequestFactory;
 public class WebClientService {
 
     private final WebClient webClient;
-
     private static WebClientService instance;
 
     private WebClientService() {
