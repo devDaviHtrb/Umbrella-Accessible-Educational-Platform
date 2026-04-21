@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.umbrella_api.modules.utils.WebClient.WebClientService;
 
 import java.util.List;
 import java.util.Map;
@@ -24,7 +25,7 @@ public class GeminiService {
         this.webClient = builder.build();
     }
 
-    public String requestAi(String text) {
+    public Map<String, Object> requestAi(String text) {
 
         String apiUrl = geminiUrl + apiKey;
 
@@ -34,15 +35,12 @@ public class GeminiService {
                                 "parts", List.of(
                                         Map.of("text", text)))));
 
-        try {
-            JsonNode root = webClient.post()
-                    .uri(apiUrl)
-                    .bodyValue(body)
-                    .retrieve()
-                    .bodyToMono(JsonNode.class)
-                    .block();
+        WebClientService webClientService = WebClientService.getInstance();
 
-            return root.path("candidates")
+        try {
+            JsonNode response = webClientService.makeRequest(body, apiUrl, "post");
+
+            String reply = response.path("candidates")
                     .get(0)
                     .path("content")
                     .path("parts")
@@ -50,8 +48,18 @@ public class GeminiService {
                     .path("text")
                     .asText();
 
+            return Map.of(
+                    "code", 200,
+                    "reply", reply,
+                    "provider", "gemini");
+
         } catch (Exception e) {
-            return "Erro: " + e.getMessage();
+
+            return Map.of(
+                    "code", 500,
+                    "reply", null,
+                    "provider", "gemini",
+                    "error", e.getMessage());
         }
     }
 }
