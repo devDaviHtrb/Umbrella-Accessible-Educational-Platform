@@ -1,7 +1,5 @@
 package com.umbrella_api.modules.utils.WebClient;
 
-import java.util.Map;
-
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;

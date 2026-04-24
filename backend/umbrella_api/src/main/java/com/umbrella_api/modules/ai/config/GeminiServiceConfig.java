@@ -10,7 +10,7 @@ public record GeminiServiceConfig(Api api, Config config) {
         }
     }
 
-    public record Config(int maxTokenOut, String systemIntruction, double temp) {
+    public record Config(int maxTokenOut, String systemInstruction, double temp) {
     }
 
 }

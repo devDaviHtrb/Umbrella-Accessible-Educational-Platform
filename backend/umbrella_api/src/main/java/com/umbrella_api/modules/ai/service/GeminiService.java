@@ -32,7 +32,7 @@ public class GeminiService {
 
         String apiUrl = Objects.requireNonNull(geminiApi.getCompleteUrl(), "null ai api url or key");
 
-        GeminiRequestBody body = GeminiRequestBody.create(text, geminiConfig.systemIntruction(),
+        GeminiRequestBody body = GeminiRequestBody.create(text, geminiConfig.systemInstruction(),
                 geminiConfig.maxTokenOut(), geminiConfig.temp());
 
         try {
