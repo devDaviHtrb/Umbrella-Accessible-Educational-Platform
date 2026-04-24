@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: umbrela_api
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASS}
+
+gemini:
+  api:
+    url:${GEMINI_API_URL}
+    key:${GEMINI_API_KEY}
+  config:
+    maxTokenOut: 200
+    systemInstruction: "generic instruction"
+    temp: 0.5
+    

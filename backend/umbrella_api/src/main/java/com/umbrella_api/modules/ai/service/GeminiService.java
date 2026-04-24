@@ -1,26 +1,27 @@
 package com.umbrella_api.modules.ai.service;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.umbrella_api.modules.ai.config.GeminiServiceConfig;
 import com.umbrella_api.modules.utils.WebClient.WebClientService;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class GeminiService {
 
     private final WebClientService webClientService;
+    private final GeminiServiceConfig.Api geminiApi;
+    private final GeminiServiceConfig.Config geminiConfig;
+    private final GeminiServiceConfig geminiServiceConfig;
 
-    @Value("${gemini.api.key}")
-    private String apiKey;
-
-    @Value("${gemini.api.url}")
-    private String geminiUrl;
-
-    public GeminiService(WebClientService webClientService) {
+    public GeminiService(WebClientService webClientService, GeminiServiceConfig geminiServiceConfig) {
+        this.geminiServiceConfig = geminiServiceConfig;
+        this.geminiConfig = geminiServiceConfig.config();
+        this.geminiApi = geminiServiceConfig.api();
         this.webClientService = webClientService;
     }
 
@@ -28,13 +29,19 @@ public class GeminiService {
     // provider:"", error:""}
     public Map<String, Object> requestAi(String text) {
 
-        String apiUrl = geminiUrl + apiKey;
+        String apiUrl = Objects.requireNonNull(geminiApi.getCompleteUrl(), "null ai api url or key");
 
         Map<String, Object> body = Map.of(
                 "contents", List.of(
-                        Map.of(
-                                "parts", List.of(
-                                        Map.of("text", text)))));
+                        Map.of("parts", List.of(
+                                Map.of("text", text)))),
+                "system_instruction", Map.of(
+                        "parts", List.of(
+                                Map.of("text", geminiConfig.systemIntruction()))),
+                "generationConfig", Map.of(
+                        "temperature", geminiConfig.temp(),
+                        "maxOutputTokens", geminiConfig.maxTokenOut(),
+                        "responseMimeType", "application/json"));
 
         try {
             JsonNode response = webClientService.makeRequest(body, apiUrl, "post");
