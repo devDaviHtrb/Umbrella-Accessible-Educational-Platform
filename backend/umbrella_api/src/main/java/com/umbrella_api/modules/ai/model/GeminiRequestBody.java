@@ -4,17 +4,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.umbrella_api.modules.ai.config.GeminiServiceConfig;
+
 public class GeminiRequestBody {
     public List<Map<String, Object>> contents;
     public Map<String, Object> system_instruction;
     public Map<String, Object> generationConfig;
 
-    public static GeminiRequestBody create(String text, String systemInstruction, int maxTokenOut, double temp) {
+    public static GeminiRequestBody create(String text, GeminiServiceConfig.Config config) {
         return new Builder()
                 .userText(text)
-                .instruction(systemInstruction)
-                .maxTokens(maxTokenOut)
-                .temperature(temp)
+                .instruction(config.systemInstruction())
+                .maxTokens(config.maxTokenOut())
+                .temperature(config.temp())
                 .build();
     }
 
@@ -50,8 +52,7 @@ public class GeminiRequestBody {
             body.system_instruction = Map.of("parts", List.of(Map.of("text", this.systemInstruction)));
             body.generationConfig = Map.of(
                     "temperature", this.temp,
-                    "maxOutputTokens", this.maxTokensOut,
-                    "responseMimeType", "application/json");
+                    "maxOutputTokens", this.maxTokensOut);
             return body;
         }
     }
