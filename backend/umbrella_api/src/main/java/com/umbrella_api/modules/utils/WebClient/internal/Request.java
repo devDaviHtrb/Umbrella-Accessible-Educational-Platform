@@ -1,11 +1,10 @@
 package com.umbrella_api.modules.utils.WebClient.internal;
 
 import com.fasterxml.jackson.databind.JsonNode;
-
-import java.util.Map;
+import com.umbrella_api.modules.ai.model.GeminiRequestBody;
 
 import org.springframework.web.reactive.function.client.WebClient;
 
 public interface Request {
-    JsonNode makeRequest(WebClient client, Map<String, Object> body, String apiUrl);
+    JsonNode makeRequest(WebClient client, GeminiRequestBody body, String apiUrl);
 }

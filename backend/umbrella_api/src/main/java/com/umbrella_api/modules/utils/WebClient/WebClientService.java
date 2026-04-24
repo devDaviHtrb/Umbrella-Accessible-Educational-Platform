@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.umbrella_api.modules.ai.model.GeminiRequestBody;
 import com.umbrella_api.modules.utils.WebClient.internal.Request;
 import com.umbrella_api.modules.utils.WebClient.internal.impl.RequestFactory;
 
@@ -23,7 +24,7 @@ public class WebClientService {
     }
 
     public JsonNode makeRequest(
-            Map<String, Object> body,
+            GeminiRequestBody body,
             String apiUrl,
             String httpMethod) {
 
