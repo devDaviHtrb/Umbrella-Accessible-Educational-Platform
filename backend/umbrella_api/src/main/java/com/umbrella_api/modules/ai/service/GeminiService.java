@@ -2,9 +2,9 @@ package com.umbrella_api.modules.ai.service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.umbrella_api.modules.utils.WebClient.WebClientService;
 
 import java.util.List;
 import java.util.Map;
@@ -12,7 +12,7 @@ import java.util.Map;
 @Service
 public class GeminiService {
 
-    private final WebClient webClient;
+    private final WebClientService webClientService;
 
     @Value("${gemini.api.key}")
     private String apiKey;
@@ -20,11 +20,13 @@ public class GeminiService {
     @Value("${gemini.api.url}")
     private String geminiUrl;
 
-    public GeminiService(WebClient.Builder builder) {
-        this.webClient = builder.build();
+    public GeminiService(WebClientService webClientService) {
+        this.webClientService = webClientService;
     }
 
-    public String requestAi(String text) {
+    // return a json like {code:"", reply:"", provider:""} or {code:"", reply:"",
+    // provider:"", error:""}
+    public Map<String, Object> requestAi(String text) {
 
         String apiUrl = geminiUrl + apiKey;
 
@@ -35,14 +37,9 @@ public class GeminiService {
                                         Map.of("text", text)))));
 
         try {
-            JsonNode root = webClient.post()
-                    .uri(apiUrl)
-                    .bodyValue(body)
-                    .retrieve()
-                    .bodyToMono(JsonNode.class)
-                    .block();
+            JsonNode response = webClientService.makeRequest(body, apiUrl, "post");
 
-            return root.path("candidates")
+            String reply = response.path("candidates")
                     .get(0)
                     .path("content")
                     .path("parts")
@@ -50,8 +47,18 @@ public class GeminiService {
                     .path("text")
                     .asText();
 
+            return Map.of(
+                    "code", 200,
+                    "reply", reply,
+                    "provider", "gemini");
+
         } catch (Exception e) {
-            return "Erro: " + e.getMessage();
+
+            return Map.of(
+                    "code", 500,
+                    "reply", "",
+                    "provider", "gemini",
+                    "error", e.getMessage());
         }
     }
 }
