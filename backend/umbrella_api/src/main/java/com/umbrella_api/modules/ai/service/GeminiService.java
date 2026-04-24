@@ -24,6 +24,8 @@ public class GeminiService {
         this.webClientService = webClientService;
     }
 
+    // return a json like {code:"", reply:"", provider:""} or {code:"", reply:"",
+    // provider:"", error:""}
     public Map<String, Object> requestAi(String text) {
 
         String apiUrl = geminiUrl + apiKey;
