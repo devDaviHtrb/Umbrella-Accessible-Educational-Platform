@@ -19,38 +19,38 @@ public class GeminiRequestBody {
     }
 
     private static class Builder {
-        private String instruction;
+        private String systemInstruction;
         private String text;
         private Double temp;
-        private Integer maxTokens;
+        private Integer maxTokensOut;
 
-        Builder instruction(String i) {
-            this.instruction = i;
+        Builder instruction(String systemInstruction) {
+            this.systemInstruction = systemInstruction;
             return this;
         }
 
-        Builder userText(String t) {
-            this.text = Objects.requireNonNull(t, "Empty text");
+        Builder userText(String text) {
+            this.text = Objects.requireNonNull(text, "Empty text");
             return this;
         }
 
-        Builder temperature(Double tmp) {
-            this.temp = tmp;
+        Builder temperature(Double temp) {
+            this.temp = temp;
             return this;
         }
 
-        Builder maxTokens(Integer mt) {
-            this.maxTokens = mt;
+        Builder maxTokens(Integer maxTokensOut) {
+            this.maxTokensOut = maxTokensOut;
             return this;
         }
 
         GeminiRequestBody build() {
             var body = new GeminiRequestBody();
-            body.contents = List.of(Map.of("parts", List.of(Map.of("text", text))));
-            body.system_instruction = Map.of("parts", List.of(Map.of("text", instruction)));
+            body.contents = List.of(Map.of("parts", List.of(Map.of("text", this.text))));
+            body.system_instruction = Map.of("parts", List.of(Map.of("text", this.systemInstruction)));
             body.generationConfig = Map.of(
-                    "temperature", temp,
-                    "maxOutputTokens", maxTokens,
+                    "temperature", this.temp,
+                    "maxOutputTokens", this.maxTokensOut,
                     "responseMimeType", "application/json");
             return body;
         }
