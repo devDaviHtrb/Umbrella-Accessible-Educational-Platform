@@ -15,3 +15,7 @@ gemini:
     systemInstruction: "generic instruction"
     temp: 0.5
     
+cloudinary:
+  cloud_name: ${CLOUDiNARY_NAME}
+  api_key: ${CLOUDiNARY_KEY}
+  api_secret: ${CLOUDiNARY_SECRET}

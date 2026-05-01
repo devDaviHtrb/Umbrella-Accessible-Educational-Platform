@@ -4,8 +4,8 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.umbrella_api.modules.ai.config.GeminiServiceConfig;
+import com.umbrella_api.modules.ai.dto.GeminiRequestBody;
 import com.umbrella_api.modules.ai.exceptions.AiApiException;
-import com.umbrella_api.modules.ai.model.GeminiRequestBody;
 import com.umbrella_api.modules.utils.WebClient.WebClientService;
 
 import java.util.Map;
@@ -19,8 +19,7 @@ public class GeminiService {
     private final GeminiServiceConfig.Config geminiConfig;
     private final GeminiServiceConfig geminiServiceConfig;
 
-    public GeminiService(WebClientService webClientService, GeminiServiceConfig geminiServiceConfig,
-            GeminiRequestBody geminiRequestBody) {
+    public GeminiService(WebClientService webClientService, GeminiServiceConfig geminiServiceConfig) {
         this.geminiServiceConfig = geminiServiceConfig;
         this.geminiConfig = geminiServiceConfig.config();
         this.geminiApi = geminiServiceConfig.api();

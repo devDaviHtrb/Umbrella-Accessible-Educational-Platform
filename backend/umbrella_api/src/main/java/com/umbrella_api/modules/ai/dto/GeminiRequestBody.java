@@ -1,4 +1,4 @@
-package com.umbrella_api.modules.ai.model;
+package com.umbrella_api.modules.ai.dto;
 
 import java.util.List;
 import java.util.Map;
