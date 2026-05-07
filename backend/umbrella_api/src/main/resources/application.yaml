@@ -1,10 +1,8 @@
 spring:
   application:
     name: umbrela_api
-  datasource:
-    url: ${DB_URL}
-    username: ${DB_USER}
-    password: ${DB_PASS}
+  profiles:
+    active: h2
 
 gemini:
   api:
@@ -19,3 +17,5 @@ cloudinary:
   cloud_name: ${CLOUDiNARY_NAME}
   api_key: ${CLOUDiNARY_KEY}
   api_secret: ${CLOUDiNARY_SECRET}
+
+
