@@ -1,4 +1,4 @@
-package com.umbrella_api.modules.ImageDb.exceptions;
+package com.umbrella_api.modules.FileDb.exceptions;
 
 import lombok.Getter;
 

@@ -1,4 +1,4 @@
-package com.umbrella_api.modules.ImageDb.infra;
+package com.umbrella_api.modules.FileDb.infra;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.umbrella_api.modules.ImageDb.exceptions.FileDbException;
+import com.umbrella_api.modules.FileDb.exceptions.FileDbException;
 
 @RestControllerAdvice
 public class FileDbExceptionHandler {

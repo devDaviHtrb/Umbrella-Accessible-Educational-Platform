@@ -1,4 +1,4 @@
-package com.umbrella_api.modules.ImageDb.service.impl;
+package com.umbrella_api.modules.FileDb.service.impl;
 
 import java.io.IOException;
 import java.util.Map;
@@ -8,8 +8,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
-import com.umbrella_api.modules.ImageDb.exceptions.FileDbException;
-import com.umbrella_api.modules.ImageDb.service.FileDbService;
+import com.umbrella_api.modules.FileDb.exceptions.FileDbException;
+import com.umbrella_api.modules.FileDb.service.FileDbService;
 
 @Service
 public class CloudinaryService implements FileDbService {
