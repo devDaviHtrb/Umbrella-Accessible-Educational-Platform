@@ -9,7 +9,9 @@ import org.springframework.web.multipart.MultipartFile;
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.umbrella_api.modules.FileDb.exceptions.FileDbException;
+import com.umbrella_api.modules.FileDb.repository.ImageRepository;
 import com.umbrella_api.modules.FileDb.service.FileDbService;
+import com.umbrella_api.modules.FileDb.validations.FileValidator;
 
 @Service
 public class CloudinaryService implements FileDbService {
@@ -36,21 +38,14 @@ public class CloudinaryService implements FileDbService {
     @Override
     public Map<String, Object> upload(MultipartFile file, String folder, String resourceType) {
 
-        if (file == null || file.isEmpty()) {
-            throw new FileDbException("Empty file", 400, "Bad Request");
-        }
 
-        if (!resourceType.equalsIgnoreCase("raw") && !resourceType.equalsIgnoreCase("image")) {
-            throw new FileDbException("Invalid resource type: " + resourceType, 400, "Bad Request");
-        }
-
+        
         try {
             return cloudinary.uploader().upload(file.getBytes(),
                     ObjectUtils.asMap("folder", folder, "resource_type", resourceType.toLowerCase()));
         } catch (IOException e) {
             throw new FileDbException("File processing error", 500, "Internal Server Error");
         } catch (Exception e) {
-
             throw new FileDbException("Error communicating with the file provider", 502, "Bad Gateway");
         }
 
@@ -67,17 +62,11 @@ public class CloudinaryService implements FileDbService {
     @Override
     public Map<String, Object> delete(String publicId, String resourceType) {
 
-        if (publicId == null || publicId.isEmpty()) {
-            throw new FileDbException("Invalid cloudinary public id", 400, "Bad Request");
-        }
-        if (!resourceType.equalsIgnoreCase("raw") && !resourceType.equalsIgnoreCase("image")) {
-            throw new FileDbException("Invalid resource type: " + resourceType, 400, "Bad Request");
-        }
+        FileValidator.validateDelete(publicId, resourceType);
 
         try {
             return cloudinary.uploader().destroy(publicId,
-                    ObjectUtils.asMap("resource_type", resourceType.toLowerCase(),
-                            "invalidate", true));
+                    ObjectUtils.asMap("resource_type", resourceType.toLowerCase(), "invalidate", true));
         } catch (Exception e) {
             throw new FileDbException("Something is wrong, we can't delete this file", 400, "Bad Request");
         }
