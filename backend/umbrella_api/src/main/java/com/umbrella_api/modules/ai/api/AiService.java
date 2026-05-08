@@ -1,8 +1,8 @@
 package com.umbrella_api.modules.ai.api;
 
-import java.util.Map;
+import com.umbrella_api.modules.ai.dto.AiResponse;
 
 public interface AiService {
-    public Map<String, Object> requestAi(String text);
+    public AiResponse requestAi(String text);
 
 }

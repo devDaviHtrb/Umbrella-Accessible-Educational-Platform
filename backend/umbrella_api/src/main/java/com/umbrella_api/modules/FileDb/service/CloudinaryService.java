@@ -3,8 +3,6 @@ package com.umbrella_api.modules.FileDb.service;
 import com.umbrella_api.modules.FileDb.infra.CloudinaryProvider;
 import com.umbrella_api.modules.FileDb.validations.FileValidator;
 
-import java.util.Map;
-
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 

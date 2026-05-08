@@ -1,8 +1,5 @@
 package com.umbrella_api.modules.FileDb.api;
 
-import java.util.Map;
-
-import org.apache.tomcat.util.http.fileupload.FileUpload;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.umbrella_api.modules.FileDb.dto.DeleteFileResponse;
