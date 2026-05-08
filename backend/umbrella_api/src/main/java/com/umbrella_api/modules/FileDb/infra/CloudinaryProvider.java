@@ -1,4 +1,4 @@
-package com.umbrella_api.modules.ImageDb.infra;
+package com.umbrella_api.modules.FileDb.infra;
 
 import java.util.Map;
 
@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import com.cloudinary.Cloudinary;
-import com.umbrella_api.modules.ImageDb.config.CloudinaryConfig;
+import com.umbrella_api.modules.FileDb.config.CloudinaryConfig;
 
 @Configuration
 public class CloudinaryProvider {

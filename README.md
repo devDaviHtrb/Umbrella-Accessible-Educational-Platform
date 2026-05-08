@@ -61,6 +61,31 @@ Our mission is to make learning more adaptable, more human, and more accessible 
 
 ---
 
+## 🛠️ Data Access Layer (Spring Data JPA)
+
+Within the Umbrella backend, we leverage **Spring Data JPA** to handle data persistence efficiently. By extending the `JpaRepository` interface, our services gain access to a standardized set of methods for managing entities without boilerplate code.
+
+### Core Repository Methods
+
+
+| Method | Parameters | Return Type | Description |
+| :--- | :--- | :--- | :--- |
+| **`save`** | `T entity` | `T` | Persists a new record or updates an existing one. |
+| **`saveAll`** | `Iterable<T> entities` | `List<T>` | Performs batch insertion or updates for multiple records. |
+| **`findById`** | `ID id` | `Optional<T>` | Retrieves a specific record by its primary key. |
+| **`existsById`** | `ID id` | `boolean` | Checks if a record exists in the database. |
+| **`findAll`** | *(None)* | `List<T>` | Returns a list of all records within the table. |
+| **`findAll(Pageable)`** | `Pageable page` | `Page<T>` | Retrieves records in segments (essential for UI performance). |
+| **`count`** | *(None)* | `long` | Returns the total number of records available. |
+| **`deleteById`** | `ID id` | `void` | Removes a record based on its unique identifier. |
+| **`flush`** | *(None)* | `void` | Forces immediate synchronization of changes to the database. |
+
+> **Architecture Note:** All repositories in the project are defined as interfaces. Spring Data JPA automatically generates the implementation at runtime, ensuring a clean and maintainable backend architecture focused on business logic.
+
+---
+
+---
+
 ## 🎯 Vision
 
 Umbrella is more than a platform — it's a commitment to equal access to education through technology.

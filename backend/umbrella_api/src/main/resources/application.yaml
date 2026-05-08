@@ -1,15 +1,13 @@
 spring:
   application:
     name: umbrela_api
-  datasource:
-    url: ${DB_URL}
-    username: ${DB_USER}
-    password: ${DB_PASS}
+  profiles:
+    active: h2
 
 gemini:
   api:
-    url:${GEMINI_API_URL}
-    key:${GEMINI_API_KEY}
+    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=
+    key: ${GEMINI_API_KEY}
   config:
     maxTokenOut: 200
     systemInstruction: "generic instruction"
@@ -19,3 +17,5 @@ cloudinary:
   cloud_name: ${CLOUDiNARY_NAME}
   api_key: ${CLOUDiNARY_KEY}
   api_secret: ${CLOUDiNARY_SECRET}
+
+
