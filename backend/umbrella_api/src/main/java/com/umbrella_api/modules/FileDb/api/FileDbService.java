@@ -2,7 +2,11 @@ package com.umbrella_api.modules.FileDb.api;
 
 import java.util.Map;
 
+import org.apache.tomcat.util.http.fileupload.FileUpload;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.umbrella_api.modules.FileDb.dto.DeleteFileResponse;
+import com.umbrella_api.modules.FileDb.dto.FileUploadResponse;
 
 public interface FileDbService {
     /*
@@ -19,7 +23,7 @@ public interface FileDbService {
      * "bytes": int
      * }
      */
-    public Map<String, Object> upload(MultipartFile file, String folder, String resourceType);
+    public FileUploadResponse upload(MultipartFile file, String folder, String resourceType);
 
     /*
      * returns Map<String, Object>
@@ -29,5 +33,5 @@ public interface FileDbService {
      * image database cache.)
      * }
      */
-    public Map<String, Object> delete(String publicId, String resourceType);
+    public DeleteFileResponse delete(String publicId, String resourceType);
 }

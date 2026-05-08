@@ -1,4 +1,4 @@
-package com.umbrella_api.modules.FileDb.service.impl;
+package com.umbrella_api.modules.FileDb.service;
 
 import com.umbrella_api.modules.FileDb.infra.CloudinaryProvider;
 import com.umbrella_api.modules.FileDb.validations.FileValidator;
@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.umbrella_api.modules.FileDb.api.FileDbService;
+import com.umbrella_api.modules.FileDb.dto.DeleteFileResponse;
+import com.umbrella_api.modules.FileDb.dto.FileUploadResponse;
 
 @Service
 public class CloudinaryService implements FileDbService {
@@ -34,7 +36,7 @@ public class CloudinaryService implements FileDbService {
      * }
      */
     @Override
-    public Map<String, Object> upload(MultipartFile file, String folder, String resourceType) {
+    public FileUploadResponse upload(MultipartFile file, String folder, String resourceType) {
 
         FileValidator.validateUpload(file, resourceType);
         return this.cloudinaryProvider.upload(file, folder, resourceType);
@@ -50,7 +52,7 @@ public class CloudinaryService implements FileDbService {
      * }
      */
     @Override
-    public Map<String, Object> delete(String publicId, String resourceType) {
+    public DeleteFileResponse delete(String publicId, String resourceType) {
 
         FileValidator.validateDelete(publicId, resourceType);
         return this.cloudinaryProvider.delete(publicId, resourceType);
