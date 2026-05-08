@@ -1,4 +1,4 @@
-package com.umbrella_api.modules.ai.infra;
+package com.umbrella_api.modules.FileDb.exceptions;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -7,13 +7,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.umbrella_api.modules.ai.exceptions.AiApiException;
-
 @RestControllerAdvice
-public class AiExceptionHandler {
+public class FileDbExceptionHandler {
 
-    @ExceptionHandler(AiApiException.class)
-    private ResponseEntity<Map<String, Object>> aiInterfaceError(AiApiException exception) {
+    @ExceptionHandler(FileDbException.class)
+    private ResponseEntity<Map<String, Object>> aiInterfaceError(FileDbException exception) {
         Map<String, Object> responseBody = new HashMap<>();
         responseBody.put("status", exception.getStatus());
         responseBody.put("message", exception.getMessage());

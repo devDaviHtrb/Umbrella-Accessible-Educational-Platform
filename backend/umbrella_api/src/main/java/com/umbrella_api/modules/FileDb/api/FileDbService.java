@@ -1,4 +1,4 @@
-package com.umbrella_api.modules.FileDb.service;
+package com.umbrella_api.modules.FileDb.api;
 
 import java.util.Map;
 

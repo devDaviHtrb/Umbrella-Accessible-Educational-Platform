@@ -4,14 +4,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import com.umbrella_api.modules.ai.config.GeminiServiceConfig;
+import com.umbrella_api.modules.ai.config.GeminiData;
 
 public class GeminiRequestBody {
     public List<Map<String, Object>> contents;
     public Map<String, Object> system_instruction;
     public Map<String, Object> generationConfig;
 
-    public static GeminiRequestBody create(String text, GeminiServiceConfig.Config config) {
+    public static GeminiRequestBody create(String text, GeminiData.Config config) {
         return new Builder()
                 .userText(text)
                 .instruction(config.systemInstruction())
