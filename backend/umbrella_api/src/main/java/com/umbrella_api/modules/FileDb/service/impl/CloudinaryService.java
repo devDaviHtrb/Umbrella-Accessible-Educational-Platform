@@ -38,8 +38,8 @@ public class CloudinaryService implements FileDbService {
     @Override
     public Map<String, Object> upload(MultipartFile file, String folder, String resourceType) {
 
+        FileValidator.validateUpload(file, resourceType);
 
-        
         try {
             return cloudinary.uploader().upload(file.getBytes(),
                     ObjectUtils.asMap("folder", folder, "resource_type", resourceType.toLowerCase()));
