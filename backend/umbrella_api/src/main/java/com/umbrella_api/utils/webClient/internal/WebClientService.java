@@ -1,4 +1,4 @@
-package com.umbrella_api.modules.utils.WebClient;
+package com.umbrella_api.utils.webClient.internal;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -7,11 +7,12 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.umbrella_api.modules.ai.dto.GeminiRequestBody;
-import com.umbrella_api.modules.utils.WebClient.internal.Request;
-import com.umbrella_api.modules.utils.WebClient.internal.impl.RequestFactory;
+import com.umbrella_api.utils.webClient.WebClientUtil;
+import com.umbrella_api.utils.webClient.internal.request.Request;
+import com.umbrella_api.utils.webClient.internal.request.impl.RequestFactory;
 
 @Component
-public class WebClientService {
+public class WebClientService implements WebClientUtil {
 
     private final WebClient webClient;
 

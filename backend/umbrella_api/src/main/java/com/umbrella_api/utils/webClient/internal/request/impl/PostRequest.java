@@ -1,12 +1,12 @@
 
-package com.umbrella_api.modules.utils.WebClient.internal.impl;
+package com.umbrella_api.utils.webClient.internal.request.impl;
 
 import org.springframework.http.HttpStatusCode;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.umbrella_api.modules.ai.dto.GeminiRequestBody;
-import com.umbrella_api.modules.utils.WebClient.internal.Request;
+import com.umbrella_api.utils.webClient.internal.request.Request;
 
 import reactor.core.publisher.Mono;
 

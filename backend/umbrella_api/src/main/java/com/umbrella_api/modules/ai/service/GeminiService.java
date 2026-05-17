@@ -15,7 +15,7 @@ public class GeminiService implements AiService {
         this.geminiProvider = geminiProvider;
     }
 
-    // return a json like {code:"", reply:"", provider:""} or a AiApiException
+    // return a json like {code:"", reply:"", provider:""} or a IlegalStateException
     public AiResponse requestAi(String text) {
         return geminiProvider.requestAi(text);
     }

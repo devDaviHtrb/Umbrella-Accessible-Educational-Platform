@@ -1,4 +1,4 @@
-package com.umbrella_api.modules.utils.WebClient.internal;
+package com.umbrella_api.utils.webClient.internal.request;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.umbrella_api.modules.ai.dto.GeminiRequestBody;

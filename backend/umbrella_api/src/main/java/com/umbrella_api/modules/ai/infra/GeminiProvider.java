@@ -8,16 +8,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.umbrella_api.modules.ai.config.GeminiData;
 import com.umbrella_api.modules.ai.dto.AiResponse;
 import com.umbrella_api.modules.ai.dto.GeminiRequestBody;
-import com.umbrella_api.modules.utils.WebClient.WebClientService;
+import com.umbrella_api.utils.webClient.WebClientUtil;
 
 @Component
 public class GeminiProvider {
-    private final WebClientService webClientService;
+    private final WebClientUtil webClientService;
     private final GeminiData.Api geminiApi;
     private final GeminiData.Config geminiConfig;
     private final GeminiData geminiServiceConfig;
 
-    public GeminiProvider(WebClientService webClientService,
+    public GeminiProvider(WebClientUtil webClientService,
             GeminiData geminiServiceConfig) {
         this.webClientService = webClientService;
         this.geminiApi = geminiServiceConfig.api();
