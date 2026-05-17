@@ -10,7 +10,6 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.umbrella_api.modules.FileDb.dto.DeleteFileResponse;
 import com.umbrella_api.modules.FileDb.dto.FileUploadResponse;
-import com.umbrella_api.modules.FileDb.exceptions.FileDbException;
 
 @Component
 public class CloudinaryProvider {
@@ -34,9 +33,9 @@ public class CloudinaryProvider {
                     (int) result.get("height"));
 
         } catch (IOException e) {
-            throw new FileDbException("File processing error", 500, "Internal Server Error");
+            throw new IllegalArgumentException("Failed to process the uploaded file. It may be corrupted.", e);
         } catch (Exception e) {
-            throw new FileDbException("Error communicating with the file provider", 502, "Bad Gateway");
+            throw new IllegalStateException("Cloud storage provider integration failed. Could not upload file.", e);
         }
 
     }
@@ -52,7 +51,7 @@ public class CloudinaryProvider {
                     (Boolean) result.get("partial"));
 
         } catch (Exception e) {
-            throw new FileDbException("Something is wrong, we can't delete this file", 400, "Bad Request");
+            throw new IllegalStateException("Something went wrong, we couldn't delete this file from cloud storage", e);
         }
 
     }

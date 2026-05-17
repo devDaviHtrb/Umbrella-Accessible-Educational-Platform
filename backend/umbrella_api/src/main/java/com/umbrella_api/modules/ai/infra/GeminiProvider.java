@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.umbrella_api.modules.ai.config.GeminiData;
 import com.umbrella_api.modules.ai.dto.AiResponse;
 import com.umbrella_api.modules.ai.dto.GeminiRequestBody;
-import com.umbrella_api.modules.ai.exceptions.AiApiException;
 import com.umbrella_api.modules.utils.WebClient.WebClientService;
 
 @Component
@@ -35,8 +34,7 @@ public class GeminiProvider {
 
         if (response.has("error")) {
             System.out.println("erro na api");
-            throw new AiApiException(response.at("/error/message").asText(), response.at("/error/code").asInt(),
-                    response.at("/error/status").asText());
+            throw new IllegalStateException("Ai provider integration failed.");
         }
 
         String reply = response.at("/candidates/0/content/parts/0/text").asText();

@@ -46,4 +46,13 @@ public class GlobalExceptionHandler {
                 HttpStatus.UNAUTHORIZED.value());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
     }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ExceptionResponse> handleIllegalState(IllegalStateException ex) {
+        ExceptionResponse error = new ExceptionResponse(
+                "Internal Server Error",
+                ex.getMessage(),
+                HttpStatus.INTERNAL_SERVER_ERROR.value());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
 }
