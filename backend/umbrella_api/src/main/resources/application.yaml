@@ -8,10 +8,13 @@ spring:
 
 gemini:
   api:
-    url:${GEMINI_API_URL}
-    key:${GEMINI_API_KEY}
+    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=
+    key: ${GEMINI_API_KEY}
   config:
     maxTokenOut: 200
     systemInstruction: "generic instruction"
     temp: 0.5
+logging:
+  level:
+    org.springframework.security: TRACE
     
