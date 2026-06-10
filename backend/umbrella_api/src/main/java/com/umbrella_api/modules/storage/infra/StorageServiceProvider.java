@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.umbrella_api.common.dto.GenericResponse;
@@ -73,12 +74,14 @@ public class StorageServiceProvider {
             return new GenericResponse("Ok", "Success on upload", 200);
 
         } catch (Exception e) {
+            e.printStackTrace();
             return new GenericResponse("Error", "Error on upload", 400);
             // Add a specific exception after
         }
 
     }
 
+    @Transactional
     public GenericResponse delete(StorageFileEntity file) {
         /*
          * IMPORTANT: We delete from the local database BEFORE the cloud provider.
@@ -108,6 +111,7 @@ public class StorageServiceProvider {
             fileDbService.delete(file.getFileDbId(), file.getResourceType());
             return new GenericResponse("Ok", "Success on delete", 200);
         } catch (Exception e) {
+            e.printStackTrace();
             return new GenericResponse("Error", "Error on delete", 400);
             // Add a specific exception after
         }

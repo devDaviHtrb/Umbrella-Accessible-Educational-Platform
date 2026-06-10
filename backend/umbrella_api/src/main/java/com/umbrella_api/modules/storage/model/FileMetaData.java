@@ -27,7 +27,10 @@ public class FileMetaData {
     @Column(nullable = false)
     String status;
 
+    @Column
     String description;
+
+    @Column
     long size;
 
     @OneToOne

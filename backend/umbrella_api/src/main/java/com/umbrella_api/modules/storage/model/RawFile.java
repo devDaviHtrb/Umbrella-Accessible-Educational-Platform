@@ -2,6 +2,7 @@ package com.umbrella_api.modules.storage.model;
 
 import com.umbrella_api.modules.storage.common.BaseFileEntity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
@@ -15,6 +16,9 @@ import lombok.experimental.SuperBuilder;
 @Table(name = "raws")
 @SuperBuilder
 public class RawFile extends BaseFileEntity {
+
+    @Column
+    String type;
 
     @OneToOne(mappedBy = "rawFile")
     private FileMetaData fileMetaData;

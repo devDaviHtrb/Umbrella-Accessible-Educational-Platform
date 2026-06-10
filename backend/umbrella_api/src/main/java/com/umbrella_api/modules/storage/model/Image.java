@@ -17,8 +17,14 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class Image extends BaseFileEntity {
 
+    @Column
     int width;
+
+    @Column
     int height;
+
+    @Column
+    String type;
 
     @Column(nullable = false, length = 500)
     String alternativeText;
