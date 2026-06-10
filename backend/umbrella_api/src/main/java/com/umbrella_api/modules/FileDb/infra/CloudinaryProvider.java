@@ -30,7 +30,8 @@ public class CloudinaryProvider {
                     (String) result.get("format"),
                     (String) result.get("resource_type"),
                     (int) result.get("width"),
-                    (int) result.get("height"));
+                    (int) result.get("height"),
+                    (int) result.get("bytes"));
 
         } catch (IOException e) {
             throw new IllegalArgumentException("Failed to process the uploaded file. It may be corrupted.", e);

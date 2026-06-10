@@ -9,9 +9,11 @@ import org.springframework.web.multipart.MultipartFile;
 import com.umbrella_api.common.dto.GenericResponse;
 import com.umbrella_api.modules.FileDb.api.FileDbService;
 import com.umbrella_api.modules.FileDb.dto.FileUploadResponse;
+import com.umbrella_api.modules.storage.common.StorageFileEntity;
+import com.umbrella_api.modules.storage.model.FileMetaData;
 import com.umbrella_api.modules.storage.model.Image;
 import com.umbrella_api.modules.storage.model.RawFile;
-import com.umbrella_api.modules.storage.model.StorageFileEntity;
+import com.umbrella_api.modules.storage.repository.FileMetaDataRepository;
 import com.umbrella_api.modules.storage.repository.ImageRepository;
 import com.umbrella_api.modules.storage.repository.RawRepository;
 
@@ -26,31 +28,47 @@ public class StorageServiceProvider {
     @Autowired
     private RawRepository rawRepository;
 
-    public GenericResponse upload(MultipartFile file, String resourceType, String alternativeText, String fileName) {
+    @Autowired
+    private FileMetaDataRepository fileRepository;
+
+    public GenericResponse upload(MultipartFile file, String resourceType, String alternativeText, String fileName,
+            String fileDescription) {
         FileUploadResponse storageEntityData = fileDbService.upload(file, resourceType, resourceType);
+
+        FileMetaData fileMetaData = FileMetaData.builder()
+                .title(fileName)
+                .description(fileDescription)
+                .size(storageEntityData.bytes())
+                .status("ok")
+                .build();
 
         try {
             if (resourceType.equalsIgnoreCase("raw")) {
                 RawFile entity = RawFile.builder()
                         .fileDbId(storageEntityData.publicId())
                         .url(storageEntityData.url())
-                        .name(fileName)
+                        .fileMetaData(fileMetaData)
                         .build();
 
-                rawRepository.save(entity);
+                entity = rawRepository.save(entity);
+                fileMetaData.setRawFile(entity);
 
             } else if (resourceType.equalsIgnoreCase("image")) {
                 Image entity = Image.builder()
                         .fileDbId(storageEntityData.publicId())
                         .url(storageEntityData.url())
-                        .name(fileName)
                         .alternativeText(alternativeText != null ? alternativeText : "Without description")
                         .width(storageEntityData.width())
                         .height(storageEntityData.height())
+                        .fileMetaData(fileMetaData)
                         .build();
+
                 // create a validation after
-                imageRepository.save(entity);
+                entity = imageRepository.save(entity);
+                fileMetaData.setImage(entity);
             }
+
+            fileRepository.save(fileMetaData);
 
             return new GenericResponse("Ok", "Success on upload", 200);
 
@@ -69,8 +87,21 @@ public class StorageServiceProvider {
          */
         try {
             if (file instanceof Image img) {
+                FileMetaData metaData = fileRepository.findByImage(img);
+
+                if (metaData != null) {
+                    metaData.setImage(null);
+                    fileRepository.delete(metaData);
+                }
+
                 imageRepository.delete(img);
             } else if (file instanceof RawFile raw) {
+                FileMetaData metaData = fileRepository.findByRawFile(raw);
+                if (metaData != null) {
+                    metaData.setRawFile(null);
+                    fileRepository.delete(metaData);
+                }
+
                 rawRepository.delete(raw);
             }
 
@@ -92,5 +123,4 @@ public class StorageServiceProvider {
         // add error handling after
         return rawRepository.findById(id);
     }
-
 }

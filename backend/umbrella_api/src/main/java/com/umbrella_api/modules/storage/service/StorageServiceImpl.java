@@ -6,10 +6,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.umbrella_api.common.dto.GenericResponse;
 import com.umbrella_api.modules.storage.api.StorageService;
+import com.umbrella_api.modules.storage.common.StorageFileEntity;
 import com.umbrella_api.modules.storage.infra.StorageServiceProvider;
 import com.umbrella_api.modules.storage.model.Image;
 import com.umbrella_api.modules.storage.model.RawFile;
-import com.umbrella_api.modules.storage.model.StorageFileEntity;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -20,8 +20,9 @@ public class StorageServiceImpl implements StorageService {
     private StorageServiceProvider storageServiceProvider;
 
     @Override
-    public GenericResponse upload(MultipartFile file, String resourceType, String alternativeText, String fileName) {
-        return storageServiceProvider.upload(file, resourceType, alternativeText, fileName);
+    public GenericResponse upload(MultipartFile file, String resourceType, String alternativeText, String fileName,
+            String fileDescription) {
+        return storageServiceProvider.upload(file, resourceType, alternativeText, fileName, fileDescription);
     }
 
     @Override
