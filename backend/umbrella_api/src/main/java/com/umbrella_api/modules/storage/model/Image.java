@@ -23,5 +23,6 @@ public class Image extends BaseFile {
     @Override
     public String getResourceType() {
         return "image";
+        //image: .jpg, .png, .gif and .pdf
     }
 }
