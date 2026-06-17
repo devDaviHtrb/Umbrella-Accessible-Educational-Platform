@@ -33,7 +33,7 @@ public class CloudinaryService implements FileDbService {
      * "width": int (pixels),
      * "height": int (pixels),
      * "format": String (jpg, webp, png, etc...),
-     * "resource_type": String (image or raw),
+     * "resource_type": String (image, video or raw),
      * "secure_url": String,
      * "bytes": int
      * }
