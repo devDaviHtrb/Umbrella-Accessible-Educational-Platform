@@ -16,5 +16,6 @@ public class RawFile extends BaseFile {
     @Override
     public String getResourceType() {
         return "raw";
+        //raw: .txt, .csv, .docx, .xlsx and .json.
     }
 }
