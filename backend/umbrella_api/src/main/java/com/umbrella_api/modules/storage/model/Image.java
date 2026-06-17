@@ -6,28 +6,32 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Data
-@EqualsAndHashCode(callSuper = true)
 @Table(name = "images")
+@Getter
+@Setter
 @SuperBuilder
+@NoArgsConstructor  
+@AllArgsConstructor 
 public class Image extends BaseFileEntity {
 
     @Column
-    int width;
+    private Integer width;
 
     @Column
-    int height;
+    private Integer height; 
 
-    @Column
-    String type;
+    @Column(name = "image_type") 
+    private String type;
 
     @Column(nullable = false, length = 500)
-    String alternativeText;
+    private String alternativeText;
 
     @OneToOne(mappedBy = "image")
     private FileMetaData fileMetaData;
