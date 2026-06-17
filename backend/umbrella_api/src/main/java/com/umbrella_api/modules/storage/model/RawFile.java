@@ -6,19 +6,23 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Data
-@EqualsAndHashCode(callSuper = true)
 @Table(name = "raws")
+@Getter
+@Setter
 @SuperBuilder
+@NoArgsConstructor 
+@AllArgsConstructor 
 public class RawFile extends BaseFileEntity {
 
-    @Column
-    String type;
+    @Column(name = "file_type") // Evita o uso da palavra reservada 'TYPE' do SQL
+    private String type;
 
     @OneToOne(mappedBy = "rawFile")
     private FileMetaData fileMetaData;
@@ -32,5 +36,4 @@ public class RawFile extends BaseFileEntity {
     public void setFile(FileMetaData file) {
         this.fileMetaData = file;
     }
-
 }
