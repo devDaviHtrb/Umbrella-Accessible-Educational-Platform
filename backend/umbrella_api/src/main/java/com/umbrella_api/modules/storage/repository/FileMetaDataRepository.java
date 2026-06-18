@@ -5,9 +5,7 @@ import com.umbrella_api.modules.storage.model.Image;
 import com.umbrella_api.modules.storage.model.RawFile;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
-@Repository
 public interface FileMetaDataRepository extends JpaRepository<FileMetaData, Object> {
     FileMetaData findByImage(Image image);
 

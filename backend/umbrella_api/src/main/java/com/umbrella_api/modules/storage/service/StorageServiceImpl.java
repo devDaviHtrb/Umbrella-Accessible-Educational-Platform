@@ -1,6 +1,5 @@
 package com.umbrella_api.modules.storage.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -10,14 +9,18 @@ import com.umbrella_api.modules.storage.common.StorageFileEntity;
 import com.umbrella_api.modules.storage.infra.StorageServiceProvider;
 import com.umbrella_api.modules.storage.model.Image;
 import com.umbrella_api.modules.storage.model.RawFile;
+import com.umbrella_api.modules.storage.model.Video;
 
 import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class StorageServiceImpl implements StorageService {
 
-    @Autowired
-    private StorageServiceProvider storageServiceProvider;
+    private final StorageServiceProvider storageServiceProvider;
+
+    StorageServiceImpl(StorageServiceProvider storageServiceProvider) {
+        this.storageServiceProvider = storageServiceProvider;
+    }
 
     @Override
     public GenericResponse upload(MultipartFile file, String resourceType, String alternativeText, String fileName,
@@ -41,6 +44,13 @@ public class StorageServiceImpl implements StorageService {
     public RawFile getRawFileById(long id) {
         return storageServiceProvider.getRawFileById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Image not found")); // create a generic not found
+                                                                                    // exception later
+    }
+
+    @Override
+    public Video getVideoById(long id) {
+        return storageServiceProvider.getVideoById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Video not found")); // create a generic not found
                                                                                     // exception later
     }
 

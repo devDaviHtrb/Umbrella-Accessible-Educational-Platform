@@ -1,5 +1,6 @@
 package com.umbrella_api.modules.storage.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.umbrella_api.modules.storage.common.BaseFileEntity;
 
 import jakarta.persistence.Column;
@@ -17,23 +18,24 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @SuperBuilder
-@NoArgsConstructor  
-@AllArgsConstructor 
+@NoArgsConstructor
+@AllArgsConstructor
 public class Image extends BaseFileEntity {
 
     @Column
     private Integer width;
 
     @Column
-    private Integer height; 
+    private Integer height;
 
-    @Column(name = "image_type") 
+    @Column(name = "image_type")
     private String type;
 
     @Column(nullable = false, length = 500)
     private String alternativeText;
 
     @OneToOne(mappedBy = "image")
+    @JsonManagedReference
     private FileMetaData fileMetaData;
 
     @Override

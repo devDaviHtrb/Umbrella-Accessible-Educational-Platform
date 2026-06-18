@@ -29,9 +29,10 @@ public class CloudinaryProvider {
                     (String) result.get("public_id"),
                     (String) result.get("format"),
                     (String) result.get("resource_type"),
-                    (int) result.get("width"),
-                    (int) result.get("height"),
-                    (int) result.get("bytes"));
+                    (Integer) result.get("width"),
+                    (Integer) result.get("height"),
+                    (Integer) result.get("bytes"),
+                    (Double) result.get("duration"));
 
         } catch (IOException e) {
             throw new IllegalArgumentException("Failed to process the uploaded file. It may be corrupted.", e);

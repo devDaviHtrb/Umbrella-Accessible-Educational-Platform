@@ -1,5 +1,6 @@
 package com.umbrella_api.modules.storage.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.umbrella_api.modules.storage.common.BaseFileEntity;
 
 import jakarta.persistence.Column;
@@ -17,19 +18,20 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @SuperBuilder
-@NoArgsConstructor  // Exigido pelo Hibernate
+@NoArgsConstructor // Exigido pelo Hibernate
 @AllArgsConstructor // Exigido pelo @SuperBuilder
-public class Videos extends BaseFileEntity {
+public class Video extends BaseFileEntity {
 
     @Column(nullable = false)
     private Double duration;
 
-    @OneToOne(mappedBy = "videos")
+    @OneToOne(mappedBy = "video")
+    @JsonManagedReference
     private FileMetaData fileMetaData;
 
     @Override
     public String getResourceType() {
-        return "videos";
+        return "video";
     }
 
     @Override

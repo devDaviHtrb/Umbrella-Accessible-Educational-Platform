@@ -1,5 +1,6 @@
 package com.umbrella_api.modules.storage.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.umbrella_api.modules.storage.common.BaseFileEntity;
 
 import jakarta.persistence.Column;
@@ -17,14 +18,15 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @SuperBuilder
-@NoArgsConstructor 
-@AllArgsConstructor 
+@NoArgsConstructor
+@AllArgsConstructor
 public class RawFile extends BaseFileEntity {
 
-    @Column(name = "file_type") // Evita o uso da palavra reservada 'TYPE' do SQL
+    @Column(name = "file_type")
     private String type;
 
     @OneToOne(mappedBy = "rawFile")
+    @JsonManagedReference
     private FileMetaData fileMetaData;
 
     @Override

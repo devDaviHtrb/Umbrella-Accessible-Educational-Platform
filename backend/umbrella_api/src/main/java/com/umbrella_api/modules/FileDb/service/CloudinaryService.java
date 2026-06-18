@@ -3,9 +3,6 @@ package com.umbrella_api.modules.FileDb.service;
 import com.umbrella_api.modules.FileDb.infra.CloudinaryProvider;
 import com.umbrella_api.modules.FileDb.validations.FileValidator;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,8 +36,8 @@ public class CloudinaryService implements FileDbService {
      * }
      */
     @Override
-    public FileUploadResponse upload(@NotNull MultipartFile file, @NotBlank String folder,
-            @NotBlank String resourceType) {
+    public FileUploadResponse upload(MultipartFile file, String folder,
+            String resourceType) {
 
         FileValidator.validateResourceType(resourceType);
         return this.cloudinaryProvider.upload(file, folder, resourceType);
@@ -56,7 +53,7 @@ public class CloudinaryService implements FileDbService {
      * }
      */
     @Override
-    public DeleteFileResponse delete(String publicId, @NotBlank String resourceType) {
+    public DeleteFileResponse delete(String publicId, String resourceType) {
 
         FileValidator.validateResourceType(resourceType);
         return this.cloudinaryProvider.delete(publicId, resourceType);

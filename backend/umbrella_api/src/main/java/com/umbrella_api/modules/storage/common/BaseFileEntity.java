@@ -15,7 +15,7 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @SuperBuilder
-@NoArgsConstructor 
+@NoArgsConstructor
 @AllArgsConstructor
 public abstract class BaseFileEntity implements StorageFileEntity {
 
@@ -26,6 +26,6 @@ public abstract class BaseFileEntity implements StorageFileEntity {
     @Column(nullable = false)
     private String url;
 
-    @Column(name = "public_id", nullable = false) 
-    private String publicId;
+    @Column(name = "public_id", nullable = false)
+    private String fileDbId;
 }

@@ -1,8 +1,8 @@
 package com.umbrella_api.modules.storage.infra;
 
+import com.umbrella_api.modules.storage.repository.VideoRepository;
 import java.util.Optional;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,24 +14,30 @@ import com.umbrella_api.modules.storage.common.StorageFileEntity;
 import com.umbrella_api.modules.storage.model.FileMetaData;
 import com.umbrella_api.modules.storage.model.Image;
 import com.umbrella_api.modules.storage.model.RawFile;
+import com.umbrella_api.modules.storage.model.Video;
 import com.umbrella_api.modules.storage.repository.FileMetaDataRepository;
 import com.umbrella_api.modules.storage.repository.ImageRepository;
 import com.umbrella_api.modules.storage.repository.RawRepository;
 
 @Component
 public class StorageServiceProvider {
-    @Autowired
-    private FileDbService fileDbService;
+    private final VideoRepository videoRepository;
+    private final FileDbService fileDbService;
+    private final ImageRepository imageRepository;
+    private final RawRepository rawRepository;
+    private final FileMetaDataRepository fileRepository;
 
-    @Autowired
-    private ImageRepository imageRepository;
+    public StorageServiceProvider(VideoRepository videoRepository, ImageRepository imageRepository,
+            FileDbService fileDbService, RawRepository rawRepository,
+            FileMetaDataRepository fileRepository) {
+        this.videoRepository = videoRepository;
+        this.imageRepository = imageRepository;
+        this.fileDbService = fileDbService;
+        this.rawRepository = rawRepository;
+        this.fileRepository = fileRepository;
+    }
 
-    @Autowired
-    private RawRepository rawRepository;
-
-    @Autowired
-    private FileMetaDataRepository fileRepository;
-
+    @Transactional
     public GenericResponse upload(MultipartFile file, String resourceType, String alternativeText, String fileName,
             String fileDescription) {
         FileUploadResponse storageEntityData = fileDbService.upload(file, resourceType, resourceType);
@@ -44,11 +50,26 @@ public class StorageServiceProvider {
                 .build();
 
         try {
+
+            fileMetaData = fileRepository.save(fileMetaData);
+
             if (resourceType.equalsIgnoreCase("raw")) {
+
+                String fileExtension = "unknown";
+                String originalFilename = file.getOriginalFilename();
+
+                if (originalFilename != null && originalFilename.contains(".")) {
+                    fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
+                } else if (file.getContentType() != null && file.getContentType().contains("/")) {
+                    String contentType = file.getContentType();
+                    fileExtension = contentType.substring(contentType.indexOf("/") + 1);
+                }
+
                 RawFile entity = RawFile.builder()
                         .fileDbId(storageEntityData.publicId())
                         .url(storageEntityData.url())
                         .fileMetaData(fileMetaData)
+                        .type(fileExtension)
                         .build();
 
                 entity = rawRepository.save(entity);
@@ -64,9 +85,19 @@ public class StorageServiceProvider {
                         .fileMetaData(fileMetaData)
                         .build();
 
-                // create a validation after
                 entity = imageRepository.save(entity);
                 fileMetaData.setImage(entity);
+
+            } else if (resourceType.equalsIgnoreCase("video")) {
+                Video entity = Video.builder()
+                        .fileDbId(storageEntityData.publicId())
+                        .url(storageEntityData.url())
+                        .duration(storageEntityData.duration())
+                        .fileMetaData(fileMetaData)
+                        .build();
+
+                entity = videoRepository.save(entity);
+                fileMetaData.setVideo(entity);
             }
 
             fileRepository.save(fileMetaData);
@@ -76,9 +107,7 @@ public class StorageServiceProvider {
         } catch (Exception e) {
             e.printStackTrace();
             return new GenericResponse("Error", "Error on upload", 400);
-            // Add a specific exception after
         }
-
     }
 
     @Transactional
@@ -126,5 +155,9 @@ public class StorageServiceProvider {
     public Optional<RawFile> getRawFileById(long id) {
         // add error handling after
         return rawRepository.findById(id);
+    }
+
+    public Optional<Video> getVideoById(Long id) {
+        return videoRepository.findById(id);
     }
 }

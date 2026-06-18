@@ -1,5 +1,7 @@
 package com.umbrella_api.modules.storage.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -19,13 +21,13 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @SuperBuilder
-@NoArgsConstructor  
+@NoArgsConstructor
 @AllArgsConstructor
 public class FileMetaData {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; 
+    private Long id;
 
     @Column(nullable = false)
     private String title;
@@ -36,18 +38,21 @@ public class FileMetaData {
     @Column
     private String description;
 
-    @Column(nullable = false) 
-    private Long size;
+    @Column(nullable = false)
+    private int size;
 
     @OneToOne
     @JoinColumn(name = "image_id", referencedColumnName = "id")
+    @JsonBackReference
     private Image image;
 
     @OneToOne
     @JoinColumn(name = "raw_id", referencedColumnName = "id")
+    @JsonBackReference
     private RawFile rawFile;
 
     @OneToOne
     @JoinColumn(name = "video_id", referencedColumnName = "id")
-    private Videos videos; 
+    @JsonBackReference
+    private Video video;
 }
