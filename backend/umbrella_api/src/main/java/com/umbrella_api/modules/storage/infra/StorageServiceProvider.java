@@ -1,6 +1,8 @@
 package com.umbrella_api.modules.storage.infra;
 
 import com.umbrella_api.modules.storage.repository.VideoRepository;
+import com.umbrella_api.modules.storage.util.ExtensionExtractor;
+
 import java.util.Optional;
 
 import org.springframework.stereotype.Component;
@@ -26,20 +28,23 @@ public class StorageServiceProvider {
     private final ImageRepository imageRepository;
     private final RawRepository rawRepository;
     private final FileMetaDataRepository fileRepository;
+    private final ExtensionExtractor extractor;
 
     public StorageServiceProvider(VideoRepository videoRepository, ImageRepository imageRepository,
             FileDbService fileDbService, RawRepository rawRepository,
-            FileMetaDataRepository fileRepository) {
+            FileMetaDataRepository fileRepository, ExtensionExtractor extractor) {
         this.videoRepository = videoRepository;
         this.imageRepository = imageRepository;
         this.fileDbService = fileDbService;
         this.rawRepository = rawRepository;
         this.fileRepository = fileRepository;
+        this.extractor = extractor;
     }
 
     @Transactional
     public GenericResponse upload(MultipartFile file, String resourceType, String alternativeText, String fileName,
             String fileDescription) {
+
         FileUploadResponse storageEntityData = fileDbService.upload(file, resourceType, resourceType);
 
         FileMetaData fileMetaData = FileMetaData.builder()
@@ -55,47 +60,22 @@ public class StorageServiceProvider {
 
             if (resourceType.equalsIgnoreCase("raw")) {
 
-                String fileExtension = "unknown";
-                String originalFilename = file.getOriginalFilename();
+                String fileExtension = extractor.extract(file);
 
-                if (originalFilename != null && originalFilename.contains(".")) {
-                    fileExtension = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
-                } else if (file.getContentType() != null && file.getContentType().contains("/")) {
-                    String contentType = file.getContentType();
-                    fileExtension = contentType.substring(contentType.indexOf("/") + 1);
-                }
-
-                RawFile entity = RawFile.builder()
-                        .fileDbId(storageEntityData.publicId())
-                        .url(storageEntityData.url())
-                        .fileMetaData(fileMetaData)
-                        .type(fileExtension)
-                        .build();
-
+                RawFile entity = RawFile.create(storageEntityData, fileMetaData, fileExtension);
                 entity = rawRepository.save(entity);
+
                 fileMetaData.setRawFile(entity);
 
             } else if (resourceType.equalsIgnoreCase("image")) {
-                Image entity = Image.builder()
-                        .fileDbId(storageEntityData.publicId())
-                        .url(storageEntityData.url())
-                        .alternativeText(alternativeText != null ? alternativeText : "Without description")
-                        .width(storageEntityData.width())
-                        .height(storageEntityData.height())
-                        .fileMetaData(fileMetaData)
-                        .build();
 
+                Image entity = Image.create(storageEntityData, fileMetaData, alternativeText);
                 entity = imageRepository.save(entity);
                 fileMetaData.setImage(entity);
 
             } else if (resourceType.equalsIgnoreCase("video")) {
-                Video entity = Video.builder()
-                        .fileDbId(storageEntityData.publicId())
-                        .url(storageEntityData.url())
-                        .duration(storageEntityData.duration())
-                        .fileMetaData(fileMetaData)
-                        .build();
 
+                Video entity = Video.create(storageEntityData, fileMetaData);
                 entity = videoRepository.save(entity);
                 fileMetaData.setVideo(entity);
             }
