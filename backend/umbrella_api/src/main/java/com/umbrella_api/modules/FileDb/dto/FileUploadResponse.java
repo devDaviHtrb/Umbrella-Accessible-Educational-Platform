@@ -5,6 +5,8 @@ public record FileUploadResponse(
         String publicId,
         String format,
         String resourceType,
-        int width,
-        int height) {
+        Integer width,
+        Integer height,
+        Integer bytes,
+        Double duration) {
 }

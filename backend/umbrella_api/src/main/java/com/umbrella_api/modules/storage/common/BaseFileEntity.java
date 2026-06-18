@@ -1,4 +1,4 @@
-package com.umbrella_api.modules.storage.model;
+package com.umbrella_api.modules.storage.common;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
@@ -7,23 +7,25 @@ import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @MappedSuperclass
 @Getter
 @Setter
 @SuperBuilder
-public abstract class BaseFile implements StorageFileEntity {
+@NoArgsConstructor
+@AllArgsConstructor
+public abstract class BaseFileEntity implements StorageFileEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @Column(nullable = false)
-    String url;
+    private String url;
 
-    @Column(nullable = false)
-    String fileDbId;
-
-    @Column(nullable = false)
-    String name;
+    @Column(name = "public_id", nullable = false)
+    private String fileDbId;
 }

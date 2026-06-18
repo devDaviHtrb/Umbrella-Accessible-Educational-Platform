@@ -14,25 +14,24 @@ import lombok.AllArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "raws")
+@Table(name = "videos")
 @Getter
 @Setter
 @SuperBuilder
-@NoArgsConstructor
-@AllArgsConstructor
-public class RawFile extends BaseFileEntity {
+@NoArgsConstructor // Exigido pelo Hibernate
+@AllArgsConstructor // Exigido pelo @SuperBuilder
+public class Video extends BaseFileEntity {
 
-    @Column(name = "file_type")
-    private String type;
+    @Column(nullable = false)
+    private Double duration;
 
-    @OneToOne(mappedBy = "rawFile")
+    @OneToOne(mappedBy = "video")
     @JsonManagedReference
     private FileMetaData fileMetaData;
 
     @Override
     public String getResourceType() {
-        return "raw";
-        //raw: .txt, .csv, .docx, .xlsx and .json.
+        return "video";
     }
 
     @Override
