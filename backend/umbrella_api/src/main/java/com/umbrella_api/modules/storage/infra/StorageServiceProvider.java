@@ -86,6 +86,8 @@ public class StorageServiceProvider {
 
         } catch (Exception e) {
             e.printStackTrace();
+            org.springframework.transaction.interceptor.TransactionAspectSupport
+                .currentTransactionStatus().setRollbackOnly();
             return new GenericResponse("Error", "Error on upload", 400);
         }
     }
@@ -121,6 +123,8 @@ public class StorageServiceProvider {
             return new GenericResponse("Ok", "Success on delete", 200);
         } catch (Exception e) {
             e.printStackTrace();
+            org.springframework.transaction.interceptor.TransactionAspectSupport
+                .currentTransactionStatus().setRollbackOnly();
             return new GenericResponse("Error", "Error on delete", 400);
             // Add a specific exception after
         }
