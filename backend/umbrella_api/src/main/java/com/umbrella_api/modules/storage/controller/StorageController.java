@@ -1,7 +1,7 @@
 package com.umbrella_api.modules.storage.controller;
 
 import com.umbrella_api.common.dto.GenericResponse;
-import com.umbrella_api.modules.storage.infra.StorageServiceProvider;
+import com.umbrella_api.modules.storage.api.StorageService;
 import com.umbrella_api.modules.storage.model.Image;
 import com.umbrella_api.modules.storage.model.RawFile;
 import com.umbrella_api.modules.storage.model.Video;
@@ -14,10 +14,10 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/storage")
 public class StorageController {
 
-    private final StorageServiceProvider storageServiceProvider;
+    private final StorageService storageService;
 
-    StorageController(StorageServiceProvider storageServiceProvider) {
-        this.storageServiceProvider = storageServiceProvider;
+    public StorageController(StorageService storageService) {
+        this.storageService = storageService;
     }
 
     @PostMapping("/upload")
@@ -28,7 +28,7 @@ public class StorageController {
             @RequestParam("fileName") String fileName,
             @RequestParam(value = "fileDescription", required = false) String fileDescription) {
 
-        GenericResponse response = storageServiceProvider.upload(
+        GenericResponse response = storageService.upload(
                 file,
                 resourceType,
                 alternativeText,
@@ -44,22 +44,16 @@ public class StorageController {
 
     @GetMapping("/image/{id}")
     public ResponseEntity<Image> getImageById(@PathVariable long id) {
-        return storageServiceProvider.getImageById(id)
-                .map(image -> ResponseEntity.ok().body(image))
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        return ResponseEntity.ok(storageService.getImageById(id));
     }
 
     @GetMapping("/video/{id}")
     public ResponseEntity<Video> getVideoById(@PathVariable long id) {
-        return storageServiceProvider.getVideoById(id)
-                .map(video -> ResponseEntity.ok().body(video))
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        return ResponseEntity.ok(storageService.getVideoById(id));
     }
 
     @GetMapping("/raw/{id}")
     public ResponseEntity<RawFile> getRawById(@PathVariable long id) {
-        return storageServiceProvider.getRawFileById(id)
-                .map(raw -> ResponseEntity.ok().body(raw))
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        return ResponseEntity.ok(storageService.getRawFileById(id));
     }
 }
