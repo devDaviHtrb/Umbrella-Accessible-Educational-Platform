@@ -1,5 +1,9 @@
 package com.umbrella_api.modules.course.model;
 
+import java.time.Duration;
+import java.time.LocalDate;
+
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -22,4 +26,20 @@ public class Modules {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column
+    private String description;
+
+    @Column(nullable = false)
+    private boolean required;
+
+    @Column
+    private LocalDate creation_date;
+
+    @Column
+    private Duration time_limit;
+    // awaiting the data dict for define the type of "time_limit"
 }
