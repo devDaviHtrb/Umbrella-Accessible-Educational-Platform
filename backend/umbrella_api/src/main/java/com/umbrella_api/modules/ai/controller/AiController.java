@@ -6,21 +6,20 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.umbrella_api.modules.ai.api.AiService;
 import com.umbrella_api.modules.ai.dto.AiResponse;
-import com.umbrella_api.modules.ai.service.GeminiService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 
 @RestController
-@RequestMapping("/aiTutor")
+@RequestMapping("/api/aiTutor")
 public class AiController {
     private final AiService aiService;
 
-    public AiController(GeminiService aiService) {
+    public AiController(AiService aiService) {
         this.aiService = aiService;
     }
 
-    @PostMapping("/ask")
+    @PostMapping
     public ResponseEntity<AiResponse> askAi(@RequestParam("text") String text) {
         AiResponse response = aiService.requestAi(text);
 
