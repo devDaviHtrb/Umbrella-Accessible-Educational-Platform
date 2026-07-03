@@ -1,11 +1,17 @@
 package com.umbrella_api.modules.course.service;
 
-import java.time.Duration;
-import java.time.LocalDate;
+import java.util.List;
 
 import com.umbrella_api.common.dto.GenericResponse;
 import com.umbrella_api.modules.course.api.CourseService;
+import com.umbrella_api.modules.course.dto.CourseDto;
+import com.umbrella_api.modules.course.dto.ModuleDto;
+import com.umbrella_api.modules.course.dto.UpdateModuleDto;
 import com.umbrella_api.modules.course.infra.CourseProvider;
+import com.umbrella_api.modules.course.model.Courses;
+import com.umbrella_api.modules.course.model.Modules;
+
+import jakarta.persistence.EntityNotFoundException;
 
 public class CourseServiceImpl implements CourseService {
 
@@ -16,9 +22,9 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public GenericResponse createCourse(String name, String description, Integer difficulty_level) {
+    public GenericResponse createCourse(CourseDto courseData) {
 
-        return courseProvider.createCourse(name, description, difficulty_level);
+        return courseProvider.createCourse(courseData);
     }
 
     @Override
@@ -27,14 +33,40 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public GenericResponse createModule(String name, String description, boolean isRequired, LocalDate creationDate,
-            Duration timeLimit) {
-        return courseProvider.createModule(name, description, isRequired, creationDate, timeLimit);
+    public GenericResponse createModule(ModuleDto moduleData) {
+        return courseProvider.createModule(moduleData);
     }
 
     @Override
     public GenericResponse deleteModule(long id) {
         return courseProvider.deleteModule(id);
+    }
+
+    @Override
+    public List<Modules> getModulesByCourse(Long courseId) {
+        return courseProvider.getModulesByCourse(courseId);
+    }
+
+    @Override
+    public Modules getModuleById(Long moduleId) {
+        return courseProvider.getModuleById(moduleId)
+                .orElseThrow(() -> new EntityNotFoundException("Module not found"));
+    }
+
+    @Override
+    public GenericResponse updateModule(Long id, UpdateModuleDto moduleData) {
+        return courseProvider.updateModule(id, moduleData);
+    }
+
+    @Override
+    public GenericResponse updateCourse(Long id, CourseDto courseData) {
+        return courseProvider.updateCourse(id, courseData);
+    }
+
+    @Override
+    public Courses getCourseById(Long id) {
+        return courseProvider.getCourseById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Course not found"));
     }
 
 }

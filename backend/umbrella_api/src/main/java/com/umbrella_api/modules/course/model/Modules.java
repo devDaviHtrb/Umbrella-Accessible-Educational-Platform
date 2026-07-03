@@ -42,4 +42,7 @@ public class Modules {
     @Column
     private Duration time_limit;
     // awaiting the data dict for define the type of "time_limit"
+
+    @Column(name = "course_id", nullable = false)
+    private Long courseId;
 }

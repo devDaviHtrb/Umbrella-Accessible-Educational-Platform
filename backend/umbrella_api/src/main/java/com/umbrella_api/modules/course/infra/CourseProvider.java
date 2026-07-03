@@ -1,9 +1,12 @@
 package com.umbrella_api.modules.course.infra;
 
-import java.time.Duration;
-import java.time.LocalDate;
+import java.util.List;
+import java.util.Optional;
 
 import com.umbrella_api.common.dto.GenericResponse;
+import com.umbrella_api.modules.course.dto.CourseDto;
+import com.umbrella_api.modules.course.dto.ModuleDto;
+import com.umbrella_api.modules.course.dto.UpdateModuleDto;
 import com.umbrella_api.modules.course.model.Courses;
 import com.umbrella_api.modules.course.model.Modules;
 import com.umbrella_api.modules.course.repository.ActivitiesRepository;
@@ -32,17 +35,18 @@ public class CourseProvider {
     }
 
     @Transactional
-    public GenericResponse createCourse(String name, String description, Integer difficulty_level) {
+    public GenericResponse createCourse(CourseDto courseData) {
         try {
-            Courses course = Courses.builder().name(name).description(description).difficulty_level(difficulty_level)
+            Courses course = Courses.builder().name(courseData.name()).description(courseData.description())
+                    .difficulty_level(courseData.difficulty_level())
                     .module_amount(0).build();
             coursesRepository.save(course);
-            return new GenericResponse("ok", "Succes on create " + name, 200);
+            return new GenericResponse("ok", "Succes on create " + courseData.name(), 200);
         } catch (Exception e) {
             e.printStackTrace();
             org.springframework.transaction.interceptor.TransactionAspectSupport
                     .currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error create " + name, 400);
+            return new GenericResponse("Error", "Error create " + courseData.name(), 400);
         }
     }
 
@@ -60,18 +64,30 @@ public class CourseProvider {
     }
 
     @Transactional
-    public GenericResponse createModule(String name, String description, boolean isRequired, LocalDate creationDate,
-            Duration timeLimit) {
+    public GenericResponse createModule(ModuleDto moduleData) {
         try {
-            Modules module = Modules.builder().name(name).description(description).creation_date(creationDate)
-                    .required(isRequired).time_limit(timeLimit).build();
+
+            // add a user validation after
+            if (!coursesRepository.existsById(moduleData.courseId())) {
+                return new GenericResponse("Error", "O course not found.", 404);
+            }
+
+            Modules module = Modules.builder().name(moduleData.name()).description(moduleData.description())
+                    .creation_date(moduleData.creationDate())
+                    .required(moduleData.isRequired()).time_limit(moduleData.timeLimit())
+                    .courseId(moduleData.courseId()).build();
             modulesRepository.save(module);
-            return new GenericResponse("ok", "Succes on create " + name, 200);
+
+            return new GenericResponse("ok", "Succes on create " + moduleData.name(), 200);
+
         } catch (Exception e) {
+
             e.printStackTrace();
             org.springframework.transaction.interceptor.TransactionAspectSupport
                     .currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error create " + name, 400);
+
+            return new GenericResponse("Error", "Error create " + moduleData.name(), 400);
+
         }
     }
 
@@ -86,6 +102,71 @@ public class CourseProvider {
             return new GenericResponse("Error", "Error delete the module ", 400);
         }
         return new GenericResponse("ok", "Succes on delete a module ", 200);
+    }
+
+    public List<Modules> getModulesByCourse(Long courseId) {
+        return modulesRepository.findByCourseId(courseId);
+    }
+
+    public Optional<Modules> getModuleById(Long moduleId) {
+        return modulesRepository.findById(moduleId);
+    }
+
+    @Transactional
+    public GenericResponse updateModule(Long id, UpdateModuleDto moduleData) {
+        try {
+            Optional<Modules> moduleOptional = modulesRepository.findById(id);
+
+            if (moduleOptional.isEmpty()) {
+                return new GenericResponse("Not Found", "Module not found", 404);
+            }
+
+            Modules module = moduleOptional.get();
+
+            module.setName(moduleData.name());
+            module.setDescription(moduleData.description());
+            module.setRequired(moduleData.isRequired());
+            module.setTime_limit(moduleData.timeLimit());
+
+            modulesRepository.save(module);
+
+            return new GenericResponse("ok", "Succes on update this module", 200);
+        } catch (Exception e) {
+            e.printStackTrace();
+            org.springframework.transaction.interceptor.TransactionAspectSupport
+                    .currentTransactionStatus().setRollbackOnly();
+            return new GenericResponse("Error", "Error on update this module ", 400);
+        }
+    }
+
+    @Transactional
+    public GenericResponse updateCourse(Long id, CourseDto courseData) {
+        try {
+            Optional<Courses> courseOptional = coursesRepository.findById(id);
+
+            if (courseOptional.isEmpty()) {
+                return new GenericResponse("Not Found", "Course not found", 404);
+            }
+
+            Courses course = courseOptional.get();
+
+            course.setName(courseData.name());
+            course.setDescription(courseData.description());
+            course.setDifficulty_level(courseData.difficulty_level());
+
+            coursesRepository.save(course);
+
+            return new GenericResponse("ok", "Succes on update this course", 200);
+        } catch (Exception e) {
+            e.printStackTrace();
+            org.springframework.transaction.interceptor.TransactionAspectSupport
+                    .currentTransactionStatus().setRollbackOnly();
+            return new GenericResponse("Error", "Error on update this course ", 400);
+        }
+    }
+
+    public Optional<Courses> getCourseById(Long id) {
+        return coursesRepository.findById(id);
     }
 
 }
