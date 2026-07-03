@@ -16,6 +16,29 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+/**
+ * WHY USE ORM RELATIONSHIPS (JPA) IN THE STORAGE MODULE?
+ * 
+ * Unlike the rest of the Umbrella ecosystem—where we use raw IDs to decouple
+ * modules and maximize performance—the Storage module has a strict, physical
+ * dependency with the binary files hosted in Cloudinary (Image, Video,
+ * RawFile).
+ * 
+ * Using managed ORM relationships (@OneToOne, @JoinColumn) is justified here
+ * to:
+ * 1. Enforce Referential Integrity: A FileMetaData object cannot exist as an
+ * orphan
+ * without its respective indexed physical file.
+ * 2. Lifecycle Automation: It enables the use of cascading operations, ensuring
+ * that
+ * if metadata is cleared or updated, the database handles deletions atomically,
+ * making it seamless to sync with binary deletions via the Cloudinary API.
+ * 
+ * The use of @JsonBackReference prevents infinite recursion loops when
+ * serializing
+ * these entities into JSON for the consuming APIs.
+ */
+
 @Entity
 @Table(name = "files")
 @Getter
