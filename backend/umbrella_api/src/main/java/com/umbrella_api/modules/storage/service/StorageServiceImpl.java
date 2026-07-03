@@ -54,4 +54,11 @@ public class StorageServiceImpl implements StorageService {
                                                                                     // exception later
     }
 
+    @Override
+    public StorageFileEntity findEntityByTypeAndId(String resourceType, Long id) {
+        return storageServiceProvider.findEntityByTypeAndId(resourceType, id)
+                .orElseThrow(() -> new EntityNotFoundException("File not found")); // create a generic not found
+                                                                                   // exception later
+    }
+
 }
