@@ -102,3 +102,4 @@ temp/
 *.sqlite
 *.db
 ```
+backend/umbrella_api/src/main/resources/temp.yaml
