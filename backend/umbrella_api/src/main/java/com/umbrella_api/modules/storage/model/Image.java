@@ -1,6 +1,7 @@
 package com.umbrella_api.modules.storage.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.umbrella_api.modules.FileDb.dto.FileUploadResponse;
 import com.umbrella_api.modules.storage.common.BaseFileEntity;
 
 import jakarta.persistence.Column;
@@ -41,10 +42,22 @@ public class Image extends BaseFileEntity {
     @Override
     public String getResourceType() {
         return "image";
+        // image: .jpg, .png, .gif and .pdf
     }
 
     @Override
     public void setFile(FileMetaData file) {
         this.fileMetaData = file;
+    }
+
+    public static Image create(FileUploadResponse data, FileMetaData meta, String altText) {
+        return Image.builder()
+                .fileDbId(data.publicId())
+                .url(data.url())
+                .alternativeText(altText != null ? altText : "Without description")
+                .width(data.width())
+                .height(data.height())
+                .fileMetaData(meta)
+                .build();
     }
 }

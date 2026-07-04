@@ -1,6 +1,7 @@
 package com.umbrella_api.modules.storage.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.umbrella_api.modules.FileDb.dto.FileUploadResponse;
 import com.umbrella_api.modules.storage.common.BaseFileEntity;
 
 import jakarta.persistence.Column;
@@ -32,10 +33,20 @@ public class RawFile extends BaseFileEntity {
     @Override
     public String getResourceType() {
         return "raw";
+        // raw: .txt, .csv, .docx, .xlsx and .json.
     }
 
     @Override
     public void setFile(FileMetaData file) {
         this.fileMetaData = file;
+    }
+
+    public static RawFile create(FileUploadResponse data, FileMetaData meta, String fileExtension) {
+        return RawFile.builder()
+                .fileDbId(data.publicId())
+                .url(data.url())
+                .fileMetaData(meta)
+                .type(fileExtension)
+                .build();
     }
 }
