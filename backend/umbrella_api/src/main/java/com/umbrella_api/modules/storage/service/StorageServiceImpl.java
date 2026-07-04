@@ -24,8 +24,8 @@ public class StorageServiceImpl implements StorageService {
 
     @Override
     public GenericResponse upload(MultipartFile file, String resourceType, String alternativeText, String fileName,
-            String fileDescription) {
-        return storageServiceProvider.upload(file, resourceType, alternativeText, fileName, fileDescription);
+            String fileDescription, Long moduleId) {
+        return storageServiceProvider.upload(file, resourceType, alternativeText, fileName, fileDescription, moduleId);
     }
 
     @Override

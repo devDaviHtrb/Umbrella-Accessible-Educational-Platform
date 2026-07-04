@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.umbrella_api.common.dto.GenericResponse;
 import com.umbrella_api.modules.FileDb.api.FileDbService;
 import com.umbrella_api.modules.FileDb.dto.FileUploadResponse;
+import com.umbrella_api.modules.course.repository.ModulesRepository;
 import com.umbrella_api.modules.storage.common.StorageFileEntity;
 import com.umbrella_api.modules.storage.model.FileMetaData;
 import com.umbrella_api.modules.storage.model.Image;
@@ -29,63 +30,74 @@ public class StorageServiceProvider {
     private final RawRepository rawRepository;
     private final FileMetaDataRepository fileRepository;
     private final ExtensionExtractor extractor;
+    private final ModulesRepository modulesRepository;
 
-    public StorageServiceProvider(VideoRepository videoRepository, ImageRepository imageRepository,
-            FileDbService fileDbService, RawRepository rawRepository,
-            FileMetaDataRepository fileRepository, ExtensionExtractor extractor) {
+    public StorageServiceProvider(VideoRepository videoRepository, FileDbService fileDbService,
+            ImageRepository imageRepository, RawRepository rawRepository, FileMetaDataRepository fileRepository,
+            ExtensionExtractor extractor, ModulesRepository modulesRepository) {
         this.videoRepository = videoRepository;
-        this.imageRepository = imageRepository;
         this.fileDbService = fileDbService;
+        this.imageRepository = imageRepository;
         this.rawRepository = rawRepository;
         this.fileRepository = fileRepository;
         this.extractor = extractor;
+        this.modulesRepository = modulesRepository;
     }
 
     @Transactional
     public GenericResponse upload(MultipartFile file, String resourceType, String alternativeText, String fileName,
-            String fileDescription) {
+            String fileDescription, Long moduleId) {
 
-        FileUploadResponse storageEntityData = fileDbService.upload(file, resourceType, resourceType);
+        if (moduleId != null && !modulesRepository.existsById(moduleId)) {
+            return new GenericResponse("Error", "Module not found", 404);
+        }
 
-        FileMetaData fileMetaData = FileMetaData.builder()
-                .title(fileName)
-                .description(fileDescription)
-                .size(storageEntityData.bytes())
-                .status("ok")
-                .build();
+        FileUploadResponse storageEntityData = null;
 
         try {
+            storageEntityData = fileDbService.upload(file, resourceType, resourceType);
+
+            FileMetaData fileMetaData = FileMetaData.builder()
+                    .title(fileName)
+                    .description(fileDescription)
+                    .size(storageEntityData.bytes())
+                    .status("ok")
+                    .moduleId(moduleId)
+                    .build();
 
             fileMetaData = fileRepository.save(fileMetaData);
 
             if (resourceType.equalsIgnoreCase("raw")) {
-
                 String fileExtension = extractor.extract(file);
-
                 RawFile entity = RawFile.create(storageEntityData, fileMetaData, fileExtension);
                 entity = rawRepository.save(entity);
-
                 fileMetaData.setRawFile(entity);
 
             } else if (resourceType.equalsIgnoreCase("image")) {
-
                 Image entity = Image.create(storageEntityData, fileMetaData, alternativeText);
                 entity = imageRepository.save(entity);
                 fileMetaData.setImage(entity);
 
             } else if (resourceType.equalsIgnoreCase("video")) {
-
                 Video entity = Video.create(storageEntityData, fileMetaData);
                 entity = videoRepository.save(entity);
                 fileMetaData.setVideo(entity);
             }
 
             fileRepository.save(fileMetaData);
-
             return new GenericResponse("Ok", "Success on upload", 200);
 
         } catch (Exception e) {
             e.printStackTrace();
+
+            if (storageEntityData != null) {
+                try {
+                    fileDbService.delete(storageEntityData.publicId(), resourceType);
+                } catch (Exception cloudEx) {
+                    System.err.println("Failed to delete orphaned file from cloud provider: " + cloudEx.getMessage());
+                }
+            }
+
             org.springframework.transaction.interceptor.TransactionAspectSupport
                     .currentTransactionStatus().setRollbackOnly();
             return new GenericResponse("Error", "Error on upload", 400);

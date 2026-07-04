@@ -64,6 +64,9 @@ public class FileMetaData {
     @Column(nullable = false)
     private int size;
 
+    @Column(name = "module_id")
+    private Long moduleId;
+
     @OneToOne
     @JoinColumn(name = "image_id", referencedColumnName = "id")
     @JsonBackReference
@@ -78,4 +81,5 @@ public class FileMetaData {
     @JoinColumn(name = "video_id", referencedColumnName = "id")
     @JsonBackReference
     private Video video;
+
 }

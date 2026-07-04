@@ -28,14 +28,16 @@ public class StorageController {
             @RequestParam("resourceType") String resourceType,
             @RequestParam(value = "alternativeText", required = false) String alternativeText,
             @RequestParam("fileName") String fileName,
-            @RequestParam(value = "fileDescription", required = false) String fileDescription) {
+            @RequestParam(value = "fileDescription", required = false) String fileDescription,
+            @RequestParam(value = "moduleId", required = false) Long moduleId) {
 
         GenericResponse response = storageService.upload(
                 file,
                 resourceType,
                 alternativeText,
                 fileName,
-                fileDescription);
+                fileDescription,
+                moduleId);
 
         if (response.status().equalsIgnoreCase("Error")) {
             return ResponseEntity.status(400).body(response);

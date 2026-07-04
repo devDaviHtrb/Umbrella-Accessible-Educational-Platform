@@ -1,7 +1,5 @@
 package com.umbrella_api.modules.storage.api;
 
-import java.util.Optional;
-
 import org.springframework.web.multipart.MultipartFile;
 
 import com.umbrella_api.common.dto.GenericResponse;
@@ -12,7 +10,7 @@ import com.umbrella_api.modules.storage.model.Video;
 
 public interface StorageService {
     public GenericResponse upload(MultipartFile file, String resourceType, String alternativeText, String fileName,
-            String fileDescription);
+            String fileDescription, Long moduleId);
 
     public GenericResponse delete(StorageFileEntity file);
 
