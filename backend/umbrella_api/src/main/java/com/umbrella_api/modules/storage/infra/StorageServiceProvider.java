@@ -57,39 +57,52 @@ public class StorageServiceProvider {
         try {
             storageEntityData = fileDbService.upload(file, resourceType, resourceType);
 
-            FileMetaData fileMetaData = FileMetaData.builder()
-                    .title(fileName)
-                    .description(fileDescription)
-                    .size(storageEntityData.bytes())
-                    .status("ok")
-                    .moduleId(moduleId)
-                    .build();
+            FileMetaData fileMetaData = null;
+            if (moduleId != null) {
+                fileMetaData = FileMetaData.builder()
+                        .title(fileName)
+                        .description(fileDescription)
+                        .size(storageEntityData.bytes())
+                        .status("ok")
+                        .moduleId(moduleId)
+                        .build();
 
-            fileMetaData = fileRepository.save(fileMetaData);
+                fileMetaData = fileRepository.save(fileMetaData);
+            }
 
             if (resourceType.equalsIgnoreCase("raw")) {
                 String fileExtension = extractor.extract(file);
                 RawFile entity = RawFile.create(storageEntityData, fileMetaData, fileExtension);
                 entity = rawRepository.save(entity);
-                fileMetaData.setRawFile(entity);
+
+                if (fileMetaData != null) {
+                    fileMetaData.setRawFile(entity);
+                    fileRepository.save(fileMetaData);
+                }
 
             } else if (resourceType.equalsIgnoreCase("image")) {
                 Image entity = Image.create(storageEntityData, fileMetaData, alternativeText);
                 entity = imageRepository.save(entity);
-                fileMetaData.setImage(entity);
+
+                if (fileMetaData != null) {
+                    fileMetaData.setImage(entity);
+                    fileRepository.save(fileMetaData);
+                }
 
             } else if (resourceType.equalsIgnoreCase("video")) {
                 Video entity = Video.create(storageEntityData, fileMetaData);
                 entity = videoRepository.save(entity);
-                fileMetaData.setVideo(entity);
+
+                if (fileMetaData != null) {
+                    fileMetaData.setVideo(entity);
+                    fileRepository.save(fileMetaData);
+                }
             }
 
-            fileRepository.save(fileMetaData);
             return new GenericResponse("Ok", "Success on upload", 200);
 
         } catch (Exception e) {
             e.printStackTrace();
-
             if (storageEntityData != null) {
                 try {
                     fileDbService.delete(storageEntityData.publicId(), resourceType);
@@ -97,7 +110,6 @@ public class StorageServiceProvider {
                     System.err.println("Failed to delete orphaned file from cloud provider: " + cloudEx.getMessage());
                 }
             }
-
             org.springframework.transaction.interceptor.TransactionAspectSupport
                     .currentTransactionStatus().setRollbackOnly();
             return new GenericResponse("Error", "Error on upload", 400);
@@ -114,21 +126,27 @@ public class StorageServiceProvider {
         try {
             if (file instanceof Image img) {
                 FileMetaData metaData = fileRepository.findByImage(img);
-
                 if (metaData != null) {
                     metaData.setImage(null);
                     fileRepository.delete(metaData);
                 }
-
                 imageRepository.delete(img);
+
             } else if (file instanceof RawFile raw) {
                 FileMetaData metaData = fileRepository.findByRawFile(raw);
                 if (metaData != null) {
                     metaData.setRawFile(null);
                     fileRepository.delete(metaData);
                 }
-
                 rawRepository.delete(raw);
+
+            } else if (file instanceof Video video) {
+                FileMetaData metaData = fileRepository.findByVideo(video);
+                if (metaData != null) {
+                    metaData.setVideo(null);
+                    fileRepository.delete(metaData);
+                }
+                videoRepository.delete(video);
             }
 
             fileDbService.delete(file.getFileDbId(), file.getResourceType());
@@ -138,18 +156,14 @@ public class StorageServiceProvider {
             org.springframework.transaction.interceptor.TransactionAspectSupport
                     .currentTransactionStatus().setRollbackOnly();
             return new GenericResponse("Error", "Error on delete", 400);
-            // Add a specific exception after
         }
-
     }
 
     public Optional<Image> getImageById(long id) {
-        // add error handling after
         return imageRepository.findById(id);
     }
 
     public Optional<RawFile> getRawFileById(long id) {
-        // add error handling after
         return rawRepository.findById(id);
     }
 
@@ -158,12 +172,11 @@ public class StorageServiceProvider {
     }
 
     public Optional<StorageFileEntity> findEntityByTypeAndId(String resourceType, Long id) {
-        if (resourceType == null) {
+        if (resourceType == null || id == null) {
             return Optional.empty();
         }
 
         if (resourceType.equalsIgnoreCase("image")) {
-
             return this.getImageById(id).map(file -> file);
         }
 
