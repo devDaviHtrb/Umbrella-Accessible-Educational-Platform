@@ -68,8 +68,9 @@ public class CourseProvider {
         try {
 
             // add a user validation after
-            if (!coursesRepository.existsById(moduleData.courseId())) {
-                return new GenericResponse("Error", "O course not found.", 404);
+            Optional<Courses> courseOptional = coursesRepository.findById(moduleData.courseId());
+            if (courseOptional.isEmpty()) {
+                return new GenericResponse("Error", "Course not found.", 404);
             }
 
             Modules module = Modules.builder().name(moduleData.name()).description(moduleData.description())
@@ -77,6 +78,10 @@ public class CourseProvider {
                     .required(moduleData.isRequired()).time_limit(moduleData.timeLimit())
                     .courseId(moduleData.courseId()).build();
             modulesRepository.save(module);
+
+            Courses course = courseOptional.get();
+            course.setModule_amount(course.getModule_amount() + 1);
+            coursesRepository.save(course);
 
             return new GenericResponse("ok", "Succes on create " + moduleData.name(), 200);
 
@@ -94,7 +99,20 @@ public class CourseProvider {
     @Transactional
     public GenericResponse deleteModule(long id) {
         try {
+            Optional<Modules> opModule = this.getModuleById(id);
+
+            if (opModule.isEmpty()) {
+                return new GenericResponse("Error", "Module not found", 404);
+            }
+
+            Modules module = opModule.get();
+            Courses course = this.getCourseById(module.getCourseId()).get();
+
             modulesRepository.deleteById(id);
+            course.setModule_amount(course.getModule_amount() - 1);
+
+            coursesRepository.save(course);
+
         } catch (Exception e) {
             e.printStackTrace();
             org.springframework.transaction.interceptor.TransactionAspectSupport
