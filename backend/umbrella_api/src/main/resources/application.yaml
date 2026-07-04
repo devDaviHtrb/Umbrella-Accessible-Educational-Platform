@@ -6,6 +6,10 @@ spring:
     username: ${DB_USER}
     password: ${DB_PASS}
 
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 3600000
+
 gemini:
   api:
     url: https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=
@@ -16,5 +20,6 @@ gemini:
     temp: 0.5
 logging:
   level:
-    org.springframework.security: TRACE
-    
+    org:
+      springframework:
+        security: TRACE

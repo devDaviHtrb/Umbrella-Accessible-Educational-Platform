@@ -1,0 +1,19 @@
+FROM maven:3.9.6-eclipse-temurin-21
+
+WORKDIR /app
+
+# Arquivos necessários para baixar dependências
+COPY pom.xml .
+COPY mvnw .
+COPY .mvn .mvn
+
+RUN chmod +x mvnw
+
+# Baixa dependências uma única vez
+RUN ./mvnw dependency:go-offline
+
+EXPOSE 8080
+
+ENV MAVEN_OPTS="-Dmaven.repo.local=/root/.m2/repository"
+
+CMD ["./mvnw", "spring-boot:run", "-DskipTests"]
