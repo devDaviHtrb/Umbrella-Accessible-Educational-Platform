@@ -47,6 +47,17 @@ public class StorageServiceProvider {
     @Transactional
     public GenericResponse upload(MultipartFile file, String resourceType, String alternativeText, String fileName,
             String fileDescription, Long moduleId) {
+        /**
+         * Uploads a file to the cloud storage and links it to local entities.
+         * 
+         * NOTE ON MODULE LINKAGE:
+         * The 'moduleId' parameter is completely optional. If a 'moduleId' is provided,
+         * the system creates a central 'FileMetaData' record to link the file to the
+         * course structure.
+         * If 'moduleId' is null, the system bypasses metadata generation and directly
+         * persists
+         * the concrete resource entity (Image, Video, or RawFile) standalone.
+         */
 
         if (moduleId != null && !modulesRepository.existsById(moduleId)) {
             return new GenericResponse("Error", "Module not found", 404);
