@@ -1,5 +1,7 @@
 package com.umbrella_api.modules.storage.api;
 
+import java.util.Optional;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import com.umbrella_api.common.dto.GenericResponse;
@@ -19,5 +21,7 @@ public interface StorageService {
     public RawFile getRawFileById(long id);
 
     public Video getVideoById(long id);
+
+    public StorageFileEntity findEntityByTypeAndId(String resourceType, Long id);
 
 }

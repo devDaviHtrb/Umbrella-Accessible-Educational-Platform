@@ -87,7 +87,7 @@ public class StorageServiceProvider {
         } catch (Exception e) {
             e.printStackTrace();
             org.springframework.transaction.interceptor.TransactionAspectSupport
-                .currentTransactionStatus().setRollbackOnly();
+                    .currentTransactionStatus().setRollbackOnly();
             return new GenericResponse("Error", "Error on upload", 400);
         }
     }
@@ -124,7 +124,7 @@ public class StorageServiceProvider {
         } catch (Exception e) {
             e.printStackTrace();
             org.springframework.transaction.interceptor.TransactionAspectSupport
-                .currentTransactionStatus().setRollbackOnly();
+                    .currentTransactionStatus().setRollbackOnly();
             return new GenericResponse("Error", "Error on delete", 400);
             // Add a specific exception after
         }
@@ -143,5 +143,26 @@ public class StorageServiceProvider {
 
     public Optional<Video> getVideoById(Long id) {
         return videoRepository.findById(id);
+    }
+
+    public Optional<StorageFileEntity> findEntityByTypeAndId(String resourceType, Long id) {
+        if (resourceType == null) {
+            return Optional.empty();
+        }
+
+        if (resourceType.equalsIgnoreCase("image")) {
+
+            return this.getImageById(id).map(file -> file);
+        }
+
+        if (resourceType.equalsIgnoreCase("raw")) {
+            return this.getRawFileById(id).map(file -> file);
+        }
+
+        if (resourceType.equalsIgnoreCase("video")) {
+            return this.getVideoById(id).map(file -> file);
+        }
+
+        return Optional.empty();
     }
 }

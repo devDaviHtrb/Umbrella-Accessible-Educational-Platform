@@ -2,6 +2,8 @@ package com.umbrella_api.modules.storage.controller;
 
 import com.umbrella_api.common.dto.GenericResponse;
 import com.umbrella_api.modules.storage.api.StorageService;
+import com.umbrella_api.modules.storage.common.StorageFileEntity;
+
 import com.umbrella_api.modules.storage.model.Image;
 import com.umbrella_api.modules.storage.model.RawFile;
 import com.umbrella_api.modules.storage.model.Video;
@@ -16,7 +18,7 @@ public class StorageController {
 
     private final StorageService storageService;
 
-    public StorageController(StorageService storageService) {
+    StorageController(StorageService storageService) {
         this.storageService = storageService;
     }
 
@@ -45,15 +47,35 @@ public class StorageController {
     @GetMapping("/image/{id}")
     public ResponseEntity<Image> getImageById(@PathVariable long id) {
         return ResponseEntity.ok(storageService.getImageById(id));
+
     }
 
     @GetMapping("/video/{id}")
     public ResponseEntity<Video> getVideoById(@PathVariable long id) {
         return ResponseEntity.ok(storageService.getVideoById(id));
+
     }
 
     @GetMapping("/raw/{id}")
     public ResponseEntity<RawFile> getRawById(@PathVariable long id) {
         return ResponseEntity.ok(storageService.getRawFileById(id));
+    }
+
+    @DeleteMapping("/{resourceType}/{id}")
+    public ResponseEntity<GenericResponse> deleteFile(
+            @PathVariable String resourceType,
+            @PathVariable Long id) {
+
+        StorageFileEntity file = storageService.findEntityByTypeAndId(resourceType, id);
+
+        if (file == null) {
+            return ResponseEntity.status(404)
+                    .body(new GenericResponse("Error", "File not found", 404));
+        }
+
+        GenericResponse response = storageService.delete(file);
+
+        return ResponseEntity.ok(response);
+
     }
 }
