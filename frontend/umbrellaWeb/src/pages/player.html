@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-br"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Umbrella Learning Portal - Sala de Aula</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#f2f3f9",
+                        "surface": "#f8f9ff",
+                        "secondary-fixed": "#d7e2ff",
+                        "secondary-container": "#a9c4fd",
+                        "on-secondary-container": "#355082",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-bright": "#f8f9ff",
+                        "on-tertiary-fixed-variant": "#00504d",
+                        "on-secondary-fixed": "#001a40",
+                        "error-container": "#ffdad6",
+                        "primary-fixed": "#d9e2ff",
+                        "tertiary": "#004d4a",
+                        "surface-variant": "#e1e2e8",
+                        "inverse-on-surface": "#eff0f6",
+                        "on-primary-fixed-variant": "#00419d",
+                        "primary": "#003f98",
+                        "on-surface": "#191c20",
+                        "on-primary": "#ffffff",
+                        "primary-container": "#1a56be",
+                        "primary-fixed-dim": "#b1c5ff",
+                        "on-tertiary-container": "#84e5df",
+                        "on-surface-variant": "#434653",
+                        "background": "#f8f9ff",
+                        "tertiary-container": "#006764",
+                        "tertiary-fixed-dim": "#76d6d1",
+                        "secondary": "#435e91",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#2e3135",
+                        "surface-container-high": "#e7e8ee",
+                        "tertiary-fixed": "#92f3ed",
+                        "on-background": "#191c20",
+                        "on-secondary-fixed-variant": "#2a4678",
+                        "on-primary-fixed": "#001946",
+                        "on-tertiary-fixed": "#00201f",
+                        "on-primary-container": "#c5d4ff",
+                        "on-error-container": "#93000a",
+                        "inverse-primary": "#b1c5ff",
+                        "on-tertiary": "#ffffff",
+                        "outline": "#737784",
+                        "outline-variant": "#c3c6d5",
+                        "surface-container": "#eceef3",
+                        "secondary-fixed-dim": "#acc7ff",
+                        "surface-tint": "#1f59c1",
+                        "surface-dim": "#d8dae0",
+                        "surface-container-highest": "#e1e2e8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Lexend"],
+                        "display": ["Lexend"],
+                        "body": ["Lexend"],
+                        "label": ["Lexend"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Lexend', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c3c6d5;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- SideNavBar Anchor -->
+<aside class="h-screen w-72 flex flex-col fixed left-0 top-0 bg-[#f2f3f9] dark:bg-slate-900 bg-gradient-to-r from-[#f2f3f9] to-[#f8f9ff] dark:from-slate-900 dark:to-slate-950 transition-all duration-300 ease-in-out z-50">
+<div class="flex flex-col gap-2 p-6 h-full">
+<div class="mb-8">
+<h1 class="text-xl font-black text-[#1A56BE] dark:text-blue-400">Umbrella</h1>
+<p class="text-xs font-lexend text-on-surface-variant opacity-70">Learning Portal</p>
+</div>
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ease-in-out text-[#191c20]/60 dark:text-slate-500 hover:text-[#1A56BE] hover:bg-white/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-lexend text-title-md">Painel</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ease-in-out text-[#1A56BE] dark:text-blue-300 font-bold border-r-4 border-[#1A56BE] bg-[#ffffff] dark:bg-slate-800" href="#">
+<span class="material-symbols-outlined" data-icon="school" style="font-variation-settings: 'FILL' 1;">school</span>
+<span class="font-lexend text-title-md">Cursos</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ease-in-out text-[#191c20]/60 dark:text-slate-500 hover:text-[#1A56BE] hover:bg-white/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="video_library">video_library</span>
+<span class="font-lexend text-title-md">Aulas Gravadas</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ease-in-out text-[#191c20]/60 dark:text-slate-500 hover:text-[#1A56BE] hover:bg-white/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="smart_toy">smart_toy</span>
+<span class="font-lexend text-title-md">Tutor IA</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ease-in-out text-[#191c20]/60 dark:text-slate-500 hover:text-[#1A56BE] hover:bg-white/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-lexend text-title-md">Agenda</span>
+</a>
+<div class="mt-auto pt-8">
+<a class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ease-in-out text-[#191c20]/60 dark:text-slate-500 hover:text-[#1A56BE] hover:bg-white/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-lexend text-title-md">Ajustes</span>
+</a>
+</div>
+</nav>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-72 min-h-screen flex flex-col">
+<!-- TopNavBar Anchor -->
+<header class="bg-[#f8f9ff]/80 dark:bg-slate-950/80 backdrop-blur-xl flex justify-between items-center w-full px-8 py-3 docked full-width top-0 sticky z-40 shadow-sm dark:shadow-none">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 text-[#1A56BE] dark:text-blue-400 font-semibold font-lexend text-body-lg">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+<span>Fundamentos de Engenharia de Software</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<div class="h-2 w-2 rounded-full bg-error"></div>
+<span class="text-label-md text-on-surface-variant font-medium">AO VIVO • 1,240 alunos</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full hover:bg-[#f2f3f9] dark:hover:bg-slate-800 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 rounded-full hover:bg-[#f2f3f9] dark:hover:bg-slate-800 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="help_outline">help_outline</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container text-xs font-bold ml-2">
+                        JS
+                    </div>
+</div>
+</div>
+</header>
+<!-- Classroom Layout Grid -->
+<section class="p-8 flex gap-8 h-[calc(100vh-64px)] overflow-hidden">
+<!-- Left: Video & Resources -->
+<div class="flex-grow flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2">
+<!-- Video Player Section -->
+<div class="relative w-full aspect-video bg-inverse-surface rounded-xl overflow-hidden group shadow-2xl">
+<!-- Professor Silhouette Placeholder -->
+<div class="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-inverse-surface to-[#1a1c1e]">
+<span class="material-symbols-outlined text-[120px] text-on-surface-variant opacity-20 mb-4" data-icon="person">person</span>
+<div class="text-center">
+<h3 class="text-on-primary font-lexend text-headline-sm">Prof. Dr. Ricardo Oliveira</h3>
+<p class="text-on-surface-variant opacity-60 text-body-md">Sua câmera está oculta para privacidade</p>
+</div>
+</div>
+<!-- Overlay Controls (Asymmetric Editorial Style) -->
+<div class="absolute bottom-6 left-6 right-6 flex items-end justify-between">
+<div class="bg-black/40 backdrop-blur-md p-4 rounded-xl flex gap-4 items-center border border-white/10">
+<button class="text-white hover:text-primary-fixed-dim transition-colors">
+<span class="material-symbols-outlined" data-icon="play_arrow" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+<button class="text-white hover:text-primary-fixed-dim transition-colors">
+<span class="material-symbols-outlined" data-icon="volume_up">volume_up</span>
+</button>
+<div class="h-1 w-32 bg-white/20 rounded-full overflow-hidden">
+<div class="h-full bg-primary-container w-3/4"></div>
+</div>
+</div>
+<div class="flex gap-3">
+<button class="bg-error hover:bg-red-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg active:scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="record_voice_over">record_voice_over</span>
+                                Áudio Privado com Professor
+                            </button>
+<button class="bg-black/40 backdrop-blur-md text-white p-3 rounded-xl border border-white/10 hover:bg-black/60 transition-colors">
+<span class="material-symbols-outlined" data-icon="fullscreen">fullscreen</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Bento Resources Section -->
+<div class="grid grid-cols-12 gap-6 pb-8">
+<div class="col-span-8 bg-surface-container-low p-6 rounded-xl border-l-4 border-primary">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h4 class="text-title-lg font-bold text-primary mb-1">Materiais da Aula</h4>
+<p class="text-body-md text-on-surface-variant">Arquivos e links úteis citados hoje.</p>
+</div>
+<button class="text-primary text-label-lg font-bold hover:underline">Ver todos</button>
+</div>
+<div class="space-y-3">
+<div class="flex items-center gap-4 bg-surface-container-lowest p-4 rounded-xl hover:shadow-md transition-shadow cursor-pointer">
+<div class="bg-primary-fixed p-2 rounded-lg">
+<span class="material-symbols-outlined text-primary" data-icon="picture_as_pdf">picture_as_pdf</span>
+</div>
+<div class="flex-grow">
+<p class="font-lexend text-body-lg font-medium">Slides_Aula_05.pdf</p>
+<p class="text-body-sm text-on-surface-variant opacity-70">PDF • 12MB</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="download">download</span>
+</div>
+<div class="flex items-center gap-4 bg-surface-container-lowest p-4 rounded-xl hover:shadow-md transition-shadow cursor-pointer">
+<div class="bg-tertiary-fixed p-2 rounded-lg">
+<span class="material-symbols-outlined text-tertiary" data-icon="link">link</span>
+</div>
+<div class="flex-grow">
+<p class="font-lexend text-body-lg font-medium">Repositório de Exemplo (GitHub)</p>
+<p class="text-body-sm text-on-surface-variant opacity-70">External Link</p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="open_in_new">open_in_new</span>
+</div>
+</div>
+</div>
+<div class="col-span-4 flex flex-col gap-6">
+<div class="bg-tertiary text-on-tertiary p-6 rounded-xl flex flex-col justify-between h-full relative overflow-hidden group">
+<!-- Background pattern -->
+<div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-9xl" data-icon="trending_up">trending_up</span>
+</div>
+<div>
+<p class="text-label-md uppercase tracking-wider opacity-80 mb-2">Progresso Atual</p>
+<h5 class="text-headline-sm font-bold">85% Concluído</h5>
+</div>
+<div class="mt-4">
+<div class="w-full bg-white/20 h-2 rounded-full mb-2">
+<div class="bg-white h-full w-[85%] rounded-full"></div>
+</div>
+<p class="text-body-sm">Você está quase lá!</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right: Persistent Chat & Participants -->
+<aside class="w-96 flex flex-col gap-4">
+<div class="flex-grow bg-surface-container-lowest rounded-xl shadow-lg flex flex-col overflow-hidden">
+<div class="p-4 border-b border-surface-variant flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="forum" style="font-variation-settings: 'FILL' 1;">forum</span>
+<h3 class="font-lexend font-bold">Chat da Turma</h3>
+</div>
+<span class="bg-primary-container text-on-primary-container text-[10px] px-2 py-0.5 rounded-full font-bold">LIVE</span>
+</div>
+<!-- Chat Messages -->
+<div class="flex-grow overflow-y-auto p-4 flex flex-col gap-4 custom-scrollbar bg-surface-container-low/30">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="text-label-sm font-bold text-primary">Ana Silva</span>
+<span class="text-[10px] text-on-surface-variant">14:02</span>
+</div>
+<div class="bg-surface p-3 rounded-xl rounded-tl-none border border-surface-variant/50">
+<p class="text-body-md">Lorem ipsum dolor sit amet, consectetur adipiscing elit?</p>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="text-label-sm font-bold text-tertiary">Monitor_João</span>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed-variant text-[8px] px-1 rounded uppercase">Equipe</span>
+<span class="text-[10px] text-on-surface-variant">14:04</span>
+</div>
+<div class="bg-surface p-3 rounded-xl rounded-tl-none border border-surface-variant/50">
+<p class="text-body-md">Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.</p>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="text-label-sm font-bold text-on-surface">Marcos Oliveira</span>
+<span class="text-[10px] text-on-surface-variant">14:05</span>
+</div>
+<div class="bg-surface p-3 rounded-xl rounded-tl-none border border-surface-variant/50">
+<p class="text-body-md">Quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2">
+<span class="text-label-sm font-bold text-primary">Ana Silva</span>
+<span class="text-[10px] text-on-surface-variant">14:06</span>
+</div>
+<div class="bg-surface p-3 rounded-xl rounded-tl-none border border-surface-variant/50">
+<p class="text-body-md">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur!</p>
+</div>
+</div>
+<div class="flex flex-col gap-1 items-end">
+<div class="flex items-center gap-2">
+<span class="text-[10px] text-on-surface-variant">14:08</span>
+<span class="text-label-sm font-bold text-on-primary-container">Você</span>
+</div>
+<div class="bg-primary-container text-on-primary-container p-3 rounded-xl rounded-tr-none">
+<p class="text-body-md">Excepteur sint occaecat cupidatat non proident.</p>
+</div>
+</div>
+</div>
+<!-- Chat Input -->
+<div class="p-4 bg-surface">
+<div class="relative">
+<input class="w-full bg-surface-container-highest border-none rounded-xl py-3 pl-4 pr-12 text-body-md focus:ring-2 focus:ring-primary focus:bg-surface transition-all placeholder:text-on-surface-variant/50" placeholder="Digite sua mensagem..." type="text"/>
+<button class="absolute right-2 top-1/2 -translate-y-1/2 text-primary hover:bg-primary-container/20 p-2 rounded-lg transition-colors">
+<span class="material-symbols-outlined" data-icon="send">send</span>
+</button>
+</div>
+<div class="flex gap-2 mt-2">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="mood">mood</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]" data-icon="attach_file">attach_file</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Active Quiz / Engagement Mini-Card -->
+<div class="bg-gradient-to-br from-primary to-primary-container p-5 rounded-xl text-white shadow-xl relative overflow-hidden">
+<div class="relative z-10">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-secondary-fixed" data-icon="quiz">quiz</span>
+<span class="text-label-sm font-bold tracking-widest uppercase">Quiz Relâmpago</span>
+</div>
+<h4 class="text-title-md font-medium leading-tight mb-3">Qual o principal pilar do SOLID apresentado?</h4>
+<button class="w-full bg-white text-primary font-bold py-2 rounded-lg text-label-lg hover:bg-secondary-fixed transition-colors">
+                            Responder Agora
+                        </button>
+</div>
+<!-- Abstract glass effect -->
+<div class="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+</div>
+</aside>
+</section>
+</main>
+<!-- Contextual FAB (Hidden on this view per guidelines, but adding placeholder logic as reference) -->
+<!-- Suppressed on Details/Transactional screens as per rule -->
+</body></html>
