@@ -2,6 +2,8 @@ package com.umbrella_api.modules.storage.infra;
 
 import com.umbrella_api.modules.storage.repository.VideoRepository;
 import com.umbrella_api.modules.storage.util.ExtensionExtractor;
+import com.umbrella_api.modules.user.model.UserModel;
+import com.umbrella_api.modules.user.repository.UserRepository;
 
 import java.util.Optional;
 
@@ -10,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.umbrella_api.common.dto.GenericResponse;
+import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.FileDb.api.FileDbService;
 import com.umbrella_api.modules.FileDb.dto.FileUploadResponse;
 import com.umbrella_api.modules.course.repository.ModulesRepository;
@@ -31,10 +34,11 @@ public class StorageServiceProvider {
     private final FileMetaDataRepository fileRepository;
     private final ExtensionExtractor extractor;
     private final ModulesRepository modulesRepository;
+    private final UserRepository userRepository;
 
     public StorageServiceProvider(VideoRepository videoRepository, FileDbService fileDbService,
             ImageRepository imageRepository, RawRepository rawRepository, FileMetaDataRepository fileRepository,
-            ExtensionExtractor extractor, ModulesRepository modulesRepository) {
+            ExtensionExtractor extractor, ModulesRepository modulesRepository, UserRepository userRepository) {
         this.videoRepository = videoRepository;
         this.fileDbService = fileDbService;
         this.imageRepository = imageRepository;
@@ -42,11 +46,12 @@ public class StorageServiceProvider {
         this.fileRepository = fileRepository;
         this.extractor = extractor;
         this.modulesRepository = modulesRepository;
+        this.userRepository = userRepository;
     }
 
     @Transactional
     public GenericResponse upload(MultipartFile file, String resourceType, String alternativeText, String fileName,
-            String fileDescription, Long moduleId) {
+            String fileDescription, Long moduleId, CustomUserDetails loggedUser) {
         /**
          * Uploads a file to the cloud storage and links it to local entities.
          * 
@@ -93,6 +98,12 @@ public class StorageServiceProvider {
 
             } else if (resourceType.equalsIgnoreCase("image")) {
                 Image entity = Image.create(storageEntityData, fileMetaData, alternativeText);
+
+                if (fileMetaData == null) {
+                    UserModel user = loggedUser.getUserModel();
+                    entity.setUserId(user.getId());
+                }
+
                 entity = imageRepository.save(entity);
 
                 if (fileMetaData != null) {

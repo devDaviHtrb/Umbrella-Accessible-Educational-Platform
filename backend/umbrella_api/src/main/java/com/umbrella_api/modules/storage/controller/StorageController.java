@@ -1,6 +1,7 @@
 package com.umbrella_api.modules.storage.controller;
 
 import com.umbrella_api.common.dto.GenericResponse;
+import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.storage.api.StorageService;
 import com.umbrella_api.modules.storage.common.StorageFileEntity;
 
@@ -9,6 +10,8 @@ import com.umbrella_api.modules.storage.model.RawFile;
 import com.umbrella_api.modules.storage.model.Video;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,7 +32,8 @@ public class StorageController {
             @RequestParam(value = "alternativeText", required = false) String alternativeText,
             @RequestParam("fileName") String fileName,
             @RequestParam(value = "fileDescription", required = false) String fileDescription,
-            @RequestParam(value = "moduleId", required = false) Long moduleId) {
+            @RequestParam(value = "moduleId", required = false) Long moduleId,
+            @AuthenticationPrincipal CustomUserDetails loggedUser) {
 
         GenericResponse response = storageService.upload(
                 file,
@@ -37,7 +41,8 @@ public class StorageController {
                 alternativeText,
                 fileName,
                 fileDescription,
-                moduleId);
+                moduleId,
+                loggedUser);
 
         if (response.status().equalsIgnoreCase("Error")) {
             return ResponseEntity.status(400).body(response);
