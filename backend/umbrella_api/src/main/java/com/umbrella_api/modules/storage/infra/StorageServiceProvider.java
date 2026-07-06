@@ -7,7 +7,6 @@ import com.umbrella_api.modules.user.repository.UserRepository;
 
 import java.util.Optional;
 
-import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
