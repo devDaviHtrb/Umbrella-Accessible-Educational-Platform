@@ -1,8 +1,8 @@
-package com.umbrella_api.modules.utils.WebClient.internal.impl;
+package com.umbrella_api.utils.webClient.internal.request.impl;
 
 import java.util.Map;
 
-import com.umbrella_api.modules.utils.WebClient.internal.Request;
+import com.umbrella_api.utils.webClient.internal.request.Request;
 
 public class RequestFactory {
     public static final Map<String, Request> REQUESTS = Map.of("post", new PostRequestEstrategy(), "get",
