@@ -17,7 +17,7 @@ public class UserModel {
 
     @Id
     @GeneratedValue
-    private UUID id; //id
+    private Long id; // id
 
     @Column(nullable = false)
     private String name;

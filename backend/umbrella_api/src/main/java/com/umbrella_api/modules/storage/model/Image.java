@@ -35,6 +35,9 @@ public class Image extends BaseFileEntity {
     @Column(nullable = false, length = 500)
     private String alternativeText;
 
+    @Column(name = "user_id", nullable = true)
+    private Long userId;
+
     @OneToOne(mappedBy = "image")
     @JsonManagedReference
     private FileMetaData fileMetaData;

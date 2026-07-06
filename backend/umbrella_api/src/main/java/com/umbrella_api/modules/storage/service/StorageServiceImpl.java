@@ -1,9 +1,11 @@
 package com.umbrella_api.modules.storage.service;
 
+import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.umbrella_api.common.dto.GenericResponse;
+import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.storage.api.StorageService;
 import com.umbrella_api.modules.storage.common.StorageFileEntity;
 import com.umbrella_api.modules.storage.infra.StorageServiceProvider;
@@ -24,8 +26,9 @@ public class StorageServiceImpl implements StorageService {
 
     @Override
     public GenericResponse upload(MultipartFile file, String resourceType, String alternativeText, String fileName,
-            String fileDescription, Long moduleId) {
-        return storageServiceProvider.upload(file, resourceType, alternativeText, fileName, fileDescription, moduleId);
+            String fileDescription, Long moduleId, CustomUserDetails loggedUser) {
+        return storageServiceProvider.upload(file, resourceType, alternativeText, fileName, fileDescription, moduleId,
+                loggedUser);
     }
 
     @Override
