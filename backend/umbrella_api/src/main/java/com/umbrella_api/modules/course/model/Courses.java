@@ -35,4 +35,5 @@ public class Courses {
 
     @Column
     private Integer difficulty_level;
+
 }

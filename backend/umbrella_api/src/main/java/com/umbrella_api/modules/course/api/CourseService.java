@@ -3,6 +3,7 @@ package com.umbrella_api.modules.course.api;
 import java.util.List;
 
 import com.umbrella_api.common.dto.GenericResponse;
+import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.course.dto.CourseDto;
 import com.umbrella_api.modules.course.dto.ModuleDto;
 import com.umbrella_api.modules.course.dto.UpdateModuleDto;
@@ -10,7 +11,7 @@ import com.umbrella_api.modules.course.model.Courses;
 import com.umbrella_api.modules.course.model.Modules;
 
 public interface CourseService {
-    public GenericResponse createCourse(CourseDto courseData);
+    public GenericResponse createCourse(CourseDto courseData, CustomUserDetails loggedUser);
 
     public Courses getCourseById(Long id);
 

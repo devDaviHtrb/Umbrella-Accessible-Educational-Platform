@@ -17,28 +17,23 @@ public class AuthController {
     private final AuthService service;
 
     @GetMapping("/test")
-    public String test(){
+    public String test() {
         return "running";
     }
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponseDto> register(
-            @RequestBody @Valid RegisterRequestDto request
-    ) {
-
+            @RequestBody @Valid RegisterRequestDto request) {
 
         return ResponseEntity.ok(
-                service.register(request)
-        );
+                service.register(request));
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDto> login(
-            @RequestBody @Valid LoginRequestDto request
-    ) {
+            @RequestBody @Valid LoginRequestDto request) {
 
         return ResponseEntity.ok(
-                service.login(request)
-        );
+                service.login(request));
     }
 }

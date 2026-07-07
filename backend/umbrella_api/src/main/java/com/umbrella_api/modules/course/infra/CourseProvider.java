@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.umbrella_api.common.dto.GenericResponse;
+import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.course.dto.CourseDto;
 import com.umbrella_api.modules.course.dto.ModuleDto;
 import com.umbrella_api.modules.course.dto.UpdateModuleDto;
@@ -35,7 +36,7 @@ public class CourseProvider {
     }
 
     @Transactional
-    public GenericResponse createCourse(CourseDto courseData) {
+    public GenericResponse createCourse(CourseDto courseData, CustomUserDetails loggedUser) {
         try {
             Courses course = Courses.builder().name(courseData.name()).description(courseData.description())
                     .difficulty_level(courseData.difficulty_level())

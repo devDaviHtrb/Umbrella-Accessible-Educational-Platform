@@ -3,6 +3,7 @@ package com.umbrella_api.modules.course.service;
 import java.util.List;
 
 import com.umbrella_api.common.dto.GenericResponse;
+import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.course.api.CourseService;
 import com.umbrella_api.modules.course.dto.CourseDto;
 import com.umbrella_api.modules.course.dto.ModuleDto;
@@ -22,9 +23,9 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public GenericResponse createCourse(CourseDto courseData) {
+    public GenericResponse createCourse(CourseDto courseData, CustomUserDetails loggedUser) {
 
-        return courseProvider.createCourse(courseData);
+        return courseProvider.createCourse(courseData, loggedUser);
     }
 
     @Override

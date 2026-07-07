@@ -7,7 +7,7 @@ import org.springframework.security.core.userdetails.User;
 
 @Getter
 public class CustomUserDetails extends User {
-    // Guarda o seu modelo do banco completo na memória da requisição!
+
     private final UserModel userModel;
 
     public CustomUserDetails(UserModel userModel) {

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/storage")
+@RequestMapping("/api/public/storage")
 public class StorageController {
 
     private final StorageService storageService;
