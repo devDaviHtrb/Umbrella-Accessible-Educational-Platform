@@ -1,13 +1,16 @@
 package com.umbrella_api.modules.storage.model;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.umbrella_api.modules.course.model.Modules;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
@@ -64,8 +67,9 @@ public class FileMetaData {
     @Column(nullable = false)
     private int size;
 
-    @Column(name = "module_id")
-    private Long moduleId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "module_id", nullable = false)
+    private Modules module;
 
     @OneToOne
     @JoinColumn(name = "image_id", referencedColumnName = "id")

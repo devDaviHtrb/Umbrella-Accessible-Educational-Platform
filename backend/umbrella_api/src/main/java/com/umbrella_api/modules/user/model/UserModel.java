@@ -3,8 +3,12 @@ package com.umbrella_api.modules.user.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
-import java.util.UUID;
+
+import com.umbrella_api.modules.course.model.CourseUserRelation;
+import com.umbrella_api.modules.storage.model.Image;
 
 @Entity
 @Table(name = "users")
@@ -35,5 +39,13 @@ public class UserModel {
     @CollectionTable(name = "user_roles")
     @Enumerated(EnumType.STRING)
     private Set<UserRole> roles;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "user")
+    private List<Image> images = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "user")
+    private List<CourseUserRelation> courseUserRelations = new ArrayList<>();
 
 }
