@@ -14,6 +14,8 @@ import com.umbrella_api.modules.course.model.Subjects;
 import com.umbrella_api.modules.user.model.UserModel;
 
 public interface CourseService {
+
+    // Course crud
     public GenericResponse createCourse(CourseDto courseData, CustomUserDetails loggedUser);
 
     public Courses getCourseById(Long id);
@@ -22,8 +24,9 @@ public interface CourseService {
 
     public GenericResponse deleteCourse(long id);
 
+    // Module crud
     public GenericResponse createModule(ModuleRequestDto moduleData); // awaiting the data dict for define the type of
-    // "timeLimit"
+                                                                      // "timeLimit"
 
     public GenericResponse deleteModule(long id);
 
@@ -35,10 +38,12 @@ public interface CourseService {
 
     public UserModel getCourseCreatorById(Long Id);
 
+    // Course/user relation crud
     public GenericResponse createUserRelation(Long userId, Long courseId);
 
     public GenericResponse deleteUserRelation(Long userId, Long courseId);
 
+    // Subject crud
     public GenericResponse createSubject(String subjectName);
 
     public List<Subjects> getSubjects();
@@ -46,5 +51,9 @@ public interface CourseService {
     public GenericResponse deleteSubject(Long subjectId);
 
     public List<CourseGetResponseDto> getCoursesBySubject(Long subjectId);
+
+    // Activities crud
+
+    // Questions crud
 
 }

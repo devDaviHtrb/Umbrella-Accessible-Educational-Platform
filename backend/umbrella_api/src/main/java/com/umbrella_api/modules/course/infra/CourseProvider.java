@@ -304,7 +304,8 @@ public class CourseProvider {
         List<Modules> modules = modulesRepository.findByCourseId(courseId);
 
         for (Modules module : modules) {
-            this.deleteModule(module.getId());
+            storageService.deleteAllFilesByModuleId(module.getId());
+            modulesRepository.deleteById(module.getId());
         }
     }
 

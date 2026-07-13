@@ -3,6 +3,9 @@ package com.umbrella_api.modules.course.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -48,7 +51,8 @@ public class Courses {
     @Builder.Default
     private List<CourseUserRelation> relationships = new ArrayList<>();
 
-    @OneToMany(mappedBy = "course")
+    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("course")
     @Builder.Default
     private List<Modules> modules = new ArrayList<>();
 
