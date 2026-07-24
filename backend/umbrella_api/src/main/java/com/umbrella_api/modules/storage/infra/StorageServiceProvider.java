@@ -235,4 +235,27 @@ public class StorageServiceProvider {
             }
         }
     }
+
+    // It have to be implemented in the future
+    /*
+     * @Transactional
+     * public void deleteAllFilesByQuestionId(Long questionId) {
+     * 
+     * List<FileMetaData> metaList = fileRepository.findByQuestionId(questionId);
+     * 
+     * for (FileMetaData meta : metaList) {
+     * StorageFileEntity realFile = null;
+     * if (meta.getImage() != null)
+     * realFile = meta.getImage();
+     * else if (meta.getVideo() != null)
+     * realFile = meta.getVideo();
+     * else if (meta.getRawFile() != null)
+     * realFile = meta.getRawFile();
+     * 
+     * if (realFile != null) {
+     * this.delete(realFile);
+     * }
+     * }
+     * }
+     */
 }

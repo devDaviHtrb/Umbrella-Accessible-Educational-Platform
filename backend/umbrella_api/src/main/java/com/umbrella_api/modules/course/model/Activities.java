@@ -1,5 +1,6 @@
 package com.umbrella_api.modules.course.model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -30,22 +31,23 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Activities {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "title", nullable = false)
-    String title;
+    private String title;
 
     @Column(name = "test", nullable = false)
-    boolean test;
+    private boolean test;
 
-    @Column(name = "score", nullable = false)
-    Float score;
+    @Column(name = "max_score", nullable = false)
+    private Float maxScore;
 
     @Column(name = "status", nullable = false)
     @Builder.Default
-    String status = "awaiting the data dict";
+    private String status = "awaiting the data dict";
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "module_id", nullable = false)
@@ -54,5 +56,6 @@ public class Activities {
 
     @OneToMany(mappedBy = "activity", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("activity")
-    private List<Questions> questions;
+    @Builder.Default
+    private List<Questions> questions = new ArrayList<>();
 }

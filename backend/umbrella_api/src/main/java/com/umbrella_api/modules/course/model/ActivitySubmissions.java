@@ -1,9 +1,11 @@
 package com.umbrella_api.modules.course.model;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.umbrella_api.modules.user.model.UserModel;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -15,7 +17,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,42 +26,40 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "questions")
+@Table(name = "activity_submissions")
 @Getter
 @Setter
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Questions {
+public class ActivitySubmissions {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "value", nullable = false)
-    private Float value;
+    @Column(name = "score")
+    private Float score;
 
     @Column(name = "status", nullable = false)
     @Builder.Default
-    private String status = "awaiting the data dict";
+    private String status = "IN_PROGRESS";
 
-    @Column(name = "number", nullable = false)
-    private Integer number;
+    @Column(name = "submitted_at")
+    private LocalDateTime submittedAt;
 
-    @Column(name = "statement", nullable = false, columnDefinition = "TEXT")
-    private String statement;
-
-    @OneToOne(mappedBy = "question", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @JsonIgnoreProperties("question")
-    private Essays essay;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnoreProperties({ "submissions", "password" })
+    private UserModel user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "activity_id", nullable = false)
-    @JsonIgnoreProperties("questions")
+    @JsonIgnoreProperties("submissions")
     private Activities activity;
 
-    @OneToMany(mappedBy = "question", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnoreProperties("question")
+    @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("submission")
     @Builder.Default
-    private List<Alternatives> alternatives = new ArrayList<>();
+    private List<StudentAnswers> answers = new ArrayList<>();
 }
