@@ -4,9 +4,19 @@ import java.util.List;
 
 import com.umbrella_api.common.dto.GenericResponse;
 import com.umbrella_api.common.security.CustomUserDetails;
+import com.umbrella_api.modules.course.dto.ActivityCreateRequestDto;
+import com.umbrella_api.modules.course.dto.ActivityGetResponseDto;
+import com.umbrella_api.modules.course.dto.ActivityUpdateRequestDto;
+import com.umbrella_api.modules.course.dto.AlternativeCreateRequestDto;
+import com.umbrella_api.modules.course.dto.AlternativeUpdateRequestDto;
 import com.umbrella_api.modules.course.dto.CourseDto;
 import com.umbrella_api.modules.course.dto.CourseGetResponseDto;
+import com.umbrella_api.modules.course.dto.EssayCreateRequestDto;
+import com.umbrella_api.modules.course.dto.EssayUpdateRequestDto;
 import com.umbrella_api.modules.course.dto.ModuleRequestDto;
+import com.umbrella_api.modules.course.dto.QuestionCreateRequestDto;
+import com.umbrella_api.modules.course.dto.QuestionGetResponseDto;
+import com.umbrella_api.modules.course.dto.QuestionUpdateRequestDto;
 import com.umbrella_api.modules.course.dto.UpdateModuleDto;
 import com.umbrella_api.modules.course.model.Courses;
 import com.umbrella_api.modules.course.model.Modules;
@@ -52,8 +62,38 @@ public interface CourseService {
 
     public List<CourseGetResponseDto> getCoursesBySubject(Long subjectId);
 
-    // Activities crud
+    // Activities CRUD
+    public GenericResponse createActivity(ActivityCreateRequestDto request);
 
-    // Questions crud
+    public ActivityGetResponseDto getActivityById(Long id);
+
+    public List<ActivityGetResponseDto> getActivitiesByModuleId(Long moduleId);
+
+    public GenericResponse updateActivity(Long id, ActivityUpdateRequestDto request);
+
+    public GenericResponse deleteActivity(Long id);
+
+    // Questions CRUD
+    public GenericResponse createQuestion(QuestionCreateRequestDto request);
+
+    public QuestionGetResponseDto getQuestionById(Long id);
+
+    public GenericResponse updateQuestion(Long id, QuestionUpdateRequestDto request);
+
+    public GenericResponse deleteQuestion(Long id);
+
+    // Alternatives CRUD
+    public GenericResponse createAlternative(AlternativeCreateRequestDto request);
+
+    public GenericResponse updateAlternative(Long id, AlternativeUpdateRequestDto request);
+
+    public GenericResponse deleteAlternative(Long id);
+
+    // Essays CRUD
+    public GenericResponse createEssay(EssayCreateRequestDto request);
+
+    public GenericResponse updateEssay(Long id, EssayUpdateRequestDto request);
+
+    public GenericResponse deleteEssay(Long id);
 
 }

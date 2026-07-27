@@ -7,9 +7,19 @@ import org.springframework.stereotype.Service;
 import com.umbrella_api.common.dto.GenericResponse;
 import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.course.api.CourseService;
+import com.umbrella_api.modules.course.dto.ActivityCreateRequestDto;
+import com.umbrella_api.modules.course.dto.ActivityGetResponseDto;
+import com.umbrella_api.modules.course.dto.ActivityUpdateRequestDto;
+import com.umbrella_api.modules.course.dto.AlternativeCreateRequestDto;
+import com.umbrella_api.modules.course.dto.AlternativeUpdateRequestDto;
 import com.umbrella_api.modules.course.dto.CourseDto;
 import com.umbrella_api.modules.course.dto.CourseGetResponseDto;
+import com.umbrella_api.modules.course.dto.EssayCreateRequestDto;
+import com.umbrella_api.modules.course.dto.EssayUpdateRequestDto;
 import com.umbrella_api.modules.course.dto.ModuleRequestDto;
+import com.umbrella_api.modules.course.dto.QuestionCreateRequestDto;
+import com.umbrella_api.modules.course.dto.QuestionGetResponseDto;
+import com.umbrella_api.modules.course.dto.QuestionUpdateRequestDto;
 import com.umbrella_api.modules.course.dto.UpdateModuleDto;
 import com.umbrella_api.modules.course.infra.CourseProvider;
 import com.umbrella_api.modules.course.model.Courses;
@@ -109,6 +119,105 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public List<CourseGetResponseDto> getCoursesBySubject(Long subjectId) {
         return courseProvider.getCoursesBySubject(subjectId);
+    }
+
+    // ==========================================
+    // ACTIVITIES CRUD
+    // ==========================================
+
+    @Override
+    public GenericResponse createActivity(ActivityCreateRequestDto request) {
+        return courseProvider.createActivity(request);
+    }
+
+    @Override
+    public ActivityGetResponseDto getActivityById(Long id) {
+        ActivityGetResponseDto dto = courseProvider.getActivityById(id);
+        if (dto == null) {
+            throw new EntityNotFoundException("Activity not found");
+        }
+        return dto;
+    }
+
+    @Override
+    public List<ActivityGetResponseDto> getActivitiesByModuleId(Long moduleId) {
+        return courseProvider.getActivitiesByModuleId(moduleId);
+    }
+
+    @Override
+    public GenericResponse updateActivity(Long id, ActivityUpdateRequestDto request) {
+        return courseProvider.updateActivity(id, request);
+    }
+
+    @Override
+    public GenericResponse deleteActivity(Long id) {
+        return courseProvider.deleteActivity(id);
+    }
+
+    // ==========================================
+    // QUESTIONS CRUD
+    // ==========================================
+
+    @Override
+    public GenericResponse createQuestion(QuestionCreateRequestDto request) {
+        return courseProvider.createQuestion(request);
+    }
+
+    @Override
+    public QuestionGetResponseDto getQuestionById(Long id) {
+        QuestionGetResponseDto dto = courseProvider.getQuestionById(id);
+        if (dto == null) {
+            throw new EntityNotFoundException("Question not found");
+        }
+        return dto;
+    }
+
+    @Override
+    public GenericResponse updateQuestion(Long id, QuestionUpdateRequestDto request) {
+        return courseProvider.updateQuestion(id, request);
+    }
+
+    @Override
+    public GenericResponse deleteQuestion(Long id) {
+        return courseProvider.deleteQuestion(id);
+    }
+
+    // ==========================================
+    // ALTERNATIVES CRUD
+    // ==========================================
+
+    @Override
+    public GenericResponse createAlternative(AlternativeCreateRequestDto request) {
+        return courseProvider.createAlternative(request);
+    }
+
+    @Override
+    public GenericResponse updateAlternative(Long id, AlternativeUpdateRequestDto request) {
+        return courseProvider.updateAlternative(id, request);
+    }
+
+    @Override
+    public GenericResponse deleteAlternative(Long id) {
+        return courseProvider.deleteAlternative(id);
+    }
+
+    // ==========================================
+    // ESSAYS CRUD
+    // ==========================================
+
+    @Override
+    public GenericResponse createEssay(EssayCreateRequestDto request) {
+        return courseProvider.createEssay(request);
+    }
+
+    @Override
+    public GenericResponse updateEssay(Long id, EssayUpdateRequestDto request) {
+        return courseProvider.updateEssay(id, request);
+    }
+
+    @Override
+    public GenericResponse deleteEssay(Long id) {
+        return courseProvider.deleteEssay(id);
     }
 
 }

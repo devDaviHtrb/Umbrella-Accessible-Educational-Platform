@@ -1,5 +1,6 @@
 package com.umbrella_api.modules.course.infra;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -10,6 +11,9 @@ import com.umbrella_api.common.dto.GenericResponse;
 import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.course.dto.ActivityCreateRequestDto;
 import com.umbrella_api.modules.course.dto.ActivityGetResponseDto;
+import com.umbrella_api.modules.course.dto.ActivitySubmissionCreateRequestDto;
+import com.umbrella_api.modules.course.dto.ActivitySubmissionResponseDto;
+import com.umbrella_api.modules.course.dto.ActivitySubmissionUpdateRequestDto;
 import com.umbrella_api.modules.course.dto.ActivityUpdateRequestDto;
 import com.umbrella_api.modules.course.dto.AlternativeCreateRequestDto;
 import com.umbrella_api.modules.course.dto.AlternativeUpdateRequestDto;
@@ -21,22 +25,29 @@ import com.umbrella_api.modules.course.dto.ModuleRequestDto;
 import com.umbrella_api.modules.course.dto.QuestionCreateRequestDto;
 import com.umbrella_api.modules.course.dto.QuestionGetResponseDto;
 import com.umbrella_api.modules.course.dto.QuestionUpdateRequestDto;
+import com.umbrella_api.modules.course.dto.StudentAnswerCreateRequestDto;
+import com.umbrella_api.modules.course.dto.StudentAnswerResponseDto;
+import com.umbrella_api.modules.course.dto.StudentAnswerUpdateRequestDto;
 import com.umbrella_api.modules.course.dto.UpdateModuleDto;
 import com.umbrella_api.modules.course.model.Activities;
+import com.umbrella_api.modules.course.model.ActivitySubmissions;
 import com.umbrella_api.modules.course.model.Alternatives;
 import com.umbrella_api.modules.course.model.CourseUserRelation;
 import com.umbrella_api.modules.course.model.Courses;
 import com.umbrella_api.modules.course.model.Essays;
 import com.umbrella_api.modules.course.model.Modules;
 import com.umbrella_api.modules.course.model.Questions;
+import com.umbrella_api.modules.course.model.StudentAnswers;
 import com.umbrella_api.modules.course.model.Subjects;
 import com.umbrella_api.modules.course.repository.ActivitiesRepository;
+import com.umbrella_api.modules.course.repository.ActivitySubmissionsRepository;
 import com.umbrella_api.modules.course.repository.AlternativesRepository;
 import com.umbrella_api.modules.course.repository.CourseUserRelationRepository;
 import com.umbrella_api.modules.course.repository.CoursesRepository;
 import com.umbrella_api.modules.course.repository.EssaysRepository;
 import com.umbrella_api.modules.course.repository.ModulesRepository;
 import com.umbrella_api.modules.course.repository.QuestionsRepository;
+import com.umbrella_api.modules.course.repository.StudentAnswersRepository;
 import com.umbrella_api.modules.course.repository.SubjectsRepository;
 import com.umbrella_api.modules.storage.api.StorageService;
 import com.umbrella_api.modules.user.model.UserModel;
@@ -56,12 +67,15 @@ public class CourseProvider {
     private final UserRepository userRepository;
     private final AlternativesRepository alternativesRepository;
     private final EssaysRepository essaysRepository;
+    private final ActivitySubmissionsRepository activitySubmissionsRepository;
+    private final StudentAnswersRepository studentAnswersRepository;
 
     public CourseProvider(CoursesRepository coursesRepository, ModulesRepository modulesRepository,
             ActivitiesRepository activitiesRepository, QuestionsRepository questionsRepository,
             SubjectsRepository subjectsRepository, CourseUserRelationRepository courseUserRelationRepository,
-            StorageService storageService, UserRepository userRepository, EssaysRepository essaysRepository,
-            AlternativesRepository alternativesRepository) {
+            StorageService storageService, UserRepository userRepository, AlternativesRepository alternativesRepository,
+            EssaysRepository essaysRepository, ActivitySubmissionsRepository activitySubmissionsRepository,
+            StudentAnswersRepository studentAnswersRepository) {
         this.coursesRepository = coursesRepository;
         this.modulesRepository = modulesRepository;
         this.activitiesRepository = activitiesRepository;
@@ -72,6 +86,8 @@ public class CourseProvider {
         this.userRepository = userRepository;
         this.alternativesRepository = alternativesRepository;
         this.essaysRepository = essaysRepository;
+        this.activitySubmissionsRepository = activitySubmissionsRepository;
+        this.studentAnswersRepository = studentAnswersRepository;
     }
 
     @Transactional
@@ -492,7 +508,7 @@ public class CourseProvider {
             }
 
             Questions question = Questions.builder()
-                    .value(request.value())
+                    .points(request.points())
                     .status(request.status() != null ? request.status() : "awaiting the data dict")
                     .number(request.number())
                     .statement(request.statement())
@@ -524,8 +540,8 @@ public class CourseProvider {
 
             Questions question = questionOpt.get();
 
-            if (request.value() != null)
-                question.setValue(request.value());
+            if (request.points() != null)
+                question.setPoints(request.points());
             if (request.status() != null)
                 question.setStatus(request.status());
             if (request.number() != null)
@@ -699,6 +715,202 @@ public class CourseProvider {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new GenericResponse("Error", "Error on delete essay criteria", 400);
+        }
+    }
+    // ==========================================
+    // ACTIVITY SUBMISSIONS CRUD
+    // ==========================================
+
+    @Transactional
+    public GenericResponse createActivitySubmission(ActivitySubmissionCreateRequestDto request) {
+        try {
+            Optional<UserModel> userOpt = userRepository.findById(request.userId());
+            if (userOpt.isEmpty()) {
+                return new GenericResponse("Error", "User not found", 404);
+            }
+
+            Optional<Activities> activityOpt = activitiesRepository.findById(request.activityId());
+            if (activityOpt.isEmpty()) {
+                return new GenericResponse("Error", "Activity not found", 404);
+            }
+
+            ActivitySubmissions submission = ActivitySubmissions.builder()
+                    .user(userOpt.get())
+                    .activity(activityOpt.get())
+                    .score(0f)
+                    .status("IN_PROGRESS")
+                    .submittedAt(LocalDateTime.now())
+                    .build();
+
+            activitySubmissionsRepository.save(submission);
+            return new GenericResponse("ok", "Success on create activity submission", 200);
+        } catch (Exception e) {
+            e.printStackTrace();
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new GenericResponse("Error", "Error on create activity submission", 400);
+        }
+    }
+
+    public ActivitySubmissionResponseDto getActivitySubmissionById(Long id) {
+        return activitySubmissionsRepository.findById(id)
+                .map(ActivitySubmissionResponseDto::fromEntity)
+                .orElse(null);
+    }
+
+    public List<ActivitySubmissionResponseDto> getSubmissionsByActivityId(Long activityId) {
+        List<ActivitySubmissions> list = activitySubmissionsRepository.findByActivityId(activityId);
+        return ActivitySubmissionResponseDto.fromEntityList(list);
+    }
+
+    public List<ActivitySubmissionResponseDto> getSubmissionsByUserId(Long userId) {
+        List<ActivitySubmissions> list = activitySubmissionsRepository.findByUserId(userId);
+        return ActivitySubmissionResponseDto.fromEntityList(list);
+    }
+
+    @Transactional
+    public GenericResponse updateActivitySubmission(Long id, ActivitySubmissionUpdateRequestDto request) {
+        try {
+            Optional<ActivitySubmissions> submissionOpt = activitySubmissionsRepository.findById(id);
+            if (submissionOpt.isEmpty()) {
+                return new GenericResponse("Error", "Activity submission not found", 404);
+            }
+
+            ActivitySubmissions submission = submissionOpt.get();
+
+            if (request.score() != null)
+                submission.setScore(request.score());
+            if (request.status() != null)
+                submission.setStatus(request.status());
+
+            activitySubmissionsRepository.save(submission);
+            return new GenericResponse("ok", "Success on update activity submission", 200);
+        } catch (Exception e) {
+            e.printStackTrace();
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new GenericResponse("Error", "Error on update activity submission", 400);
+        }
+    }
+
+    @Transactional
+    public GenericResponse deleteActivitySubmission(Long id) {
+        try {
+            if (!activitySubmissionsRepository.existsById(id)) {
+                return new GenericResponse("Error", "Activity submission not found", 404);
+            }
+            studentAnswersRepository.deleteBySubmissionId(id);
+
+            activitySubmissionsRepository.deleteById(id);
+            return new GenericResponse("ok", "Success on delete activity submission", 200);
+        } catch (Exception e) {
+            e.printStackTrace();
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new GenericResponse("Error", "Error on delete activity submission", 400);
+        }
+    }
+
+    // ==========================================
+    // STUDENT ANSWERS CRUD
+    // ==========================================
+
+    @Transactional
+    public GenericResponse createStudentAnswer(StudentAnswerCreateRequestDto request) {
+        try {
+            Optional<ActivitySubmissions> submissionOpt = activitySubmissionsRepository
+                    .findById(request.submissionId());
+            if (submissionOpt.isEmpty()) {
+                return new GenericResponse("Error", "Submission not found", 404);
+            }
+
+            Optional<Questions> questionOpt = questionsRepository.findById(request.questionId());
+            if (questionOpt.isEmpty()) {
+                return new GenericResponse("Error", "Question not found", 404);
+            }
+
+            Alternatives chosenAlternative = null;
+            if (request.chosenAlternativeId() != null) {
+                Optional<Alternatives> altOpt = alternativesRepository.findById(request.chosenAlternativeId());
+                if (altOpt.isEmpty()) {
+                    return new GenericResponse("Error", "Chosen alternative not found", 404);
+                }
+                chosenAlternative = altOpt.get();
+            }
+
+            StudentAnswers answer = StudentAnswers.builder()
+                    .submission(submissionOpt.get())
+                    .question(questionOpt.get())
+                    .chosenAlternative(chosenAlternative)
+                    .essayAnswer(request.essayAnswer())
+                    .isCorrect(null)
+                    .build();
+
+            studentAnswersRepository.save(answer);
+            return new GenericResponse("ok", "Success on create student answer", 200);
+        } catch (Exception e) {
+            e.printStackTrace();
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new GenericResponse("Error", "Error on create student answer", 400);
+        }
+    }
+
+    public StudentAnswerResponseDto getStudentAnswerById(Long id) {
+        return studentAnswersRepository.findById(id)
+                .map(StudentAnswerResponseDto::fromEntity)
+                .orElse(null);
+    }
+
+    public List<StudentAnswerResponseDto> getAnswersBySubmissionId(Long submissionId) {
+        List<StudentAnswers> answers = studentAnswersRepository.findBySubmissionId(submissionId);
+        return answers.stream()
+                .map(StudentAnswerResponseDto::fromEntity)
+                .toList();
+    }
+
+    @Transactional
+    public GenericResponse updateStudentAnswer(Long id, StudentAnswerUpdateRequestDto request) {
+        try {
+            Optional<StudentAnswers> answerOpt = studentAnswersRepository.findById(id);
+            if (answerOpt.isEmpty()) {
+                return new GenericResponse("Error", "Student answer not found", 404);
+            }
+
+            StudentAnswers answer = answerOpt.get();
+
+            if (request.chosenAlternativeId() != null) {
+                Optional<Alternatives> altOpt = alternativesRepository.findById(request.chosenAlternativeId());
+                if (altOpt.isEmpty()) {
+                    return new GenericResponse("Error", "Chosen alternative not found", 404);
+                }
+                answer.setChosenAlternative(altOpt.get());
+            }
+
+            if (request.essayAnswer() != null)
+                answer.setEssayAnswer(request.essayAnswer());
+
+            if (request.isCorrect() != null)
+                answer.setIsCorrect(request.isCorrect());
+
+            studentAnswersRepository.save(answer);
+            return new GenericResponse("ok", "Success on update student answer", 200);
+        } catch (Exception e) {
+            e.printStackTrace();
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new GenericResponse("Error", "Error on update student answer", 400);
+        }
+    }
+
+    @Transactional
+    public GenericResponse deleteStudentAnswer(Long id) {
+        try {
+            if (!studentAnswersRepository.existsById(id)) {
+                return new GenericResponse("Error", "Student answer not found", 404);
+            }
+
+            studentAnswersRepository.deleteById(id);
+            return new GenericResponse("ok", "Success on delete student answer", 200);
+        } catch (Exception e) {
+            e.printStackTrace();
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new GenericResponse("Error", "Error on delete student answer", 400);
         }
     }
 

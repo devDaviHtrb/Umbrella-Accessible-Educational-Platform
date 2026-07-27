@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 
 public record QuestionGetResponseDto(
         Long id,
-        Float value,
+        Float points,
         String status,
         Integer number,
         String statement,
@@ -23,7 +23,7 @@ public record QuestionGetResponseDto(
 
         return new QuestionGetResponseDto(
                 question.getId(),
-                question.getValue(),
+                question.getPoints(),
                 question.getStatus(),
                 question.getNumber(),
                 question.getStatement(),

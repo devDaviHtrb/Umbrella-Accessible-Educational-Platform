@@ -25,7 +25,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "questions")
+@Table(name = "questionss")
 @Getter
 @Setter
 @SuperBuilder
@@ -37,8 +37,8 @@ public class Questions {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "value", nullable = false)
-    private Float value;
+    @Column(name = "points", nullable = false)
+    private Float points;
 
     @Column(name = "status", nullable = false)
     @Builder.Default
