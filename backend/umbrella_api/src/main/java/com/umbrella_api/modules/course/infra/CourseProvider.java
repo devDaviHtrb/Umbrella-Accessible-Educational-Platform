@@ -11,7 +11,6 @@ import com.umbrella_api.common.dto.GenericResponse;
 import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.course.dto.ActivityCreateRequestDto;
 import com.umbrella_api.modules.course.dto.ActivityGetResponseDto;
-import com.umbrella_api.modules.course.dto.ActivitySubmissionCreateRequestDto;
 import com.umbrella_api.modules.course.dto.ActivitySubmissionResponseDto;
 import com.umbrella_api.modules.course.dto.ActivitySubmissionUpdateRequestDto;
 import com.umbrella_api.modules.course.dto.ActivityUpdateRequestDto;
@@ -25,9 +24,11 @@ import com.umbrella_api.modules.course.dto.ModuleRequestDto;
 import com.umbrella_api.modules.course.dto.QuestionCreateRequestDto;
 import com.umbrella_api.modules.course.dto.QuestionGetResponseDto;
 import com.umbrella_api.modules.course.dto.QuestionUpdateRequestDto;
-import com.umbrella_api.modules.course.dto.StudentAnswerCreateRequestDto;
+import com.umbrella_api.modules.course.dto.StudentAnswerCorrectionDto;
+
 import com.umbrella_api.modules.course.dto.StudentAnswerResponseDto;
 import com.umbrella_api.modules.course.dto.StudentAnswerUpdateRequestDto;
+import com.umbrella_api.modules.course.dto.SubmitActivityRequestDto;
 import com.umbrella_api.modules.course.dto.UpdateModuleDto;
 import com.umbrella_api.modules.course.model.Activities;
 import com.umbrella_api.modules.course.model.ActivitySubmissions;
@@ -53,6 +54,7 @@ import com.umbrella_api.modules.storage.api.StorageService;
 import com.umbrella_api.modules.user.model.UserModel;
 import com.umbrella_api.modules.user.repository.UserRepository;
 
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 
 @Component
@@ -722,20 +724,18 @@ public class CourseProvider {
     // ==========================================
 
     @Transactional
-    public GenericResponse createActivitySubmission(ActivitySubmissionCreateRequestDto request) {
+    public ActivitySubmissions createActivitySubmission(Long activityId,
+            CustomUserDetails userDetails) {
         try {
-            Optional<UserModel> userOpt = userRepository.findById(request.userId());
-            if (userOpt.isEmpty()) {
-                return new GenericResponse("Error", "User not found", 404);
-            }
+            UserModel user = userDetails.getUserModel();
 
-            Optional<Activities> activityOpt = activitiesRepository.findById(request.activityId());
+            Optional<Activities> activityOpt = activitiesRepository.findById(activityId);
             if (activityOpt.isEmpty()) {
-                return new GenericResponse("Error", "Activity not found", 404);
+                throw new EntityNotFoundException("Activity not found");
             }
 
             ActivitySubmissions submission = ActivitySubmissions.builder()
-                    .user(userOpt.get())
+                    .user(user)
                     .activity(activityOpt.get())
                     .score(0f)
                     .status("IN_PROGRESS")
@@ -743,11 +743,12 @@ public class CourseProvider {
                     .build();
 
             activitySubmissionsRepository.save(submission);
-            return new GenericResponse("ok", "Success on create activity submission", 200);
+            return submission;
         } catch (Exception e) {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error on create activity submission", 400);
+            // create a specific execption
+            throw new RuntimeException("Error on submission");
         }
     }
 
@@ -812,46 +813,6 @@ public class CourseProvider {
     // STUDENT ANSWERS CRUD
     // ==========================================
 
-    @Transactional
-    public GenericResponse createStudentAnswer(StudentAnswerCreateRequestDto request) {
-        try {
-            Optional<ActivitySubmissions> submissionOpt = activitySubmissionsRepository
-                    .findById(request.submissionId());
-            if (submissionOpt.isEmpty()) {
-                return new GenericResponse("Error", "Submission not found", 404);
-            }
-
-            Optional<Questions> questionOpt = questionsRepository.findById(request.questionId());
-            if (questionOpt.isEmpty()) {
-                return new GenericResponse("Error", "Question not found", 404);
-            }
-
-            Alternatives chosenAlternative = null;
-            if (request.chosenAlternativeId() != null) {
-                Optional<Alternatives> altOpt = alternativesRepository.findById(request.chosenAlternativeId());
-                if (altOpt.isEmpty()) {
-                    return new GenericResponse("Error", "Chosen alternative not found", 404);
-                }
-                chosenAlternative = altOpt.get();
-            }
-
-            StudentAnswers answer = StudentAnswers.builder()
-                    .submission(submissionOpt.get())
-                    .question(questionOpt.get())
-                    .chosenAlternative(chosenAlternative)
-                    .essayAnswer(request.essayAnswer())
-                    .isCorrect(null)
-                    .build();
-
-            studentAnswersRepository.save(answer);
-            return new GenericResponse("ok", "Success on create student answer", 200);
-        } catch (Exception e) {
-            e.printStackTrace();
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error on create student answer", 400);
-        }
-    }
-
     public StudentAnswerResponseDto getStudentAnswerById(Long id) {
         return studentAnswersRepository.findById(id)
                 .map(StudentAnswerResponseDto::fromEntity)
@@ -911,6 +872,62 @@ public class CourseProvider {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new GenericResponse("Error", "Error on delete student answer", 400);
+        }
+    }
+
+    @Transactional
+    public GenericResponse correctSubmission(SubmitActivityRequestDto request, CustomUserDetails userDetails) {
+        try {
+            ActivitySubmissions submission = this.createActivitySubmission(request.activityId(), userDetails);
+
+            float totalScore = 0f;
+
+            for (StudentAnswerCorrectionDto answerDto : request.answers()) {
+                Questions question = questionsRepository.findById(answerDto.questionId())
+                        .orElseThrow(() -> new IllegalArgumentException(
+                                "Question not found with ID: " + answerDto.questionId()));
+
+                Alternatives chosenAlternative = null;
+                Boolean isCorrect = null;
+
+                if (answerDto.chosenAlternativeId() != null) {
+                    chosenAlternative = alternativesRepository.findById(answerDto.chosenAlternativeId())
+                            .orElseThrow(() -> new IllegalArgumentException(
+                                    "Alternative not found with ID: " + answerDto.chosenAlternativeId()));
+
+                    if (chosenAlternative.isCorrect()) {
+                        isCorrect = true;
+                        if (question.getPoints() != null) {
+                            totalScore += question.getPoints();
+                        }
+                    } else {
+                        isCorrect = false;
+                    }
+                }
+
+                StudentAnswers studentAnswer = StudentAnswers.builder()
+                        .submission(submission)
+                        .question(question)
+                        .chosenAlternative(chosenAlternative)
+                        .essayAnswer(answerDto.essayAnswer())
+                        .isCorrect(isCorrect)
+                        .build();
+
+                studentAnswersRepository.save(studentAnswer);
+            }
+
+            submission.setScore(totalScore);
+            activitySubmissionsRepository.save(submission);
+
+            return new GenericResponse("ok", "Activity submitted successfully. Total score: " + totalScore, 200);
+
+        } catch (IllegalArgumentException e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new GenericResponse("Error", e.getMessage(), 404);
+        } catch (Exception e) {
+            e.printStackTrace();
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new GenericResponse("Error", "Error processing activity submission", 400);
         }
     }
 

@@ -6,6 +6,8 @@ import com.umbrella_api.common.dto.GenericResponse;
 import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.course.dto.ActivityCreateRequestDto;
 import com.umbrella_api.modules.course.dto.ActivityGetResponseDto;
+import com.umbrella_api.modules.course.dto.ActivitySubmissionResponseDto;
+import com.umbrella_api.modules.course.dto.ActivitySubmissionUpdateRequestDto;
 import com.umbrella_api.modules.course.dto.ActivityUpdateRequestDto;
 import com.umbrella_api.modules.course.dto.AlternativeCreateRequestDto;
 import com.umbrella_api.modules.course.dto.AlternativeUpdateRequestDto;
@@ -17,6 +19,9 @@ import com.umbrella_api.modules.course.dto.ModuleRequestDto;
 import com.umbrella_api.modules.course.dto.QuestionCreateRequestDto;
 import com.umbrella_api.modules.course.dto.QuestionGetResponseDto;
 import com.umbrella_api.modules.course.dto.QuestionUpdateRequestDto;
+import com.umbrella_api.modules.course.dto.StudentAnswerResponseDto;
+import com.umbrella_api.modules.course.dto.StudentAnswerUpdateRequestDto;
+import com.umbrella_api.modules.course.dto.SubmitActivityRequestDto;
 import com.umbrella_api.modules.course.dto.UpdateModuleDto;
 import com.umbrella_api.modules.course.model.Courses;
 import com.umbrella_api.modules.course.model.Modules;
@@ -95,5 +100,29 @@ public interface CourseService {
     public GenericResponse updateEssay(Long id, EssayUpdateRequestDto request);
 
     public GenericResponse deleteEssay(Long id);
+
+    // ACTIVITY SUBMISSIONS CRUD
+
+    public ActivitySubmissionResponseDto getActivitySubmissionById(Long id);
+
+    public List<ActivitySubmissionResponseDto> getSubmissionsByActivityId(Long activityId);
+
+    public List<ActivitySubmissionResponseDto> getSubmissionsByUserId(Long userId);
+
+    public GenericResponse updateActivitySubmission(Long id, ActivitySubmissionUpdateRequestDto request);
+
+    public GenericResponse deleteActivitySubmission(Long id);
+
+    // STUDENT ANSWERS CRUD
+
+    public StudentAnswerResponseDto getStudentAnswerById(Long id);
+
+    public List<StudentAnswerResponseDto> getAnswersBySubmissionId(Long submissionId);
+
+    public GenericResponse updateStudentAnswer(Long id, StudentAnswerUpdateRequestDto request);
+
+    public GenericResponse deleteStudentAnswer(Long id);
+
+    public GenericResponse correctSubmission(SubmitActivityRequestDto request, CustomUserDetails user);
 
 }

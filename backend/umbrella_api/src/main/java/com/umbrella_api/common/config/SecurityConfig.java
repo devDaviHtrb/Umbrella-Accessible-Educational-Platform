@@ -53,10 +53,13 @@ public class SecurityConfig {
                                                                 "/api/auth/**",
                                                                 "/api/public/**",
                                                                 "/error",
-                                                                "/h2-console/**")
+                                                                "/h2-console/**",
+                                                                "/v3/api-docs/**",
+                                                                "/swagger-ui/**")
                                                 .permitAll()
                                                 .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
                                                 .requestMatchers("/h2-console/**").permitAll()
+                                                .requestMatchers("/v3/api-docs/**").permitAll()
 
                                                 .requestMatchers("/api/admin/**")
                                                 .hasRole("ADMIN")

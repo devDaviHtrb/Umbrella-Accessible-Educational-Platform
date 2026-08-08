@@ -9,6 +9,9 @@ import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.course.api.CourseService;
 import com.umbrella_api.modules.course.dto.ActivityCreateRequestDto;
 import com.umbrella_api.modules.course.dto.ActivityGetResponseDto;
+import com.umbrella_api.modules.course.dto.ActivitySubmissionCreateRequestDto;
+import com.umbrella_api.modules.course.dto.ActivitySubmissionResponseDto;
+import com.umbrella_api.modules.course.dto.ActivitySubmissionUpdateRequestDto;
 import com.umbrella_api.modules.course.dto.ActivityUpdateRequestDto;
 import com.umbrella_api.modules.course.dto.AlternativeCreateRequestDto;
 import com.umbrella_api.modules.course.dto.AlternativeUpdateRequestDto;
@@ -20,6 +23,10 @@ import com.umbrella_api.modules.course.dto.ModuleRequestDto;
 import com.umbrella_api.modules.course.dto.QuestionCreateRequestDto;
 import com.umbrella_api.modules.course.dto.QuestionGetResponseDto;
 import com.umbrella_api.modules.course.dto.QuestionUpdateRequestDto;
+import com.umbrella_api.modules.course.dto.StudentAnswerCreateRequestDto;
+import com.umbrella_api.modules.course.dto.StudentAnswerResponseDto;
+import com.umbrella_api.modules.course.dto.StudentAnswerUpdateRequestDto;
+import com.umbrella_api.modules.course.dto.SubmitActivityRequestDto;
 import com.umbrella_api.modules.course.dto.UpdateModuleDto;
 import com.umbrella_api.modules.course.infra.CourseProvider;
 import com.umbrella_api.modules.course.model.Courses;
@@ -218,6 +225,72 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public GenericResponse deleteEssay(Long id) {
         return courseProvider.deleteEssay(id);
+    }
+
+    // ==========================================
+    // ACTIVITY SUBMISSIONS CRUD
+    // ==========================================
+
+    @Override
+    public ActivitySubmissionResponseDto getActivitySubmissionById(Long id) {
+        ActivitySubmissionResponseDto dto = courseProvider.getActivitySubmissionById(id);
+        if (dto == null) {
+            throw new EntityNotFoundException("Activity submission not found");
+        }
+        return dto;
+    }
+
+    @Override
+    public List<ActivitySubmissionResponseDto> getSubmissionsByActivityId(Long activityId) {
+        return courseProvider.getSubmissionsByActivityId(activityId);
+    }
+
+    @Override
+    public List<ActivitySubmissionResponseDto> getSubmissionsByUserId(Long userId) {
+        return courseProvider.getSubmissionsByUserId(userId);
+    }
+
+    @Override
+    public GenericResponse updateActivitySubmission(Long id, ActivitySubmissionUpdateRequestDto request) {
+        return courseProvider.updateActivitySubmission(id, request);
+    }
+
+    @Override
+    public GenericResponse deleteActivitySubmission(Long id) {
+        return courseProvider.deleteActivitySubmission(id);
+    }
+
+    // ==========================================
+    // STUDENT ANSWERS CRUD
+    // ==========================================
+
+    @Override
+    public StudentAnswerResponseDto getStudentAnswerById(Long id) {
+        StudentAnswerResponseDto dto = courseProvider.getStudentAnswerById(id);
+        if (dto == null) {
+            throw new EntityNotFoundException("Student answer not found");
+        }
+        return dto;
+    }
+
+    @Override
+    public List<StudentAnswerResponseDto> getAnswersBySubmissionId(Long submissionId) {
+        return courseProvider.getAnswersBySubmissionId(submissionId);
+    }
+
+    @Override
+    public GenericResponse updateStudentAnswer(Long id, StudentAnswerUpdateRequestDto request) {
+        return courseProvider.updateStudentAnswer(id, request);
+    }
+
+    @Override
+    public GenericResponse deleteStudentAnswer(Long id) {
+        return courseProvider.deleteStudentAnswer(id);
+    }
+
+    @Override
+    public GenericResponse correctSubmission(SubmitActivityRequestDto request, CustomUserDetails user) {
+        return courseProvider.correctSubmission(request, user);
     }
 
 }
