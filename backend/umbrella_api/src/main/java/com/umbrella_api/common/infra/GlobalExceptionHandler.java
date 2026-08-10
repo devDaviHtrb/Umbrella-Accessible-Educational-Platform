@@ -8,6 +8,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
+import com.umbrella_api.common.Exceptions.FileStorageException;
 import com.umbrella_api.common.dto.ExceptionResponse;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -54,6 +55,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ExceptionResponse> handleIllegalState(IllegalStateException ex) {
         ExceptionResponse error = new ExceptionResponse(
                 "Internal Server Error",
+                ex.getMessage(),
+                HttpStatus.INTERNAL_SERVER_ERROR.value());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    }
+
+    @ExceptionHandler(FileStorageException.class)
+    public ResponseEntity<ExceptionResponse> handleFileStorageError(FileStorageException ex) {
+        ExceptionResponse error = new ExceptionResponse(
+                "File storage system error",
                 ex.getMessage(),
                 HttpStatus.INTERNAL_SERVER_ERROR.value());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);

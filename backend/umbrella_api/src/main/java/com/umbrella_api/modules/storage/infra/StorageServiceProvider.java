@@ -5,6 +5,9 @@ import com.umbrella_api.modules.storage.util.ExtensionExtractor;
 import com.umbrella_api.modules.user.model.UserModel;
 import com.umbrella_api.modules.user.repository.UserRepository;
 
+import jakarta.persistence.EntityNotFoundException;
+
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.umbrella_api.common.Exceptions.FileStorageException;
 import com.umbrella_api.common.dto.GenericResponse;
 import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.FileDb.api.FileDbService;
@@ -52,7 +56,7 @@ public class StorageServiceProvider {
     }
 
     @Transactional
-    public GenericResponse upload(MultipartFile file, String resourceType, String alternativeText, String fileName,
+    public FileUploadResponse upload(MultipartFile file, String resourceType, String alternativeText, String fileName,
             String fileDescription, Long moduleId, CustomUserDetails loggedUser) {
         /**
          * Uploads a file to the cloud storage and links it to local entities.
@@ -67,7 +71,7 @@ public class StorageServiceProvider {
          */
 
         if (moduleId != null && !modulesRepository.existsById(moduleId)) {
-            return new GenericResponse("Error", "Module not found", 404);
+            throw new EntityNotFoundException("The specified module doesn't exist or not found");
         }
 
         FileUploadResponse storageEntityData = null;
@@ -124,20 +128,25 @@ public class StorageServiceProvider {
                 }
             }
 
-            return new GenericResponse("Ok", "Success on upload", 200);
+            return storageEntityData;
 
         } catch (Exception e) {
-            e.printStackTrace();
+
             if (storageEntityData != null) {
                 try {
                     fileDbService.delete(storageEntityData.publicId(), resourceType);
                 } catch (Exception cloudEx) {
-                    System.err.println("Failed to delete orphaned file from cloud provider: " + cloudEx.getMessage());
+
+                    throw new FileStorageException(
+                            "Database failed and cloud cleanup also failed: " + cloudEx.getMessage(),
+                            e);
                 }
             }
+
             org.springframework.transaction.interceptor.TransactionAspectSupport
                     .currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error on upload", 400);
+
+            throw new FileStorageException("Failed to save file records in database. Cloud file rolled back.", e);
         }
     }
 
@@ -180,7 +189,7 @@ public class StorageServiceProvider {
             e.printStackTrace();
             org.springframework.transaction.interceptor.TransactionAspectSupport
                     .currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error on delete", 400);
+            throw new FileStorageException("Failed to delete this file");
         }
     }
 

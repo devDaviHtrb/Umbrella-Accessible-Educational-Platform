@@ -2,6 +2,7 @@ package com.umbrella_api.modules.storage.controller;
 
 import com.umbrella_api.common.dto.GenericResponse;
 import com.umbrella_api.common.security.CustomUserDetails;
+import com.umbrella_api.modules.FileDb.dto.FileUploadResponse;
 import com.umbrella_api.modules.storage.api.StorageService;
 import com.umbrella_api.modules.storage.common.StorageFileEntity;
 import com.umbrella_api.modules.storage.dto.ImageResponseDto;
@@ -25,7 +26,7 @@ public class StorageController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<GenericResponse> uploadFile(
+    public ResponseEntity<FileUploadResponse> uploadFile(
             @RequestParam("file") MultipartFile file,
             @RequestParam("resourceType") String resourceType,
             @RequestParam(value = "alternativeText", required = false) String alternativeText,
@@ -34,7 +35,7 @@ public class StorageController {
             @RequestParam(value = "moduleId", required = false) Long moduleId,
             @AuthenticationPrincipal CustomUserDetails loggedUser) {
 
-        GenericResponse response = storageService.upload(
+        FileUploadResponse response = storageService.upload(
                 file,
                 resourceType,
                 alternativeText,
@@ -42,10 +43,6 @@ public class StorageController {
                 fileDescription,
                 moduleId,
                 loggedUser);
-
-        if (response.status().equalsIgnoreCase("Error")) {
-            return ResponseEntity.status(400).body(response);
-        }
 
         return ResponseEntity.ok(response);
     }
