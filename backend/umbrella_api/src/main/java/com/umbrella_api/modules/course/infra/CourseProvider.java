@@ -7,6 +7,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
+import com.umbrella_api.common.Exceptions.FileStorageException;
 import com.umbrella_api.common.dto.GenericResponse;
 import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.course.dto.ActivityCreateRequestDto;
@@ -93,14 +94,14 @@ public class CourseProvider {
     }
 
     @Transactional
-    public GenericResponse createCourse(CourseDto courseData, CustomUserDetails loggedUser) {
+    public Courses createCourse(CourseDto courseData, CustomUserDetails loggedUser) {
         try {
             Subjects subject = null;
             if (courseData.subjectId() != null) {
                 Optional<Subjects> subjectOptional = subjectsRepository.findById(courseData.subjectId());
 
                 if (subjectOptional.isEmpty()) {
-                    return new GenericResponse("Error", "Subject not found", 404);
+                    throw new EntityNotFoundException("The selected subject doesn't exists or not found");
                 }
 
                 subject = subjectOptional.get();
@@ -115,12 +116,12 @@ public class CourseProvider {
             CourseUserRelation relation = CourseUserRelation.builder().course(course).user(user).creator(true).build();
             courseUserRelationRepository.save(relation);
 
-            return new GenericResponse("ok", "Succes on create " + courseData.name(), 200);
+            return course;
         } catch (Exception e) {
             e.printStackTrace();
             org.springframework.transaction.interceptor.TransactionAspectSupport
                     .currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error create " + courseData.name(), 400);
+            throw new FileStorageException("Failed to create your course", e);
         }
     }
 
@@ -202,13 +203,13 @@ public class CourseProvider {
     }
 
     @Transactional
-    public GenericResponse createModule(ModuleRequestDto moduleData) {
+    public Modules createModule(ModuleRequestDto moduleData) {
         try {
 
             // add a user validation after
             Optional<Courses> courseOptional = coursesRepository.findById(moduleData.courseId());
             if (courseOptional.isEmpty()) {
-                return new GenericResponse("Error", "Course not found.", 404);
+                throw new EntityNotFoundException("This course doesn't exist or not found");
             }
             Courses course = courseOptional.get();
 
@@ -221,7 +222,7 @@ public class CourseProvider {
             course.setModule_amount(course.getModule_amount() + 1);
             coursesRepository.save(course);
 
-            return new GenericResponse("ok", "Succes on create " + moduleData.name(), 200);
+            return module;
 
         } catch (Exception e) {
 
@@ -229,7 +230,7 @@ public class CourseProvider {
             org.springframework.transaction.interceptor.TransactionAspectSupport
                     .currentTransactionStatus().setRollbackOnly();
 
-            return new GenericResponse("Error", "Error create " + moduleData.name(), 400);
+            throw new FileStorageException("Failed to save a new module in this course", e);
 
         }
     }
@@ -270,12 +271,12 @@ public class CourseProvider {
     }
 
     @Transactional
-    public GenericResponse updateModule(Long id, UpdateModuleDto moduleData) {
+    public Modules updateModule(Long id, UpdateModuleDto moduleData) {
         try {
             Optional<Modules> moduleOptional = modulesRepository.findById(id);
 
             if (moduleOptional.isEmpty()) {
-                return new GenericResponse("Not Found", "Module not found", 404);
+                throw new EntityNotFoundException("Module doesn't exist or not found");
             }
 
             Modules module = moduleOptional.get();
@@ -287,22 +288,22 @@ public class CourseProvider {
 
             modulesRepository.save(module);
 
-            return new GenericResponse("ok", "Succes on update this module", 200);
+            return module;
         } catch (Exception e) {
             e.printStackTrace();
             org.springframework.transaction.interceptor.TransactionAspectSupport
                     .currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error on update this module ", 400);
+            throw new FileStorageException("Failed to update this module", e);
         }
     }
 
     @Transactional
-    public GenericResponse updateCourse(Long id, CourseDto courseData) {
+    public Courses updateCourse(Long id, CourseDto courseData) {
         try {
             Optional<Courses> courseOptional = coursesRepository.findById(id);
 
             if (courseOptional.isEmpty()) {
-                return new GenericResponse("Not Found", "Course not found", 404);
+                throw new EntityNotFoundException("Course not found");
             }
 
             Courses course = courseOptional.get();
@@ -310,7 +311,7 @@ public class CourseProvider {
             if (courseData.subjectId() != null) {
                 Optional<Subjects> subjecOptional = subjectsRepository.findById(courseData.subjectId());
                 if (subjecOptional.isEmpty()) {
-                    return new GenericResponse("Not Found", "Subject not found", 404);
+                    throw new EntityNotFoundException("Subject not found");
                 }
                 course.setSubject(subjecOptional.get());
             }
@@ -321,12 +322,12 @@ public class CourseProvider {
 
             coursesRepository.save(course);
 
-            return new GenericResponse("ok", "Succes on update this course", 200);
+            return course;
         } catch (Exception e) {
             e.printStackTrace();
             org.springframework.transaction.interceptor.TransactionAspectSupport
                     .currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error on update this course ", 400);
+            throw new FileStorageException("Failed to update your course", e);
         }
     }
 
@@ -350,16 +351,16 @@ public class CourseProvider {
     }
 
     @Transactional
-    public GenericResponse createSubject(String subjectName) {
+    public Subjects createSubject(String subjectName) {
         try {
             Subjects subject = Subjects.builder().subject(subjectName).build();
             subjectsRepository.save(subject);
-            return new GenericResponse("Ok", "Succes on create a new subject ", 200);
+            return subject;
         } catch (Exception e) {
             e.printStackTrace();
             org.springframework.transaction.interceptor.TransactionAspectSupport
                     .currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error on update this course ", 400);
+            throw new FileStorageException("Failed to create a new subject", e);
         }
     }
 
@@ -398,11 +399,11 @@ public class CourseProvider {
     // ==========================================
 
     @Transactional
-    public GenericResponse createActivity(ActivityCreateRequestDto request) {
+    public Activities createActivity(ActivityCreateRequestDto request) {
         try {
             Optional<Modules> moduleOpt = modulesRepository.findById(request.moduleId());
             if (moduleOpt.isEmpty()) {
-                return new GenericResponse("Error", "Module not found", 404);
+                throw new EntityNotFoundException("Module not found");
             }
 
             Activities activity = Activities.builder()
@@ -414,11 +415,11 @@ public class CourseProvider {
                     .build();
 
             activitiesRepository.save(activity);
-            return new GenericResponse("ok", "Success on create activity " + activity.getTitle(), 200);
+            return activity;
         } catch (Exception e) {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error on create activity", 400);
+            throw new FileStorageException("Failed to create a new activity", e);
         }
     }
 
@@ -434,11 +435,11 @@ public class CourseProvider {
     }
 
     @Transactional
-    public GenericResponse updateActivity(Long id, ActivityUpdateRequestDto request) {
+    public Activities updateActivity(Long id, ActivityUpdateRequestDto request) {
         try {
             Optional<Activities> activityOpt = activitiesRepository.findById(id);
             if (activityOpt.isEmpty()) {
-                return new GenericResponse("Error", "Activity not found", 404);
+                throw new EntityNotFoundException("Activity not found");
             }
 
             Activities activity = activityOpt.get();
@@ -455,17 +456,17 @@ public class CourseProvider {
             if (request.moduleId() != null) {
                 Optional<Modules> moduleOpt = modulesRepository.findById(request.moduleId());
                 if (moduleOpt.isEmpty()) {
-                    return new GenericResponse("Error", "New Module not found", 404);
+                    throw new EntityNotFoundException("Module not found");
                 }
                 activity.setModule(moduleOpt.get());
             }
 
             activitiesRepository.save(activity);
-            return new GenericResponse("ok", "Success on update activity", 200);
+            return activity;
         } catch (Exception e) {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error on update activity", 400);
+            throw new FileStorageException("Failed to update this activity", e);
         }
     }
 
@@ -502,11 +503,11 @@ public class CourseProvider {
     // ==========================================
 
     @Transactional
-    public GenericResponse createQuestion(QuestionCreateRequestDto request) {
+    public Questions createQuestion(QuestionCreateRequestDto request) {
         try {
             Optional<Activities> activityOpt = activitiesRepository.findById(request.activityId());
             if (activityOpt.isEmpty()) {
-                return new GenericResponse("Error", "Activity not found", 404);
+                throw new EntityNotFoundException("Activity not found");
             }
 
             Questions question = Questions.builder()
@@ -518,11 +519,11 @@ public class CourseProvider {
                     .build();
 
             questionsRepository.save(question);
-            return new GenericResponse("ok", "Success on create question", 200);
+            return question;
         } catch (Exception e) {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error on create question", 400);
+            throw new FileStorageException("Failed to create a question", e);
         }
     }
 
@@ -533,11 +534,11 @@ public class CourseProvider {
     }
 
     @Transactional
-    public GenericResponse updateQuestion(Long id, QuestionUpdateRequestDto request) {
+    public Questions updateQuestion(Long id, QuestionUpdateRequestDto request) {
         try {
             Optional<Questions> questionOpt = questionsRepository.findById(id);
             if (questionOpt.isEmpty()) {
-                return new GenericResponse("Error", "Question not found", 404);
+                throw new EntityNotFoundException("Question not found");
             }
 
             Questions question = questionOpt.get();
@@ -552,11 +553,11 @@ public class CourseProvider {
                 question.setStatement(request.statement());
 
             questionsRepository.save(question);
-            return new GenericResponse("ok", "Success on update question", 200);
+            return question;
         } catch (Exception e) {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error on update question", 400);
+            throw new FileStorageException("Failed to update this question", e);
         }
     }
 
@@ -584,11 +585,11 @@ public class CourseProvider {
     // ==========================================
 
     @Transactional
-    public GenericResponse createAlternative(AlternativeCreateRequestDto request) {
+    public Alternatives createAlternative(AlternativeCreateRequestDto request) {
         try {
             Optional<Questions> questionOpt = questionsRepository.findById(request.questionId());
             if (questionOpt.isEmpty()) {
-                return new GenericResponse("Error", "Question not found", 404);
+                throw new EntityNotFoundException("Question not found");
             }
 
             Alternatives alternative = Alternatives.builder()
@@ -599,20 +600,20 @@ public class CourseProvider {
                     .build();
 
             alternativesRepository.save(alternative);
-            return new GenericResponse("ok", "Success on create alternative", 200);
+            return alternative;
         } catch (Exception e) {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error on create alternative", 400);
+            throw new FileStorageException("Failed to add a alternative", e);
         }
     }
 
     @Transactional
-    public GenericResponse updateAlternative(Long id, AlternativeUpdateRequestDto request) {
+    public Alternatives updateAlternative(Long id, AlternativeUpdateRequestDto request) {
         try {
             Optional<Alternatives> altOpt = alternativesRepository.findById(id);
             if (altOpt.isEmpty()) {
-                return new GenericResponse("Error", "Alternative not found", 404);
+                throw new EntityNotFoundException("Alternative not found");
             }
 
             Alternatives alternative = altOpt.get();
@@ -625,11 +626,11 @@ public class CourseProvider {
                 alternative.setText(request.text());
 
             alternativesRepository.save(alternative);
-            return new GenericResponse("ok", "Success on update alternative", 200);
+            return alternative;
         } catch (Exception e) {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error on update alternative", 400);
+            throw new FileStorageException("Failed to update this alternative", e);
         }
     }
 
@@ -655,11 +656,11 @@ public class CourseProvider {
     // ==========================================
 
     @Transactional
-    public GenericResponse createEssay(EssayCreateRequestDto request) {
+    public Essays createEssay(EssayCreateRequestDto request) {
         try {
             Optional<Questions> questionOpt = questionsRepository.findById(request.questionId());
             if (questionOpt.isEmpty()) {
-                return new GenericResponse("Error", "Question not found", 404);
+                throw new EntityNotFoundException("Question not found");
             }
 
             Essays essay = Essays.builder()
@@ -670,20 +671,20 @@ public class CourseProvider {
                     .build();
 
             essaysRepository.save(essay);
-            return new GenericResponse("ok", "Success on create essay criteria", 200);
+            return essay;
         } catch (Exception e) {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error on create essay criteria", 400);
+            throw new FileStorageException("Failed to create a essay", e);
         }
     }
 
     @Transactional
-    public GenericResponse updateEssay(Long id, EssayUpdateRequestDto request) {
+    public Essays updateEssay(Long id, EssayUpdateRequestDto request) {
         try {
             Optional<Essays> essayOpt = essaysRepository.findById(id);
             if (essayOpt.isEmpty()) {
-                return new GenericResponse("Error", "Essay criteria not found", 404);
+                throw new EntityNotFoundException("Essay not found");
             }
 
             Essays essay = essayOpt.get();
@@ -696,11 +697,11 @@ public class CourseProvider {
                 essay.setMaxLetters(request.maxLetters());
 
             essaysRepository.save(essay);
-            return new GenericResponse("ok", "Success on update essay criteria", 200);
+            return essay;
         } catch (Exception e) {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error on update essay criteria", 400);
+            throw new FileStorageException("Failed to update this essay", e);
         }
     }
 
@@ -748,7 +749,7 @@ public class CourseProvider {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             // create a specific execption
-            throw new RuntimeException("Error on submission");
+            throw new FileStorageException("Failed to submit this activity", e);
         }
     }
 
@@ -788,7 +789,7 @@ public class CourseProvider {
         } catch (Exception e) {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error on update activity submission", 400);
+            throw new FileStorageException("Failed to update this submission", e);
         }
     }
 
@@ -827,11 +828,11 @@ public class CourseProvider {
     }
 
     @Transactional
-    public GenericResponse updateStudentAnswer(Long id, StudentAnswerUpdateRequestDto request) {
+    public StudentAnswerResponseDto updateStudentAnswer(Long id, StudentAnswerUpdateRequestDto request) {
         try {
             Optional<StudentAnswers> answerOpt = studentAnswersRepository.findById(id);
             if (answerOpt.isEmpty()) {
-                return new GenericResponse("Error", "Student answer not found", 404);
+                throw new EntityNotFoundException("Answer not found");
             }
 
             StudentAnswers answer = answerOpt.get();
@@ -839,7 +840,7 @@ public class CourseProvider {
             if (request.chosenAlternativeId() != null) {
                 Optional<Alternatives> altOpt = alternativesRepository.findById(request.chosenAlternativeId());
                 if (altOpt.isEmpty()) {
-                    return new GenericResponse("Error", "Chosen alternative not found", 404);
+                    throw new EntityNotFoundException("Alternative not found");
                 }
                 answer.setChosenAlternative(altOpt.get());
             }
@@ -851,11 +852,11 @@ public class CourseProvider {
                 answer.setIsCorrect(request.isCorrect());
 
             studentAnswersRepository.save(answer);
-            return new GenericResponse("ok", "Success on update student answer", 200);
+            return StudentAnswerResponseDto.fromEntity(answer);
         } catch (Exception e) {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error on update student answer", 400);
+            throw new FileStorageException("Failed to update this answer", e);
         }
     }
 
@@ -921,13 +922,10 @@ public class CourseProvider {
 
             return new GenericResponse("ok", "Activity submitted successfully. Total score: " + totalScore, 200);
 
-        } catch (IllegalArgumentException e) {
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", e.getMessage(), 404);
         } catch (Exception e) {
             e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error processing activity submission", 400);
+            throw new RuntimeException("Failed to submit your activity", e);
         }
     }
 

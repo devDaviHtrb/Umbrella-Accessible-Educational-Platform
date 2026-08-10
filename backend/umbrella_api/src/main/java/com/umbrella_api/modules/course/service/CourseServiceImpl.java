@@ -29,8 +29,12 @@ import com.umbrella_api.modules.course.dto.StudentAnswerUpdateRequestDto;
 import com.umbrella_api.modules.course.dto.SubmitActivityRequestDto;
 import com.umbrella_api.modules.course.dto.UpdateModuleDto;
 import com.umbrella_api.modules.course.infra.CourseProvider;
+import com.umbrella_api.modules.course.model.Activities;
+import com.umbrella_api.modules.course.model.Alternatives;
 import com.umbrella_api.modules.course.model.Courses;
+import com.umbrella_api.modules.course.model.Essays;
 import com.umbrella_api.modules.course.model.Modules;
+import com.umbrella_api.modules.course.model.Questions;
 import com.umbrella_api.modules.course.model.Subjects;
 import com.umbrella_api.modules.user.model.UserModel;
 
@@ -46,7 +50,7 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public GenericResponse createCourse(CourseDto courseData, CustomUserDetails loggedUser) {
+    public Courses createCourse(CourseDto courseData, CustomUserDetails loggedUser) {
 
         return courseProvider.createCourse(courseData, loggedUser);
     }
@@ -57,7 +61,7 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public GenericResponse createModule(ModuleRequestDto moduleData) {
+    public Modules createModule(ModuleRequestDto moduleData) {
         return courseProvider.createModule(moduleData);
     }
 
@@ -78,12 +82,12 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public GenericResponse updateModule(Long id, UpdateModuleDto moduleData) {
+    public Modules updateModule(Long id, UpdateModuleDto moduleData) {
         return courseProvider.updateModule(id, moduleData);
     }
 
     @Override
-    public GenericResponse updateCourse(Long id, CourseDto courseData) {
+    public Courses updateCourse(Long id, CourseDto courseData) {
         return courseProvider.updateCourse(id, courseData);
     }
 
@@ -109,7 +113,7 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public GenericResponse createSubject(String subjectName) {
+    public Subjects createSubject(String subjectName) {
         return courseProvider.createSubject(subjectName);
     }
 
@@ -133,7 +137,7 @@ public class CourseServiceImpl implements CourseService {
     // ==========================================
 
     @Override
-    public GenericResponse createActivity(ActivityCreateRequestDto request) {
+    public Activities createActivity(ActivityCreateRequestDto request) {
         return courseProvider.createActivity(request);
     }
 
@@ -152,7 +156,7 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public GenericResponse updateActivity(Long id, ActivityUpdateRequestDto request) {
+    public Activities updateActivity(Long id, ActivityUpdateRequestDto request) {
         return courseProvider.updateActivity(id, request);
     }
 
@@ -166,7 +170,7 @@ public class CourseServiceImpl implements CourseService {
     // ==========================================
 
     @Override
-    public GenericResponse createQuestion(QuestionCreateRequestDto request) {
+    public Questions createQuestion(QuestionCreateRequestDto request) {
         return courseProvider.createQuestion(request);
     }
 
@@ -180,7 +184,7 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public GenericResponse updateQuestion(Long id, QuestionUpdateRequestDto request) {
+    public Questions updateQuestion(Long id, QuestionUpdateRequestDto request) {
         return courseProvider.updateQuestion(id, request);
     }
 
@@ -194,12 +198,12 @@ public class CourseServiceImpl implements CourseService {
     // ==========================================
 
     @Override
-    public GenericResponse createAlternative(AlternativeCreateRequestDto request) {
+    public Alternatives createAlternative(AlternativeCreateRequestDto request) {
         return courseProvider.createAlternative(request);
     }
 
     @Override
-    public GenericResponse updateAlternative(Long id, AlternativeUpdateRequestDto request) {
+    public Alternatives updateAlternative(Long id, AlternativeUpdateRequestDto request) {
         return courseProvider.updateAlternative(id, request);
     }
 
@@ -213,12 +217,12 @@ public class CourseServiceImpl implements CourseService {
     // ==========================================
 
     @Override
-    public GenericResponse createEssay(EssayCreateRequestDto request) {
+    public Essays createEssay(EssayCreateRequestDto request) {
         return courseProvider.createEssay(request);
     }
 
     @Override
-    public GenericResponse updateEssay(Long id, EssayUpdateRequestDto request) {
+    public Essays updateEssay(Long id, EssayUpdateRequestDto request) {
         return courseProvider.updateEssay(id, request);
     }
 
@@ -279,7 +283,7 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public GenericResponse updateStudentAnswer(Long id, StudentAnswerUpdateRequestDto request) {
+    public StudentAnswerResponseDto updateStudentAnswer(Long id, StudentAnswerUpdateRequestDto request) {
         return courseProvider.updateStudentAnswer(id, request);
     }
 
@@ -289,7 +293,7 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public GenericResponse correctSubmission(SubmitActivityRequestDto request, CustomUserDetails user) {
+    public ActivitySubmissionResponseDto correctSubmission(SubmitActivityRequestDto request, CustomUserDetails user) {
         return courseProvider.correctSubmission(request, user);
     }
 

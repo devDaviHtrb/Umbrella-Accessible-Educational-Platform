@@ -7,7 +7,6 @@ import com.umbrella_api.modules.user.repository.UserRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 

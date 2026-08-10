@@ -28,8 +28,13 @@ import com.umbrella_api.modules.course.dto.StudentAnswerUpdateRequestDto;
 import com.umbrella_api.modules.course.dto.SubjectsResponseDto;
 import com.umbrella_api.modules.course.dto.SubmitActivityRequestDto;
 import com.umbrella_api.modules.course.dto.UpdateModuleDto;
+import com.umbrella_api.modules.course.model.Activities;
+import com.umbrella_api.modules.course.model.Alternatives;
 import com.umbrella_api.modules.course.model.Courses;
+import com.umbrella_api.modules.course.model.Essays;
 import com.umbrella_api.modules.course.model.Modules;
+import com.umbrella_api.modules.course.model.Questions;
+import com.umbrella_api.modules.course.model.Subjects;
 import com.umbrella_api.modules.user.model.UserModel;
 
 import jakarta.validation.Valid;
@@ -55,7 +60,7 @@ public class CourseController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<GenericResponse> registerCourse(@RequestBody @Valid CourseDto courseData,
+    public ResponseEntity<Courses> registerCourse(@RequestBody @Valid CourseDto courseData,
             @AuthenticationPrincipal CustomUserDetails loggedUser) {
 
         return ResponseEntity.ok(courseService.createCourse(courseData, loggedUser));
@@ -69,12 +74,12 @@ public class CourseController {
     }
 
     @PostMapping("/add_module")
-    public ResponseEntity<GenericResponse> addModule(@RequestBody @Valid ModuleRequestDto moduleData) {
+    public ResponseEntity<Modules> addModule(@RequestBody @Valid ModuleRequestDto moduleData) {
         return ResponseEntity.ok(courseService.createModule(moduleData));
     }
 
     @PutMapping("/modules/{id}")
-    public ResponseEntity<GenericResponse> updateModule(@PathVariable Long id,
+    public ResponseEntity<Modules> updateModule(@PathVariable Long id,
             @RequestBody @Valid UpdateModuleDto moduleData) {
         return ResponseEntity.ok(courseService.updateModule(id, moduleData));
     }
@@ -114,7 +119,7 @@ public class CourseController {
     }
 
     @PostMapping("/subjects/register")
-    public ResponseEntity<GenericResponse> newSubject(@RequestBody String name) {
+    public ResponseEntity<Subjects> newSubject(@RequestBody String name) {
         return ResponseEntity.ok(courseService.createSubject(name));
     }
 
@@ -137,7 +142,7 @@ public class CourseController {
     // ==========================================
 
     @PostMapping("/activities")
-    public ResponseEntity<GenericResponse> createActivity(@RequestBody @Valid ActivityCreateRequestDto request) {
+    public ResponseEntity<Activities> createActivity(@RequestBody @Valid ActivityCreateRequestDto request) {
         return ResponseEntity.ok(courseService.createActivity(request));
     }
 
@@ -152,7 +157,7 @@ public class CourseController {
     }
 
     @PutMapping("/activities/{id}")
-    public ResponseEntity<GenericResponse> updateActivity(
+    public ResponseEntity<Activities> updateActivity(
             @PathVariable Long id,
             @RequestBody @Valid ActivityUpdateRequestDto request) {
         return ResponseEntity.ok(courseService.updateActivity(id, request));
@@ -168,7 +173,7 @@ public class CourseController {
     // ==========================================
 
     @PostMapping("/questions")
-    public ResponseEntity<GenericResponse> createQuestion(@RequestBody @Valid QuestionCreateRequestDto request) {
+    public ResponseEntity<Questions> createQuestion(@RequestBody @Valid QuestionCreateRequestDto request) {
         return ResponseEntity.ok(courseService.createQuestion(request));
     }
 
@@ -178,7 +183,7 @@ public class CourseController {
     }
 
     @PutMapping("/questions/{id}")
-    public ResponseEntity<GenericResponse> updateQuestion(
+    public ResponseEntity<Questions> updateQuestion(
             @PathVariable Long id,
             @RequestBody @Valid QuestionUpdateRequestDto request) {
         return ResponseEntity.ok(courseService.updateQuestion(id, request));
@@ -194,12 +199,12 @@ public class CourseController {
     // ==========================================
 
     @PostMapping("/alternatives")
-    public ResponseEntity<GenericResponse> createAlternative(@RequestBody @Valid AlternativeCreateRequestDto request) {
+    public ResponseEntity<Alternatives> createAlternative(@RequestBody @Valid AlternativeCreateRequestDto request) {
         return ResponseEntity.ok(courseService.createAlternative(request));
     }
 
     @PutMapping("/alternatives/{id}")
-    public ResponseEntity<GenericResponse> updateAlternative(
+    public ResponseEntity<Alternatives> updateAlternative(
             @PathVariable Long id,
             @RequestBody @Valid AlternativeUpdateRequestDto request) {
         return ResponseEntity.ok(courseService.updateAlternative(id, request));
@@ -215,12 +220,12 @@ public class CourseController {
     // ==========================================
 
     @PostMapping("/essays")
-    public ResponseEntity<GenericResponse> createEssay(@RequestBody @Valid EssayCreateRequestDto request) {
+    public ResponseEntity<Essays> createEssay(@RequestBody @Valid EssayCreateRequestDto request) {
         return ResponseEntity.ok(courseService.createEssay(request));
     }
 
     @PutMapping("/essays/{id}")
-    public ResponseEntity<GenericResponse> updateEssay(
+    public ResponseEntity<Essays> updateEssay(
             @PathVariable Long id,
             @RequestBody @Valid EssayUpdateRequestDto request) {
         return ResponseEntity.ok(courseService.updateEssay(id, request));
@@ -278,7 +283,7 @@ public class CourseController {
     }
 
     @PutMapping("/student-answers/{id}")
-    public ResponseEntity<GenericResponse> updateStudentAnswer(
+    public ResponseEntity<StudentAnswerResponseDto> updateStudentAnswer(
             @PathVariable Long id,
             @RequestBody @Valid StudentAnswerUpdateRequestDto request) {
         return ResponseEntity.ok(courseService.updateStudentAnswer(id, request));
@@ -290,7 +295,8 @@ public class CourseController {
     }
 
     @PostMapping("/submitAnswer")
-    public ResponseEntity<GenericResponse> submitActivity(@AuthenticationPrincipal CustomUserDetails loggedUser,
+    public ResponseEntity<ActivitySubmissionResponseDto> submitActivity(
+            @AuthenticationPrincipal CustomUserDetails loggedUser,
             @RequestBody @Valid SubmitActivityRequestDto data) {
 
         return ResponseEntity.ok(courseService.correctSubmission(data, loggedUser));
