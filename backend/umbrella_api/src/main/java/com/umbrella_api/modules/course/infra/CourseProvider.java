@@ -810,7 +810,7 @@ public class CourseProvider {
     }
 
     @Transactional
-    public GenericResponse correctSubmission(SubmitActivityRequestDto request, CustomUserDetails userDetails) {
+    public ActivitySubmissionResponseDto correctSubmission(SubmitActivityRequestDto request, CustomUserDetails userDetails) {
         try {
             ActivitySubmissions submission = this.createActivitySubmission(request.activityId(), userDetails);
 
@@ -853,7 +853,7 @@ public class CourseProvider {
             submission.setScore(totalScore);
             activitySubmissionsRepository.save(submission);
 
-            return new GenericResponse("ok", "Activity submitted successfully. Total score: " + totalScore, 200);
+            return ActivitySubmissionResponseDto.fromEntity(submission);
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to submit your activity", e);
