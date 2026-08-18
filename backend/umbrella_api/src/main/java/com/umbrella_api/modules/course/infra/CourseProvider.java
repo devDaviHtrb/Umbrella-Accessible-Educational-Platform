@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import com.umbrella_api.common.Exceptions.FileStorageException;
 import com.umbrella_api.common.dto.GenericResponse;
@@ -118,7 +117,6 @@ public class CourseProvider {
 
             return course;
         } catch (Exception e) {
-            e.printStackTrace();
             org.springframework.transaction.interceptor.TransactionAspectSupport
                     .currentTransactionStatus().setRollbackOnly();
             throw new FileStorageException("Failed to create your course", e);
@@ -130,7 +128,7 @@ public class CourseProvider {
         try {
             courseUserRelationRepository.deleteRelation(userId, courseId);
         } catch (Exception e) {
-            e.printStackTrace();
+
             org.springframework.transaction.interceptor.TransactionAspectSupport
                     .currentTransactionStatus().setRollbackOnly();
             return new GenericResponse("Error", "Error delete this relationships ", 400);
@@ -153,9 +151,6 @@ public class CourseProvider {
             CourseUserRelation relation = CourseUserRelation.builder().user(user).course(course).build();
             courseUserRelationRepository.save(relation);
         } catch (Exception e) {
-            e.printStackTrace();
-            org.springframework.transaction.interceptor.TransactionAspectSupport
-                    .currentTransactionStatus().setRollbackOnly();
             return new GenericResponse("Error", "Error create the relationship ", 400);
         }
         return new GenericResponse("ok", "Succes on create the relationship ", 200);
@@ -168,9 +163,6 @@ public class CourseProvider {
             this.deleteUserRelationsByCourseId(id);
             coursesRepository.deleteById(id);
         } catch (Exception e) {
-            e.printStackTrace();
-            org.springframework.transaction.interceptor.TransactionAspectSupport
-                    .currentTransactionStatus().setRollbackOnly();
             return new GenericResponse("Error", "Error delete the course ", 400);
         }
         return new GenericResponse("ok", "Succes on delete a course ", 200);
@@ -181,9 +173,6 @@ public class CourseProvider {
         try {
             courseUserRelationRepository.deleteByCourseId(id);
         } catch (Exception e) {
-            e.printStackTrace();
-            org.springframework.transaction.interceptor.TransactionAspectSupport
-                    .currentTransactionStatus().setRollbackOnly();
             return new GenericResponse("Error", "Error delete this relationships ", 400);
         }
         return new GenericResponse("ok", "Succes on delete this relations ", 200);
@@ -194,9 +183,6 @@ public class CourseProvider {
         try {
             courseUserRelationRepository.deleteByUserId(id);
         } catch (Exception e) {
-            e.printStackTrace();
-            org.springframework.transaction.interceptor.TransactionAspectSupport
-                    .currentTransactionStatus().setRollbackOnly();
             return new GenericResponse("Error", "Error delete this relationships ", 400);
         }
         return new GenericResponse("ok", "Succes on delete this relations ", 200);
@@ -225,11 +211,6 @@ public class CourseProvider {
             return module;
 
         } catch (Exception e) {
-
-            e.printStackTrace();
-            org.springframework.transaction.interceptor.TransactionAspectSupport
-                    .currentTransactionStatus().setRollbackOnly();
-
             throw new FileStorageException("Failed to save a new module in this course", e);
 
         }
@@ -254,9 +235,6 @@ public class CourseProvider {
             coursesRepository.save(course);
 
         } catch (Exception e) {
-            e.printStackTrace();
-            org.springframework.transaction.interceptor.TransactionAspectSupport
-                    .currentTransactionStatus().setRollbackOnly();
             return new GenericResponse("Error", "Error delete the module ", 400);
         }
         return new GenericResponse("ok", "Succes on delete a module ", 200);
@@ -290,9 +268,6 @@ public class CourseProvider {
 
             return module;
         } catch (Exception e) {
-            e.printStackTrace();
-            org.springframework.transaction.interceptor.TransactionAspectSupport
-                    .currentTransactionStatus().setRollbackOnly();
             throw new FileStorageException("Failed to update this module", e);
         }
     }
@@ -324,9 +299,7 @@ public class CourseProvider {
 
             return course;
         } catch (Exception e) {
-            e.printStackTrace();
-            org.springframework.transaction.interceptor.TransactionAspectSupport
-                    .currentTransactionStatus().setRollbackOnly();
+
             throw new FileStorageException("Failed to update your course", e);
         }
     }
@@ -336,8 +309,7 @@ public class CourseProvider {
     }
 
     public UserModel getCourseCreator(Long courseId) {
-        UserModel creator = courseUserRelationRepository.findCreatorByCourseId(courseId).orElse(null);
-        return creator;
+        return courseUserRelationRepository.findCreatorByCourseId(courseId).orElse(null);
     }
 
     @Transactional
@@ -357,9 +329,7 @@ public class CourseProvider {
             subjectsRepository.save(subject);
             return subject;
         } catch (Exception e) {
-            e.printStackTrace();
-            org.springframework.transaction.interceptor.TransactionAspectSupport
-                    .currentTransactionStatus().setRollbackOnly();
+
             throw new FileStorageException("Failed to create a new subject", e);
         }
     }
@@ -381,9 +351,6 @@ public class CourseProvider {
 
             return new GenericResponse("ok", "Subject deleted and associated courses unlinked successfully", 200);
         } catch (Exception e) {
-            e.printStackTrace();
-            org.springframework.transaction.interceptor.TransactionAspectSupport
-                    .currentTransactionStatus().setRollbackOnly();
             return new GenericResponse("Error", "Error on delete subject", 400);
         }
     }
@@ -417,8 +384,6 @@ public class CourseProvider {
             activitiesRepository.save(activity);
             return activity;
         } catch (Exception e) {
-            e.printStackTrace();
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             throw new FileStorageException("Failed to create a new activity", e);
         }
     }
@@ -464,8 +429,6 @@ public class CourseProvider {
             activitiesRepository.save(activity);
             return activity;
         } catch (Exception e) {
-            e.printStackTrace();
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             throw new FileStorageException("Failed to update this activity", e);
         }
     }
@@ -477,8 +440,6 @@ public class CourseProvider {
             if (activityOpt.isEmpty()) {
                 return new GenericResponse("Error", "Activity not found", 404);
             }
-
-            ;
 
             // implements if images will can used in questions
             /*
@@ -492,8 +453,6 @@ public class CourseProvider {
             activitiesRepository.deleteById(id);
             return new GenericResponse("ok", "Success on delete activity", 200);
         } catch (Exception e) {
-            e.printStackTrace();
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new GenericResponse("Error", "Error on delete activity", 400);
         }
     }
@@ -521,8 +480,7 @@ public class CourseProvider {
             questionsRepository.save(question);
             return question;
         } catch (Exception e) {
-            e.printStackTrace();
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+
             throw new FileStorageException("Failed to create a question", e);
         }
     }
@@ -555,8 +513,7 @@ public class CourseProvider {
             questionsRepository.save(question);
             return question;
         } catch (Exception e) {
-            e.printStackTrace();
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+
             throw new FileStorageException("Failed to update this question", e);
         }
     }
@@ -574,8 +531,7 @@ public class CourseProvider {
             questionsRepository.deleteById(id);
             return new GenericResponse("ok", "Success on delete question", 200);
         } catch (Exception e) {
-            e.printStackTrace();
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+
             return new GenericResponse("Error", "Error on delete question", 400);
         }
     }
@@ -602,8 +558,6 @@ public class CourseProvider {
             alternativesRepository.save(alternative);
             return alternative;
         } catch (Exception e) {
-            e.printStackTrace();
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             throw new FileStorageException("Failed to add a alternative", e);
         }
     }
@@ -628,8 +582,6 @@ public class CourseProvider {
             alternativesRepository.save(alternative);
             return alternative;
         } catch (Exception e) {
-            e.printStackTrace();
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             throw new FileStorageException("Failed to update this alternative", e);
         }
     }
@@ -644,8 +596,6 @@ public class CourseProvider {
             alternativesRepository.deleteById(id);
             return new GenericResponse("ok", "Success on delete alternative", 200);
         } catch (Exception e) {
-            e.printStackTrace();
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new GenericResponse("Error", "Error on delete alternative", 400);
         }
 
@@ -673,8 +623,6 @@ public class CourseProvider {
             essaysRepository.save(essay);
             return essay;
         } catch (Exception e) {
-            e.printStackTrace();
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             throw new FileStorageException("Failed to create a essay", e);
         }
     }
@@ -699,8 +647,6 @@ public class CourseProvider {
             essaysRepository.save(essay);
             return essay;
         } catch (Exception e) {
-            e.printStackTrace();
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             throw new FileStorageException("Failed to update this essay", e);
         }
     }
@@ -715,8 +661,6 @@ public class CourseProvider {
             essaysRepository.deleteById(id);
             return new GenericResponse("ok", "Success on delete essay criteria", 200);
         } catch (Exception e) {
-            e.printStackTrace();
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new GenericResponse("Error", "Error on delete essay criteria", 400);
         }
     }
@@ -746,9 +690,6 @@ public class CourseProvider {
             activitySubmissionsRepository.save(submission);
             return submission;
         } catch (Exception e) {
-            e.printStackTrace();
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            // create a specific execption
             throw new FileStorageException("Failed to submit this activity", e);
         }
     }
@@ -787,8 +728,6 @@ public class CourseProvider {
             activitySubmissionsRepository.save(submission);
             return new GenericResponse("ok", "Success on update activity submission", 200);
         } catch (Exception e) {
-            e.printStackTrace();
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             throw new FileStorageException("Failed to update this submission", e);
         }
     }
@@ -804,8 +743,6 @@ public class CourseProvider {
             activitySubmissionsRepository.deleteById(id);
             return new GenericResponse("ok", "Success on delete activity submission", 200);
         } catch (Exception e) {
-            e.printStackTrace();
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new GenericResponse("Error", "Error on delete activity submission", 400);
         }
     }
@@ -854,8 +791,6 @@ public class CourseProvider {
             studentAnswersRepository.save(answer);
             return StudentAnswerResponseDto.fromEntity(answer);
         } catch (Exception e) {
-            e.printStackTrace();
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             throw new FileStorageException("Failed to update this answer", e);
         }
     }
@@ -870,8 +805,6 @@ public class CourseProvider {
             studentAnswersRepository.deleteById(id);
             return new GenericResponse("ok", "Success on delete student answer", 200);
         } catch (Exception e) {
-            e.printStackTrace();
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new GenericResponse("Error", "Error on delete student answer", 400);
         }
     }
@@ -923,8 +856,6 @@ public class CourseProvider {
             return new GenericResponse("ok", "Activity submitted successfully. Total score: " + totalScore, 200);
 
         } catch (Exception e) {
-            e.printStackTrace();
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             throw new RuntimeException("Failed to submit your activity", e);
         }
     }
