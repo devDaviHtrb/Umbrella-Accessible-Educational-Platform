@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import com.umbrella_api.modules.schedule.api.ScheduleService;
 import org.springframework.stereotype.Component;
 
 import com.umbrella_api.common.Exceptions.FileStorageException;
@@ -71,13 +72,14 @@ public class CourseProvider {
     private final EssaysRepository essaysRepository;
     private final ActivitySubmissionsRepository activitySubmissionsRepository;
     private final StudentAnswersRepository studentAnswersRepository;
+    private final ScheduleService scheduleService;
 
     public CourseProvider(CoursesRepository coursesRepository, ModulesRepository modulesRepository,
-            ActivitiesRepository activitiesRepository, QuestionsRepository questionsRepository,
-            SubjectsRepository subjectsRepository, CourseUserRelationRepository courseUserRelationRepository,
-            StorageService storageService, UserRepository userRepository, AlternativesRepository alternativesRepository,
-            EssaysRepository essaysRepository, ActivitySubmissionsRepository activitySubmissionsRepository,
-            StudentAnswersRepository studentAnswersRepository) {
+                          ActivitiesRepository activitiesRepository, QuestionsRepository questionsRepository,
+                          SubjectsRepository subjectsRepository, CourseUserRelationRepository courseUserRelationRepository,
+                          StorageService storageService, UserRepository userRepository, AlternativesRepository alternativesRepository,
+                          EssaysRepository essaysRepository, ActivitySubmissionsRepository activitySubmissionsRepository,
+                          StudentAnswersRepository studentAnswersRepository, ScheduleService scheduleService) {
         this.coursesRepository = coursesRepository;
         this.modulesRepository = modulesRepository;
         this.activitiesRepository = activitiesRepository;
@@ -90,6 +92,7 @@ public class CourseProvider {
         this.essaysRepository = essaysRepository;
         this.activitySubmissionsRepository = activitySubmissionsRepository;
         this.studentAnswersRepository = studentAnswersRepository;
+        this.scheduleService = scheduleService;
     }
 
     @Transactional
@@ -154,6 +157,11 @@ public class CourseProvider {
             return new GenericResponse("Error", "Error create the relationship ", 400);
         }
         return new GenericResponse("ok", "Succes on create the relationship ", 200);
+    }
+
+    public List<Courses> getEnrolledCoursesByUser(CustomUserDetails userDetails){
+        UserModel user = userDetails.getUserModel();
+        return courseUserRelationRepository.findCoursesByUserIdAndNotCreator(user.getId());
     }
 
     @Transactional

@@ -62,6 +62,8 @@ public interface CourseService {
 
     public GenericResponse deleteUserRelation(Long userId, Long courseId);
 
+    public List<Courses> getEnrolledCoursesByUser(CustomUserDetails userDetails);
+
     // Subject crud
     public Subjects createSubject(String subjectName);
 

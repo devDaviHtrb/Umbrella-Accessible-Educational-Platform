@@ -1,5 +1,6 @@
 package com.umbrella_api.modules.schedule.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.umbrella_api.modules.user.model.UserModel;
 import jakarta.persistence.*;
 import lombok.*;
@@ -19,6 +20,7 @@ public class UserEvents {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
     private UserModel user;
 
     @ManyToOne(fetch = FetchType.LAZY)
