@@ -1,5 +1,8 @@
 package com.umbrella_api.modules.user.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.umbrella_api.modules.schedule.model.Events;
+import com.umbrella_api.modules.schedule.model.UserEvents;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -42,10 +45,21 @@ public class UserModel {
 
     @Builder.Default
     @OneToMany(mappedBy = "user")
+    @JsonIgnore
     private List<Image> images = new ArrayList<>();
 
     @Builder.Default
     @OneToMany(mappedBy = "user")
+    @JsonIgnore
     private List<CourseUserRelation> courseUserRelations = new ArrayList<>();
+
+    @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<Events> createdEvents = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<UserEvents> userEvents = new ArrayList<>();
 
 }

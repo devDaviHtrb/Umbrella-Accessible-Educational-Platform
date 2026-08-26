@@ -1,7 +1,9 @@
 package com.umbrella_api.modules.course.repository;
 
+import java.util.List;
 import java.util.Optional;
 
+import com.umbrella_api.modules.course.model.Courses;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -17,6 +19,9 @@ public interface CourseUserRelationRepository extends JpaRepository<CourseUserRe
     public void deleteByCourseId(Long courseId);
 
     public void deleteByUserId(Long UserId);
+
+    @Query("SELECT r.course FROM CourseUserRelation r WHERE r.user.id = :userId AND r.creator = false")
+    List<Courses> findCoursesByUserIdAndNotCreator(@Param("userId") Long userId);
 
     @Modifying
     @Query("DELETE FROM CourseUserRelation r WHERE r.user.id = :userId AND r.course.id = :courseId")

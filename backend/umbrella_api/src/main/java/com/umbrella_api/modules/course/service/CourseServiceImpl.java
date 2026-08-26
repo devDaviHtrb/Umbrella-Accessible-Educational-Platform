@@ -108,6 +108,11 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
+    public List<Courses> getEnrolledCoursesByUser(CustomUserDetails userDetails){
+        return courseProvider.getEnrolledCoursesByUser(userDetails);
+    }
+
+    @Override
     public GenericResponse deleteUserRelation(Long userId, Long courseId) {
         return courseProvider.deleteUserRelation(userId, courseId);
     }
