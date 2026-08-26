@@ -156,40 +156,33 @@ public class StorageServiceProvider {
          * This ensures data integrity: if the database transaction fails, the cloud
          * file remains untouched, preventing "orphaned" cloud files with no DB record.
          */
-        try {
-            if (file instanceof Image img) {
-                FileMetaData metaData = fileRepository.findByImage(img);
-                if (metaData != null) {
-                    metaData.setImage(null);
-                    fileRepository.delete(metaData);
-                }
-                imageRepository.delete(img);
-
-            } else if (file instanceof RawFile raw) {
-                FileMetaData metaData = fileRepository.findByRawFile(raw);
-                if (metaData != null) {
-                    metaData.setRawFile(null);
-                    fileRepository.delete(metaData);
-                }
-                rawRepository.delete(raw);
-
-            } else if (file instanceof Video video) {
-                FileMetaData metaData = fileRepository.findByVideo(video);
-                if (metaData != null) {
-                    metaData.setVideo(null);
-                    fileRepository.delete(metaData);
-                }
-                videoRepository.delete(video);
+        if (file instanceof Image img) {
+            FileMetaData metaData = fileRepository.findByImage(img);
+            if (metaData != null) {
+                metaData.setImage(null);
+                fileRepository.delete(metaData);
             }
+            imageRepository.delete(img);
 
-            fileDbService.delete(file.getFileDbId(), file.getResourceType());
-            return new GenericResponse("Ok", "Success on delete", 200);
-        } catch (Exception e) {
-            e.printStackTrace();
-            org.springframework.transaction.interceptor.TransactionAspectSupport
-                    .currentTransactionStatus().setRollbackOnly();
-            throw new FileStorageException("Failed to delete this file");
+        } else if (file instanceof RawFile raw) {
+            FileMetaData metaData = fileRepository.findByRawFile(raw);
+            if (metaData != null) {
+                metaData.setRawFile(null);
+                fileRepository.delete(metaData);
+            }
+            rawRepository.delete(raw);
+
+        } else if (file instanceof Video video) {
+            FileMetaData metaData = fileRepository.findByVideo(video);
+            if (metaData != null) {
+                metaData.setVideo(null);
+                fileRepository.delete(metaData);
+            }
+            videoRepository.delete(video);
         }
+
+        fileDbService.delete(file.getFileDbId(), file.getResourceType());
+        return new GenericResponse("Ok", "Success on delete", 200);
     }
 
     public Optional<Image> getImageById(long id) {

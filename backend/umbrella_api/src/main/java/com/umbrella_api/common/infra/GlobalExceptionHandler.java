@@ -2,6 +2,7 @@ package com.umbrella_api.common.infra;
 
 import java.util.stream.Collectors;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import com.umbrella_api.common.Exceptions.FileStorageException;
 import com.umbrella_api.common.dto.ExceptionResponse;
+import com.umbrella_api.common.dto.GenericResponse;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
@@ -81,5 +83,11 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST.value());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ExceptionResponse> handleDatabaseConflict(DataIntegrityViolationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ExceptionResponse("Data integrity error", ex.getMessage(), HttpStatus.BAD_REQUEST.value()));
     }
 }
