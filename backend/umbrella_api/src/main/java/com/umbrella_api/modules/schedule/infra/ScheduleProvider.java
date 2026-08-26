@@ -16,19 +16,23 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Component
 public class ScheduleProvider {
 
     private final EventsRepository eventRepository;
     private final UserEventsRepository userEventRepository;
     private final CourseService courseService;
 
-    public ScheduleProvider(EventsRepository eventRepository, UserEventsRepository userEventRepository, CourseService courseService) {
+    public ScheduleProvider(EventsRepository eventRepository, UserEventsRepository userEventRepository,
+            CourseService courseService) {
         this.eventRepository = eventRepository;
         this.userEventRepository = userEventRepository;
         this.courseService = courseService;
@@ -47,6 +51,7 @@ public class ScheduleProvider {
             }
 
             course = courseService.getCourseById(dto.courseId());
+            System.out.println("aquiiiii");
         }
 
         if (dto.endTime().isBefore(dto.startTime())) {
@@ -65,7 +70,6 @@ public class ScheduleProvider {
 
         event = eventRepository.save(event);
 
-
         if (course == null) {
             UserEvents userEvent = UserEvents.builder()
                     .user(creator)
@@ -81,7 +85,8 @@ public class ScheduleProvider {
     }
 
     @Transactional
-    public UserEvents personalizeEvent(Long eventId, CustomUserDetails userDetails, EventStatus status, Integer reminderOffset) {
+    public UserEvents personalizeEvent(Long eventId, CustomUserDetails userDetails, EventStatus status,
+            Integer reminderOffset) {
         UserModel user = userDetails.getUserModel();
 
         Events event = eventRepository.findById(eventId)
@@ -122,11 +127,9 @@ public class ScheduleProvider {
                 .collect(Collectors.toMap(
                         ue -> ue.getEvent().getId(),
                         ue -> ue,
-                        (existing, replacement) -> existing
-                ));
+                        (existing, replacement) -> existing));
 
         List<ScheduleGetRequestDto> result = new ArrayList<>();
-
 
         for (UserEvents ue : userEventsList) {
             if (ue.getEvent().getCourse() == null) {
@@ -134,18 +137,15 @@ public class ScheduleProvider {
             }
         }
 
-
         List<Events> coursesEvents = this.getAllEnrolledCoursesEvents(userDetails);
         for (Events event : coursesEvents) {
             UserEvents userEvent = userEventMap.get(event.getId());
             result.add(ScheduleGetRequestDto.fromEntity(event, userEvent));
         }
 
-
         result.sort(Comparator.comparing(ScheduleGetRequestDto::startTime));
         return result;
     }
-
 
     @Transactional
     public void deleteEvent(Long eventId, CustomUserDetails userDetails) {
@@ -155,7 +155,8 @@ public class ScheduleProvider {
         Long userId = userDetails.getUserModel().getId();
 
         boolean isPersonalCreator = event.getCourse() == null && event.getCreatedBy().getId().equals(userId);
-        boolean isCourseCreator = event.getCourse() != null && courseService.getCourseCreatorById(event.getCourse().getId()).getId().equals(userId);
+        boolean isCourseCreator = event.getCourse() != null
+                && courseService.getCourseCreatorById(event.getCourse().getId()).getId().equals(userId);
 
         if (!isPersonalCreator && !isCourseCreator) {
             throw new AccessDeniedException("You can't delete this event.");
@@ -167,7 +168,6 @@ public class ScheduleProvider {
     public ScheduleGetRequestDto updateEvent(Long eventId, EventPostRequestDto dto, CustomUserDetails userDetails) {
         Events event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event not found."));
-
 
         if (!event.getCreatedBy().getId().equals(userDetails.getUserModel().getId())) {
             throw new AccessDeniedException("You don't have permission to alter this event.");
@@ -195,14 +195,13 @@ public class ScheduleProvider {
 
         Long userId = userDetails.getUserModel().getId();
 
-
         boolean isPersonalCreator = event.getCourse() == null && event.getCreatedBy().getId().equals(userId);
-        boolean isCourseCreator = event.getCourse() != null && courseService.getCourseCreatorById(event.getCourse().getId()).getId().equals(userId);
+        boolean isCourseCreator = event.getCourse() != null
+                && courseService.getCourseCreatorById(event.getCourse().getId()).getId().equals(userId);
 
         if (!isPersonalCreator && !isCourseCreator) {
             throw new AccessDeniedException("You don't have permission to alter this event.");
         }
-
 
         if (dto.endTime().isBefore(dto.startTime())) {
             throw new IllegalArgumentException("The end date must be after the start date..");

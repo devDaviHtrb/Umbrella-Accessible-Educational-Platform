@@ -72,14 +72,13 @@ public class CourseProvider {
     private final EssaysRepository essaysRepository;
     private final ActivitySubmissionsRepository activitySubmissionsRepository;
     private final StudentAnswersRepository studentAnswersRepository;
-    private final ScheduleService scheduleService;
 
     public CourseProvider(CoursesRepository coursesRepository, ModulesRepository modulesRepository,
-                          ActivitiesRepository activitiesRepository, QuestionsRepository questionsRepository,
-                          SubjectsRepository subjectsRepository, CourseUserRelationRepository courseUserRelationRepository,
-                          StorageService storageService, UserRepository userRepository, AlternativesRepository alternativesRepository,
-                          EssaysRepository essaysRepository, ActivitySubmissionsRepository activitySubmissionsRepository,
-                          StudentAnswersRepository studentAnswersRepository, ScheduleService scheduleService) {
+            ActivitiesRepository activitiesRepository, QuestionsRepository questionsRepository,
+            SubjectsRepository subjectsRepository, CourseUserRelationRepository courseUserRelationRepository,
+            StorageService storageService, UserRepository userRepository, AlternativesRepository alternativesRepository,
+            EssaysRepository essaysRepository, ActivitySubmissionsRepository activitySubmissionsRepository,
+            StudentAnswersRepository studentAnswersRepository) {
         this.coursesRepository = coursesRepository;
         this.modulesRepository = modulesRepository;
         this.activitiesRepository = activitiesRepository;
@@ -92,7 +91,7 @@ public class CourseProvider {
         this.essaysRepository = essaysRepository;
         this.activitySubmissionsRepository = activitySubmissionsRepository;
         this.studentAnswersRepository = studentAnswersRepository;
-        this.scheduleService = scheduleService;
+
     }
 
     @Transactional
@@ -159,7 +158,7 @@ public class CourseProvider {
         return new GenericResponse("ok", "Succes on create the relationship ", 200);
     }
 
-    public List<Courses> getEnrolledCoursesByUser(CustomUserDetails userDetails){
+    public List<Courses> getEnrolledCoursesByUser(CustomUserDetails userDetails) {
         UserModel user = userDetails.getUserModel();
         return courseUserRelationRepository.findCoursesByUserIdAndNotCreator(user.getId());
     }
@@ -818,7 +817,8 @@ public class CourseProvider {
     }
 
     @Transactional
-    public ActivitySubmissionResponseDto correctSubmission(SubmitActivityRequestDto request, CustomUserDetails userDetails) {
+    public ActivitySubmissionResponseDto correctSubmission(SubmitActivityRequestDto request,
+            CustomUserDetails userDetails) {
         try {
             ActivitySubmissions submission = this.createActivitySubmission(request.activityId(), userDetails);
 
