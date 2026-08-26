@@ -10,13 +10,14 @@ import com.umbrella_api.modules.storage.model.RawFile;
 import com.umbrella_api.modules.storage.model.Video;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/storage")
+@RequestMapping("/api/logged/storage")
 public class StorageController {
 
     private final StorageService storageService;
@@ -26,6 +27,7 @@ public class StorageController {
     }
 
     @PostMapping("/upload")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<GenericResponse> uploadFile(
             @RequestParam("file") MultipartFile file,
             @RequestParam("resourceType") String resourceType,
@@ -52,23 +54,27 @@ public class StorageController {
     }
 
     @GetMapping("/image/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Image> getImageById(@PathVariable long id) {
         return ResponseEntity.ok(storageService.getImageById(id));
 
     }
 
     @GetMapping("/video/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Video> getVideoById(@PathVariable long id) {
         return ResponseEntity.ok(storageService.getVideoById(id));
 
     }
 
     @GetMapping("/raw/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<RawFile> getRawById(@PathVariable long id) {
         return ResponseEntity.ok(storageService.getRawFileById(id));
     }
 
     @DeleteMapping("/{resourceType}/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<GenericResponse> deleteFile(
             @PathVariable String resourceType,
             @PathVariable Long id) {

@@ -26,9 +26,9 @@ gemini:
     temp: 0.5
     
 cloudinary:
-  cloud_name: ${CLOUDiNARY_NAME}
-  api_key: ${CLOUDiNARY_KEY}
-  api_secret: ${CLOUDiNARY_SECRET}
+  cloud_name: ${CLOUDINARY_NAME}
+  api_key: ${CLOUDINARY_KEY}
+  api_secret: ${CLOUDINARY_SECRET}
 
 
 logging:
