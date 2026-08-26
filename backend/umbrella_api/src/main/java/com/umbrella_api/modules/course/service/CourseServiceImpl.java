@@ -9,7 +9,7 @@ import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.course.api.CourseService;
 import com.umbrella_api.modules.course.dto.ActivityCreateRequestDto;
 import com.umbrella_api.modules.course.dto.ActivityGetResponseDto;
-import com.umbrella_api.modules.course.dto.ActivitySubmissionCreateRequestDto;
+
 import com.umbrella_api.modules.course.dto.ActivitySubmissionResponseDto;
 import com.umbrella_api.modules.course.dto.ActivitySubmissionUpdateRequestDto;
 import com.umbrella_api.modules.course.dto.ActivityUpdateRequestDto;
@@ -23,7 +23,7 @@ import com.umbrella_api.modules.course.dto.ModuleRequestDto;
 import com.umbrella_api.modules.course.dto.QuestionCreateRequestDto;
 import com.umbrella_api.modules.course.dto.QuestionGetResponseDto;
 import com.umbrella_api.modules.course.dto.QuestionUpdateRequestDto;
-import com.umbrella_api.modules.course.dto.StudentAnswerCreateRequestDto;
+
 import com.umbrella_api.modules.course.dto.StudentAnswerResponseDto;
 import com.umbrella_api.modules.course.dto.StudentAnswerUpdateRequestDto;
 import com.umbrella_api.modules.course.dto.SubmitActivityRequestDto;
@@ -108,7 +108,7 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
-    public List<Courses> getEnrolledCoursesByUser(CustomUserDetails userDetails){
+    public List<Courses> getEnrolledCoursesByUser(CustomUserDetails userDetails) {
         return courseProvider.getEnrolledCoursesByUser(userDetails);
     }
 

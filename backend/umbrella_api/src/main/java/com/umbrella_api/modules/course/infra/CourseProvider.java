@@ -4,10 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import com.umbrella_api.modules.schedule.api.ScheduleService;
 import org.springframework.stereotype.Component;
 
-import com.umbrella_api.common.Exceptions.FileStorageException;
 import com.umbrella_api.common.dto.GenericResponse;
 import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.course.dto.ActivityCreateRequestDto;

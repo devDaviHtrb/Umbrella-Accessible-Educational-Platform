@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import com.umbrella_api.common.Exceptions.FileStorageException;
 import com.umbrella_api.common.dto.ExceptionResponse;
-import com.umbrella_api.common.dto.GenericResponse;
 
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolationException;
