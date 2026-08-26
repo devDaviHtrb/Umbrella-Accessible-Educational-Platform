@@ -1,13 +1,16 @@
 package com.umbrella_api.modules.storage.service;
 
-import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.umbrella_api.common.dto.GenericResponse;
 import com.umbrella_api.common.security.CustomUserDetails;
+import com.umbrella_api.modules.FileDb.dto.FileUploadResponse;
 import com.umbrella_api.modules.storage.api.StorageService;
 import com.umbrella_api.modules.storage.common.StorageFileEntity;
+import com.umbrella_api.modules.storage.dto.ImageResponseDto;
+import com.umbrella_api.modules.storage.dto.RawFileResponseDto;
+import com.umbrella_api.modules.storage.dto.VideoResponseDto;
 import com.umbrella_api.modules.storage.infra.StorageServiceProvider;
 import com.umbrella_api.modules.storage.model.Image;
 import com.umbrella_api.modules.storage.model.RawFile;
@@ -25,7 +28,7 @@ public class StorageServiceImpl implements StorageService {
     }
 
     @Override
-    public GenericResponse upload(MultipartFile file, String resourceType, String alternativeText, String fileName,
+    public FileUploadResponse upload(MultipartFile file, String resourceType, String alternativeText, String fileName,
             String fileDescription, Long moduleId, CustomUserDetails loggedUser) {
         return storageServiceProvider.upload(file, resourceType, alternativeText, fileName, fileDescription, moduleId,
                 loggedUser);
@@ -37,24 +40,27 @@ public class StorageServiceImpl implements StorageService {
     }
 
     @Override
-    public Image getImageById(long id) {
-        return storageServiceProvider.getImageById(id)
+    public ImageResponseDto getImageById(long id) {
+        Image image = storageServiceProvider.getImageById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Image not found")); // create a generic not found
                                                                                     // exception later
+        return ImageResponseDto.fromEntity(image);
     }
 
     @Override
-    public RawFile getRawFileById(long id) {
-        return storageServiceProvider.getRawFileById(id)
+    public RawFileResponseDto getRawFileById(long id) {
+        RawFile file = storageServiceProvider.getRawFileById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Image not found")); // create a generic not found
                                                                                     // exception later
+        return RawFileResponseDto.fromEntity(file);
     }
 
     @Override
-    public Video getVideoById(long id) {
-        return storageServiceProvider.getVideoById(id)
+    public VideoResponseDto getVideoById(long id) {
+        Video video = storageServiceProvider.getVideoById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Video not found")); // create a generic not found
                                                                                     // exception later
+        return VideoResponseDto.fromEntity(video);
     }
 
     @Override
@@ -62,6 +68,11 @@ public class StorageServiceImpl implements StorageService {
         return storageServiceProvider.findEntityByTypeAndId(resourceType, id)
                 .orElseThrow(() -> new EntityNotFoundException("File not found")); // create a generic not found
                                                                                    // exception later
+    }
+
+    @Override
+    public void deleteAllFilesByModuleId(Long moduleId) {
+        storageServiceProvider.deleteAllFilesByModuleId(moduleId);
     }
 
 }

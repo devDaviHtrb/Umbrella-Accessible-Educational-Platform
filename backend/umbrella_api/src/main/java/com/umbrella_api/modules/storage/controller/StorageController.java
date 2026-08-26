@@ -2,21 +2,21 @@ package com.umbrella_api.modules.storage.controller;
 
 import com.umbrella_api.common.dto.GenericResponse;
 import com.umbrella_api.common.security.CustomUserDetails;
+import com.umbrella_api.modules.FileDb.dto.FileUploadResponse;
 import com.umbrella_api.modules.storage.api.StorageService;
 import com.umbrella_api.modules.storage.common.StorageFileEntity;
-
-import com.umbrella_api.modules.storage.model.Image;
-import com.umbrella_api.modules.storage.model.RawFile;
-import com.umbrella_api.modules.storage.model.Video;
+import com.umbrella_api.modules.storage.dto.ImageResponseDto;
+import com.umbrella_api.modules.storage.dto.RawFileResponseDto;
+import com.umbrella_api.modules.storage.dto.VideoResponseDto;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.User;
+
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/storage")
+@RequestMapping("/api/public/storage")
 public class StorageController {
 
     private final StorageService storageService;
@@ -26,7 +26,7 @@ public class StorageController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<GenericResponse> uploadFile(
+    public ResponseEntity<FileUploadResponse> uploadFile(
             @RequestParam("file") MultipartFile file,
             @RequestParam("resourceType") String resourceType,
             @RequestParam(value = "alternativeText", required = false) String alternativeText,
@@ -35,7 +35,7 @@ public class StorageController {
             @RequestParam(value = "moduleId", required = false) Long moduleId,
             @AuthenticationPrincipal CustomUserDetails loggedUser) {
 
-        GenericResponse response = storageService.upload(
+        FileUploadResponse response = storageService.upload(
                 file,
                 resourceType,
                 alternativeText,
@@ -44,27 +44,23 @@ public class StorageController {
                 moduleId,
                 loggedUser);
 
-        if (response.status().equalsIgnoreCase("Error")) {
-            return ResponseEntity.status(400).body(response);
-        }
-
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/image/{id}")
-    public ResponseEntity<Image> getImageById(@PathVariable long id) {
+    public ResponseEntity<ImageResponseDto> getImageById(@PathVariable long id) {
         return ResponseEntity.ok(storageService.getImageById(id));
 
     }
 
     @GetMapping("/video/{id}")
-    public ResponseEntity<Video> getVideoById(@PathVariable long id) {
+    public ResponseEntity<VideoResponseDto> getVideoById(@PathVariable long id) {
         return ResponseEntity.ok(storageService.getVideoById(id));
 
     }
 
     @GetMapping("/raw/{id}")
-    public ResponseEntity<RawFile> getRawById(@PathVariable long id) {
+    public ResponseEntity<RawFileResponseDto> getRawById(@PathVariable long id) {
         return ResponseEntity.ok(storageService.getRawFileById(id));
     }
 

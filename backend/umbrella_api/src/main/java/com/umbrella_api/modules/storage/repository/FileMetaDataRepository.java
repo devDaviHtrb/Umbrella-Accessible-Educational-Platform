@@ -5,6 +5,8 @@ import com.umbrella_api.modules.storage.model.Image;
 import com.umbrella_api.modules.storage.model.RawFile;
 import com.umbrella_api.modules.storage.model.Video;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface FileMetaDataRepository extends JpaRepository<FileMetaData, Object> {
@@ -14,4 +16,6 @@ public interface FileMetaDataRepository extends JpaRepository<FileMetaData, Obje
     // JpaRepository methods
 
     FileMetaData findByVideo(Video video);
+
+    List<FileMetaData> findByModuleId(Long id);
 }

@@ -3,9 +3,13 @@ package com.umbrella_api.modules.storage.model;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.umbrella_api.modules.FileDb.dto.FileUploadResponse;
 import com.umbrella_api.modules.storage.common.BaseFileEntity;
+import com.umbrella_api.modules.user.model.UserModel;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
@@ -35,8 +39,9 @@ public class Image extends BaseFileEntity {
     @Column(nullable = false, length = 500)
     private String alternativeText;
 
-    @Column(name = "user_id", nullable = true)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = true)
+    private UserModel user;
 
     @OneToOne(mappedBy = "image")
     @JsonManagedReference
