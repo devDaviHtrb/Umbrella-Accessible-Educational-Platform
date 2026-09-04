@@ -1,6 +1,7 @@
 package com.umbrella_api.modules.user.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.umbrella_api.modules.ai.model.IaChat;
 import com.umbrella_api.modules.schedule.model.Events;
 import com.umbrella_api.modules.schedule.model.UserEvents;
 import jakarta.persistence.*;
@@ -56,6 +57,10 @@ public class UserModel {
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Events> createdEvents = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<IaChat> chatsIa;
 
     @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
