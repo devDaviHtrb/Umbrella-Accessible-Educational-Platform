@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: umbrela_api
+  profiles:
+    active: h2
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USER}
+    password: ${DB_PASS}
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 3600000
+
+gemini:
+  api:
+    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=
+    key: ${GEMINI_API_KEY}
+  config:
+    maxTokenOut: 200
+    systemInstruction: "generic instruction"
+    temp: 0.5
+    
+cloudinary:
+  cloud_name: ${CLOUDiNARY_NAME}
+  api_key: ${CLOUDiNARY_KEY}
+  api_secret: ${CLOUDiNARY_SECRET}
+
+
+logging:
+  level:
+    org:
+      springframework:
+        security: TRACE

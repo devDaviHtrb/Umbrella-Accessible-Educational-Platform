@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html class="light" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Umbrella - Cadastro</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="src/scripts/config.js"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#f2f3f9",
+                        "surface": "#f8f9ff",
+                        "secondary-fixed": "#d7e2ff",
+                        "secondary-container": "#a9c4fd",
+                        "on-secondary-container": "#355082",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-bright": "#f8f9ff",
+                        "on-tertiary-fixed-variant": "#00504d",
+                        "on-secondary-fixed": "#001a40",
+                        "error-container": "#ffdad6",
+                        "primary-fixed": "#d9e2ff",
+                        "tertiary": "#004d4a",
+                        "surface-variant": "#e1e2e8",
+                        "inverse-on-surface": "#eff0f6",
+                        "on-primary-fixed-variant": "#00419d",
+                        "primary": "#003f98",
+                        "on-surface": "#191c20",
+                        "on-primary": "#ffffff",
+                        "primary-container": "#1a56be",
+                        "primary-fixed-dim": "#b1c5ff",
+                        "on-tertiary-container": "#84e5df",
+                        "on-surface-variant": "#434653",
+                        "background": "#f8f9ff",
+                        "tertiary-container": "#006764",
+                        "tertiary-fixed-dim": "#76d6d1",
+                        "secondary": "#435e91",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#2e3135",
+                        "surface-container-high": "#e7e8ee",
+                        "tertiary-fixed": "#92f3ed",
+                        "on-background": "#191c20",
+                        "on-secondary-fixed-variant": "#2a4678",
+                        "on-primary-fixed": "#001946",
+                        "on-tertiary-fixed": "#00201f",
+                        "on-primary-container": "#c5d4ff",
+                        "on-error-container": "#93000a",
+                        "inverse-primary": "#b1c5ff",
+                        "on-tertiary": "#ffffff",
+                        "outline": "#737784",
+                        "outline-variant": "#c3c6d5",
+                        "surface-container": "#eceef3",
+                        "secondary-fixed-dim": "#acc7ff",
+                        "surface-tint": "#1f59c1",
+                        "surface-dim": "#d8dae0",
+                        "surface-container-highest": "#e1e2e8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Lexend"],
+                        "display": ["Lexend"],
+                        "body": ["Lexend"],
+                        "label": ["Lexend"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .gradient-button {
+            background: linear-gradient(135deg, #003f98 0%, #1a56be 100%);
+        }
+        body {
+            font-family: 'Lexend', sans-serif;
+            background-color: #f8f9ff;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c3c6d5;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-0 m-0 overflow-hidden">
+<main class="flex w-full h-screen">
+    
+    <section class="hidden lg:flex lg:w-5/12 relative bg-primary items-center justify-center overflow-hidden">
+        <div class="absolute inset-0 z-0 opacity-40">
+            <img class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAcXC9sikDzf4_fFOtDgK3QTGl_stkyNsLHE1vhrL1LnGv0GtmnRkzdzTl8CS_iewpEou-ETPf2OVCQtB7VXk36BC08at13nSp-SitZv24ZIhKwXO65IVuPE8eVhvCG2dz7_nomd_ZiqXGFz3G_xEPUMMjFAT9CoZ2KGh9NGnOUVuM4KRnDFgsD5ZLHfG8WK9RvY8SLdO8McbzrnANz_eFDWvPbT4xLNUwL7g8Hh_l_smyQ-t6iqCy7sEv-MIiGe45hpKxGypwRs6XQ"/>
+        </div>
+        <div class="relative z-10 p-12 max-w-md">
+            <div class="inline-flex items-center gap-3 mb-8">
+                <div class="w-12 h-12 rounded-xl gradient-button flex items-center justify-center text-white shadow-lg">
+                    <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">shield</span>
+                </div>
+                <span class="text-3xl font-extrabold tracking-tight text-white">Umbrella</span>
+            </div>
+            <h1 class="text-3xl font-extrabold text-white leading-tight mb-6">
+                Crie sua conta e comece sua jornada.
+            </h1>
+            <p class="text-white/80 leading-relaxed font-light mb-6">
+                Faça parte de uma comunidade inclusiva projetada para extrair o melhor do seu potencial acadêmico.
+            </p>
+        </div>
+        <div class="absolute bottom-0 right-0 w-96 h-96 bg-primary-container/20 rounded-full blur-[120px] -mr-48 -mb-48"></div>
+    </section>
+
+    <section class="w-full lg:w-7/12 bg-surface-container-low flex flex-col items-center justify-center px-6 sm:px-12 md:px-20 relative h-full">
+        <div class="absolute top-6 right-8 flex items-center gap-4 z-20 bg-surface-container-low/80 backdrop-blur-md p-2 rounded-full">
+            <button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-highest transition-colors" title="Aumentar Texto">
+                <span class="material-symbols-outlined">text_fields</span>
+            </button>
+            <button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-highest transition-colors" title="Alto Contraste">
+                <span class="material-symbols-outlined">contrast</span>
+            </button>
+        </div>
+
+        <div class="w-full max-w-2xl h-[85vh] flex flex-col justify-between overflow-y-auto pr-2 custom-scrollbar pt-12">
+            <div>
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold text-on-surface mb-2">Junte-se à Umbrella</h2>
+                    <p class="text-body-md text-on-surface-variant">Preencha seus dados para configurar seu ambiente personalizado.</p>
+                </div>
+
+                <form id="registerForm" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        <div class="space-y-2">
+                            <label class="block text-label-md font-medium text-on-surface ml-1" for="name">Nome Completo</label>
+                            <div class="relative group">
+                                <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-outline group-focus-within:text-primary transition-colors">
+                                    <span class="material-symbols-outlined">person</span>
+                                </div>
+                                <input class="w-full h-14 pl-12 pr-4 bg-surface-container-highest border-none rounded-xl text-on-surface placeholder:text-outline/50 focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest transition-all" id="name" name="name" placeholder="Como quer ser chamado" required type="text"/>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-label-md font-medium text-on-surface ml-1" for="email">E-mail</label>
+                            <div class="relative group">
+                                <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-outline group-focus-within:text-primary transition-colors">
+                                    <span class="material-symbols-outlined">mail</span>
+                                </div>
+                                <input class="w-full h-14 pl-12 pr-4 bg-surface-container-highest border-none rounded-xl text-on-surface placeholder:text-outline/50 focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest transition-all" id="email" name="email" placeholder="exemplo@umbrella.edu.br" required type="email"/>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-label-md font-medium text-on-surface ml-1" for="password">Senha</label>
+                            <div class="relative group">
+                                <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-outline group-focus-within:text-primary transition-colors">
+                                    <span class="material-symbols-outlined">lock</span>
+                                </div>
+                                <input class="w-full h-14 pl-12 pr-12 bg-surface-container-highest border-none rounded-xl text-on-surface placeholder:text-outline/50 focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest transition-all" id="password" name="password" placeholder="••••••••" required type="password"/>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <label class="block text-label-md font-medium text-on-surface ml-1" for="type">Tipo de Perfil</label>
+                            <div class="relative group">
+                                <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-outline group-focus-within:text-primary transition-colors">
+                                    <span class="material-symbols-outlined">badge</span>
+                                </div>
+                                <select class="w-full h-14 pl-12 pr-4 bg-surface-container-highest border-none rounded-xl text-on-surface focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest transition-all appearance-none cursor-pointer" id="type" name="type" required>
+                                    <option value="" disabled selected>Selecione seu perfil</option>
+                                    <option value="user">Aluno</option>
+                                    <option value="teacher">Professor / Tutor</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2 md:col-span-2">
+                            <label class="block text-label-md font-medium text-on-surface ml-1" for="avatar">Foto de perfil <span class="text-outline text-xs">(Opcional)</span></label>
+                            <div class="relative group">
+                                <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-outline group-focus-within:text-primary transition-colors">
+                                    <span class="material-symbols-outlined">file_upload</span>
+                                </div>
+                                <input class="w-full h-14 pl-12 pr-4 pt-3 bg-surface-container-highest border-none rounded-xl text-on-surface focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest transition-all file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer" id="avatar" name="avatar" type="file" accept="image/*"/>
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-2 pt-2 border-t border-outline-variant/30 mt-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-primary">Preferências de Acessibilidade</span>
+                        </div>
+
+                        <div class="md:col-span-2 bg-surface-container-highest p-4 rounded-xl flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="material-symbols-outlined text-outline">psychology</span>
+                                <div>
+                                    <label for="is_neurodivergent" class="font-medium text-sm text-on-surface block cursor-pointer">Neurodivergência</label>
+                                    <span class="text-xs text-on-surface-variant">Possui alguma neurodivergência (ex: TDAH, TEA, Dislexia)?</span>
+                                </div>
+                            </div>
+                            <input class="w-5 h-5 text-primary border-outline-variant rounded-lg focus:ring-primary focus:ring-offset-0 cursor-pointer" id="is_neurodivergent" type="checkbox"/>
+                        </div>
+
+                        <div id="neurodivergent_details_wrapper" class="hidden md:col-span-2 space-y-2 transition-all duration-300">
+                            <label class="block text-label-md font-medium text-on-surface ml-1" for="neurodivergent_details">Especifique sua neurodivergência</label>
+                            <div class="relative group">
+                                <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none text-outline group-focus-within:text-primary transition-colors">
+                                    <span class="material-symbols-outlined">edit_note</span>
+                                </div>
+                                <input class="w-full h-14 pl-12 pr-4 bg-surface-container-highest border-none rounded-xl text-on-surface placeholder:text-outline/50 focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest transition-all" id="neurodivergent_details" name="neurodivergent" placeholder="Ex: TDAH, TEA, etc." type="text"/>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <button class="w-full h-14 gradient-button text-white font-bold rounded-xl shadow-lg hover:shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 mt-4" type="submit">
+                        <span>Finalizar Cadastro</span>
+                        <span class="material-symbols-outlined">person_add</span>
+                    </button>
+                </form>
+            </div>
+
+            <div class="mt-8 mb-4 text-center">
+                <p class="text-body-sm text-on-surface-variant">
+                    Já possui uma conta institucional? 
+                    <a class="text-primary font-bold hover:underline" href="#">Faça login aqui.</a>
+                </p>
+            </div>
+        </div>
+
+        <footer class="w-full px-8 py-4 text-center mt-auto">
+            <div class="flex items-center justify-center gap-6 text-label-sm text-outline">
+                <a class="hover:text-primary transition-colors" href="#">Termos de Uso</a>
+                <div class="w-1 h-1 rounded-full bg-outline-variant"></div>
+                <a class="hover:text-primary transition-colors" href="#">Privacidade</a>
+                <div class="w-1 h-1 rounded-full bg-outline-variant"></div>
+                <span>© 2024 Umbrella Inc.</span>
+            </div>
+        </footer>
+    </section>
+</main>
+
+<script>
+    const checkboxNeuro = document.getElementById('is_neurodivergent');
+    const wrapperDetails = document.getElementById('neurodivergent_details_wrapper');
+    const inputDetails = document.getElementById('neurodivergent_details');
+    const form = document.getElementById('registerForm');
+
+    checkboxNeuro.addEventListener('change', (e) => {
+        if (e.target.checked) {
+            wrapperDetails.classList.remove('hidden');
+            inputDetails.required = true;
+        } else {
+            wrapperDetails.classList.add('hidden');
+            inputDetails.required = false;
+            inputDetails.value = '';
+        }
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const body = {
+            name: document.getElementById('name').value,
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value,
+            //role: document.getElementById('type').value,
+            neurodivergence: checkboxNeuro.checked
+                ? inputDetails.value
+                : null
+        };
+
+        const apiUrl = `${window.APP_CONFIG.API_URL || 'http://127.0.0.1:8080'}/api/auth/register`;
+
+        try {
+            const response = await fetch(apiUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                alert("Cadastro realizado com sucesso!");
+                console.log(data);
+            } else {
+                const error = await response.text();
+                console.error(error);
+                alert(`Erro ${response.status}: ${error}`);
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Não foi possível conectar ao servidor.");
+        }
+    });
+</script>
+</body>
+</html>
