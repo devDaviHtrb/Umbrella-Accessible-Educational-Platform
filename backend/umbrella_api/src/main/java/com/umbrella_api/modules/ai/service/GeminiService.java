@@ -7,7 +7,7 @@ import com.umbrella_api.modules.ai.dto.AiResponse;
 import com.umbrella_api.modules.ai.infra.GeminiProvider;
 
 @Service
-public class GeminiService implements AiService {
+public class GeminiService{
 
     private final GeminiProvider geminiProvider;
 
