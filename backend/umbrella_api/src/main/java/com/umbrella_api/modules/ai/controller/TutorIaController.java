@@ -31,42 +31,38 @@ public class TutorIaController {
     }
 
     @PostMapping("/chat/{chatId}/ask")
-    @PreAuthorize("authentication.principal != 'anonymousUser' && @tutorIaController.isChatOwner(#chatId, authentication.principal.userModel.id)")
+    @PreAuthorize("@securityEvaluator.isChatOwner(#chatId, principal)")
     public ResponseEntity<String> askTutor(@PathVariable Long chatId, @RequestParam String ask) {
         String response = aiService.chatTutor(chatId, ask);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/user/{userId}/chats")
-    @PreAuthorize("authentication.principal != 'anonymousUser' && #userId == authentication.principal.userModel.id")
+    @PreAuthorize("@securityEvaluator.isChatOwner(#chatId, principal)")
     public ResponseEntity<List<IaChat>> getUserChats(@PathVariable Long userId) {
         List<IaChat> chats = aiService.getChatsByUser(userId);
         return ResponseEntity.ok(chats);
     }
 
     @GetMapping("/chat/{chatId}")
-    @PostAuthorize("authentication.principal != 'anonymousUser' && returnObject.body.user.id == authentication.principal.userModel.id")
+    @PostAuthorize("@securityEvaluator.isChatOwner(#chatId, principal)")
     public ResponseEntity<IaChat> getChat(@PathVariable Long chatId) {
         IaChat chat = aiService.getChatById(chatId);
         return ResponseEntity.ok(chat);
     }
 
     @GetMapping("/chat/{chatId}/history")
-    @PreAuthorize("authentication.principal != 'anonymousUser' && @tutorIaController.isChatOwner(#chatId, authentication.principal.userModel.id)")
+    @PreAuthorize("@securityEvaluator.isChatOwner(#chatId, principal)")
     public ResponseEntity<List<TutorIaInteractions>> getHistory(@PathVariable Long chatId) {
         List<TutorIaInteractions> history = aiService.getChatHistory(chatId);
         return ResponseEntity.ok(history);
     }
 
     @DeleteMapping("/chat/{chatId}")
-    @PreAuthorize("authentication.principal != 'anonymousUser' && @tutorIaController.isChatOwner(#chatId, authentication.principal.userModel.id)")
+    @PreAuthorize("@securityEvaluator.isChatOwner(#chatId, principal)")
     public ResponseEntity<Void> deleteChat(@PathVariable Long chatId) {
         aiService.removeChat(chatId);
         return ResponseEntity.noContent().build();
     }
 
-    public boolean isChatOwner(Long chatId, Long userId) {
-        IaChat chat = aiService.getChatById(chatId);
-        return chat.getUser().getId().equals(userId);
-    }
 }
