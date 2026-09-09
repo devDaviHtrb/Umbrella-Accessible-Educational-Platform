@@ -1,53 +1,89 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
 import { Platform } from 'react-native';
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
-export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-  },
-  dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
-  },
+const palette = {
+  primary: '#153E90',
+  primaryStrong: '#0D2F7A',
+  primaryLight: '#4C74C9',
+  tertiary: '#0B4F4A',
+  tertiaryLight: '#DCF3EE',
+  secondaryFixed: '#D7E2FF',
+  background: '#F8F9FF',
+  surface: '#FFFFFF',
+  surfaceContainerLow: '#F2F3F9',
+  onSurface: '#11181C',
+  onSurfaceVariant: '#434653',
+  outline: '#E3E5EF',
+  error: '#BA1A1A',
+  success: '#1E7D5A',
 };
 
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-  },
-});
+const lightTheme = {
+  text: palette.onSurface,
+  textSecondary: palette.onSurfaceVariant,
+  background: palette.background,
+  surface: palette.surface,
+  surfaceContainerLow: palette.surfaceContainerLow,
+  tint: palette.primary,
+  primary: palette.primary,
+  primaryStrong: palette.primaryStrong,
+  primaryLight: palette.primaryLight,
+  tertiary: palette.tertiary,
+  tertiaryLight: palette.tertiaryLight,
+  secondaryFixed: palette.secondaryFixed,
+  outline: palette.outline,
+  error: palette.error,
+  success: palette.success,
+  icon: palette.onSurfaceVariant,
+  tabIconDefault: palette.onSurfaceVariant,
+  tabIconSelected: palette.primary,
+};
+
+export const Colors = {
+  light: lightTheme,
+  dark: lightTheme,
+};
+
+export const Spacing = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+  xxxl: 32,
+};
+
+export const Radius = {
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+  pill: 999,
+};
+
+export const FontFamily = {
+  regular: Platform.select({ default: 'Lexend_400Regular' }),
+  medium: Platform.select({ default: 'Lexend_500Medium' }),
+  semiBold: Platform.select({ default: 'Lexend_600SemiBold' }),
+  bold: Platform.select({ default: 'Lexend_700Bold' }),
+};
+
+type TypeStyle = {
+  fontFamily: string;
+  fontSize: number;
+  lineHeight: number;
+};
+
+export const Typography: Record<
+  'display' | 'title' | 'headline' | 'body' | 'bodyMedium' | 'label' | 'caption',
+  TypeStyle
+> = {
+  display: { fontFamily: FontFamily.bold!, fontSize: 28, lineHeight: 34 },
+  title: { fontFamily: FontFamily.bold!, fontSize: 22, lineHeight: 28 },
+  headline: { fontFamily: FontFamily.semiBold!, fontSize: 17, lineHeight: 24 },
+  body: { fontFamily: FontFamily.regular!, fontSize: 15, lineHeight: 22 },
+  bodyMedium: { fontFamily: FontFamily.medium!, fontSize: 15, lineHeight: 22 },
+  label: { fontFamily: FontFamily.medium!, fontSize: 13, lineHeight: 18 },
+  caption: { fontFamily: FontFamily.regular!, fontSize: 12, lineHeight: 16 },
+};
