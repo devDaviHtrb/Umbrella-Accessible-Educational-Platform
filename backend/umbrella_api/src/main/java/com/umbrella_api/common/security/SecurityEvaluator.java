@@ -1,7 +1,6 @@
 package com.umbrella_api.common.security;
 
 import com.umbrella_api.modules.course.api.CourseService;
-import com.umbrella_api.modules.course.model.CourseUserRelation;
 import com.umbrella_api.modules.course.model.Courses;
 import com.umbrella_api.modules.user.model.UserModel;
 import org.springframework.stereotype.Component;
@@ -19,11 +18,14 @@ public class SecurityEvaluator {
         this.courseService = courseService;
     }
 
+    public boolean isNotLoggedUser(CustomUserDetails userDetails){
+        return userDetails == null || userDetails.getUserModel() == null;
+    }
 
     public boolean isChatOwner(Long chatId, CustomUserDetails userDetails) {
-        if (userDetails == null || userDetails.getUserModel() == null) {
+        if(isNotLoggedUser(userDetails)){
             return false;
-        }
+        };
 
         IaChat chat = aiService.getChatById(chatId);
         return chat != null
@@ -32,9 +34,9 @@ public class SecurityEvaluator {
     }
 
     public boolean isCourseOwner(Long courseId, CustomUserDetails userDetails){
-        if (userDetails == null || userDetails.getUserModel() == null) {
+        if(isNotLoggedUser(userDetails)){
             return false;
-        }
+        };
 
         Courses course = courseService.getCourseById(courseId);
         UserModel creator = courseService.getCourseCreatorById(courseId);
@@ -45,9 +47,9 @@ public class SecurityEvaluator {
 
 
     public boolean isSameUser(Long userId, CustomUserDetails userDetails) {
-        if (userDetails == null || userDetails.getUserModel() == null) {
+        if(isNotLoggedUser(userDetails)){
             return false;
-        }
+        };
         return userDetails.getUserModel().getId().equals(userId);
     }
 }
