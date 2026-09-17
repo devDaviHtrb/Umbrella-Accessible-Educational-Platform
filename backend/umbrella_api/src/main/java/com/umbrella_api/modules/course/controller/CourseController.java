@@ -1,85 +1,72 @@
 package com.umbrella_api.modules.course.controller;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 import com.umbrella_api.common.dto.GenericResponse;
 import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.course.api.CourseService;
-import com.umbrella_api.modules.course.dto.ActivityCreateRequestDto;
-import com.umbrella_api.modules.course.dto.ActivityGetResponseDto;
-import com.umbrella_api.modules.course.dto.ActivitySubmissionResponseDto;
-import com.umbrella_api.modules.course.dto.ActivitySubmissionUpdateRequestDto;
-import com.umbrella_api.modules.course.dto.ActivityUpdateRequestDto;
-import com.umbrella_api.modules.course.dto.AlternativeCreateRequestDto;
-import com.umbrella_api.modules.course.dto.AlternativeUpdateRequestDto;
-import com.umbrella_api.modules.course.dto.CourseDto;
-import com.umbrella_api.modules.course.dto.CourseGetResponseDto;
-import com.umbrella_api.modules.course.dto.CourseResponseDto;
-import com.umbrella_api.modules.course.dto.EssayCreateRequestDto;
-import com.umbrella_api.modules.course.dto.EssayUpdateRequestDto;
-import com.umbrella_api.modules.course.dto.ModuleRequestDto;
-import com.umbrella_api.modules.course.dto.ModulesResponseDto;
-import com.umbrella_api.modules.course.dto.QuestionCreateRequestDto;
-import com.umbrella_api.modules.course.dto.QuestionGetResponseDto;
-import com.umbrella_api.modules.course.dto.QuestionUpdateRequestDto;
-import com.umbrella_api.modules.course.dto.StudentAnswerResponseDto;
-import com.umbrella_api.modules.course.dto.StudentAnswerUpdateRequestDto;
-import com.umbrella_api.modules.course.dto.SubjectsResponseDto;
-import com.umbrella_api.modules.course.dto.SubmitActivityRequestDto;
-import com.umbrella_api.modules.course.dto.UpdateModuleDto;
-import com.umbrella_api.modules.course.model.Activities;
-import com.umbrella_api.modules.course.model.Alternatives;
-import com.umbrella_api.modules.course.model.Courses;
-import com.umbrella_api.modules.course.model.Essays;
-import com.umbrella_api.modules.course.model.Modules;
-import com.umbrella_api.modules.course.model.Questions;
-import com.umbrella_api.modules.course.model.Subjects;
+import com.umbrella_api.modules.course.dto.*;
+import com.umbrella_api.modules.course.model.*;
 import com.umbrella_api.modules.user.model.UserModel;
 
 import jakarta.validation.Valid;
 
-import java.util.List;
-
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-
 @RestController
 @RequestMapping("/api/public/courses")
 public class CourseController {
+
     private final CourseService courseService;
 
     public CourseController(CourseService courseService) {
         this.courseService = courseService;
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<Courses> registerCourse(@RequestBody @Valid CourseDto courseData,
-            @AuthenticationPrincipal CustomUserDetails loggedUser) {
+    // ==========================================
+    // COURSES
+    // ==========================================
 
+    @PostMapping("/register")
+    public ResponseEntity<Courses> registerCourse(
+            @RequestBody @Valid CourseDto courseData,
+            @AuthenticationPrincipal CustomUserDetails loggedUser) {
         return ResponseEntity.ok(courseService.createCourse(courseData, loggedUser));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CourseResponseDto> getCourseById(@PathVariable long id) {
+    public ResponseEntity<CourseResponseDto> getCourseById(@PathVariable Long id) {
         Courses course = courseService.getCourseById(id);
         UserModel creator = courseService.getCourseCreatorById(id);
         return ResponseEntity.ok(CourseResponseDto.fromEntity(course, creator));
     }
 
-    @PostMapping("/add_module")
-    public ResponseEntity<Modules> addModule(@RequestBody @Valid ModuleRequestDto moduleData) {
+    @PreAuthorize("@securityEvaluator.isCourseOwner(#id, principal)")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<GenericResponse> deleteCourse(@PathVariable Long id) {
+        return ResponseEntity.ok(courseService.deleteCourse(id));
+    }
+
+    // ==========================================
+    // MODULES
+    // ==========================================
+
+    @PreAuthorize("@securityEvaluator.isCourseOwner(#courseId, principal)")
+    @PostMapping("/{courseId}/add_module")
+    public ResponseEntity<Modules> addModule(
+            @PathVariable Long courseId,
+            @RequestBody @Valid ModuleRequestDto moduleData) {
         return ResponseEntity.ok(courseService.createModule(moduleData));
     }
 
-    @PutMapping("/modules/{id}")
-    public ResponseEntity<Modules> updateModule(@PathVariable Long id,
+    @PreAuthorize("@securityEvaluator.isCourseOwner(#courseId, principal)")
+    @PutMapping("/{courseId}/modules/{id}")
+    public ResponseEntity<Modules> updateModule(
+            @PathVariable Long courseId,
+            @PathVariable Long id,
             @RequestBody @Valid UpdateModuleDto moduleData) {
         return ResponseEntity.ok(courseService.updateModule(id, moduleData));
     }
@@ -87,7 +74,6 @@ public class CourseController {
     @GetMapping("/{id}/modules")
     public ResponseEntity<List<ModulesResponseDto>> getModulesByCourse(@PathVariable Long id) {
         List<Modules> modules = courseService.getModulesByCourse(id);
-
         return ResponseEntity.ok(ModulesResponseDto.fromEntityList(modules));
     }
 
@@ -97,17 +83,18 @@ public class CourseController {
         return ResponseEntity.ok(ModulesResponseDto.fromEntity(module));
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<GenericResponse> deleteCourse(@PathVariable Long id) {
-        return ResponseEntity.ok(courseService.deleteCourse(id));
-    }
-
-    @DeleteMapping("/modules/{id}")
-    public ResponseEntity<GenericResponse> deleteModule(@PathVariable Long id) {
+    @PreAuthorize("@securityEvaluator.isCourseOwner(#courseId, principal)")
+    @DeleteMapping("/{courseId}/modules/{id}")
+    public ResponseEntity<GenericResponse> deleteModule(
+            @PathVariable Long courseId,
+            @PathVariable Long id) {
         return ResponseEntity.ok(courseService.deleteModule(id));
     }
 
-    // Create errollment crud
+    // ==========================================
+    // ENROLLMENTS & SUBJECTS
+    // ==========================================
+
     @PostMapping("/{id}/enrrolment/{userId}")
     public ResponseEntity<GenericResponse> createUserRelation(@PathVariable Long id, @PathVariable Long userId) {
         return ResponseEntity.ok(courseService.createUserRelation(userId, id));
@@ -137,12 +124,17 @@ public class CourseController {
     public ResponseEntity<List<CourseGetResponseDto>> gerCoursesBySubject(@PathVariable Long id) {
         return ResponseEntity.ok(courseService.getCoursesBySubject(id));
     }
+
     // ==========================================
-    // ACTIVITIES CRUD
+    // ACTIVITIES
     // ==========================================
 
-    @PostMapping("/activities")
-    public ResponseEntity<Activities> createActivity(@RequestBody @Valid ActivityCreateRequestDto request) {
+    @PreAuthorize("@securityEvaluator.isCourseOwner(#courseId, principal)")
+    @PostMapping("/{courseId}/modules/{moduleId}/activities")
+    public ResponseEntity<Activities> createActivity(
+            @PathVariable Long courseId,
+            @PathVariable Long moduleId,
+            @RequestBody @Valid ActivityCreateRequestDto request) {
         return ResponseEntity.ok(courseService.createActivity(request));
     }
 
@@ -156,24 +148,36 @@ public class CourseController {
         return ResponseEntity.ok(courseService.getActivitiesByModuleId(moduleId));
     }
 
-    @PutMapping("/activities/{id}")
+    @PreAuthorize("@securityEvaluator.isCourseOwner(#courseId, principal)")
+    @PutMapping("/{courseId}/modules/{moduleId}/activities/{id}")
     public ResponseEntity<Activities> updateActivity(
+            @PathVariable Long courseId,
+            @PathVariable Long moduleId,
             @PathVariable Long id,
             @RequestBody @Valid ActivityUpdateRequestDto request) {
         return ResponseEntity.ok(courseService.updateActivity(id, request));
     }
 
-    @DeleteMapping("/activities/{id}")
-    public ResponseEntity<GenericResponse> deleteActivity(@PathVariable Long id) {
+    @PreAuthorize("@securityEvaluator.isCourseOwner(#courseId, principal)")
+    @DeleteMapping("/{courseId}/modules/{moduleId}/activities/{id}")
+    public ResponseEntity<GenericResponse> deleteActivity(
+            @PathVariable Long courseId,
+            @PathVariable Long moduleId,
+            @PathVariable Long id) {
         return ResponseEntity.ok(courseService.deleteActivity(id));
     }
 
     // ==========================================
-    // QUESTIONS CRUD
+    // QUESTIONS
     // ==========================================
 
-    @PostMapping("/questions")
-    public ResponseEntity<Questions> createQuestion(@RequestBody @Valid QuestionCreateRequestDto request) {
+    @PreAuthorize("@securityEvaluator.isCourseOwner(#courseId, principal)")
+    @PostMapping("/{courseId}/modules/{moduleId}/activities/{activityId}/questions")
+    public ResponseEntity<Questions> createQuestion(
+            @PathVariable Long courseId,
+            @PathVariable Long moduleId,
+            @PathVariable Long activityId,
+            @RequestBody @Valid QuestionCreateRequestDto request) {
         return ResponseEntity.ok(courseService.createQuestion(request));
     }
 
@@ -182,95 +186,133 @@ public class CourseController {
         return ResponseEntity.ok(courseService.getQuestionById(id));
     }
 
-    @PutMapping("/questions/{id}")
+    @PreAuthorize("@securityEvaluator.isCourseOwner(#courseId, principal)")
+    @PutMapping("/{courseId}/modules/{moduleId}/activities/{activityId}/questions/{id}")
     public ResponseEntity<Questions> updateQuestion(
+            @PathVariable Long courseId,
+            @PathVariable Long moduleId,
+            @PathVariable Long activityId,
             @PathVariable Long id,
             @RequestBody @Valid QuestionUpdateRequestDto request) {
         return ResponseEntity.ok(courseService.updateQuestion(id, request));
     }
 
-    @DeleteMapping("/questions/{id}")
-    public ResponseEntity<GenericResponse> deleteQuestion(@PathVariable Long id) {
+    @PreAuthorize("@securityEvaluator.isCourseOwner(#courseId, principal)")
+    @DeleteMapping("/{courseId}/modules/{moduleId}/activities/{activityId}/questions/{id}")
+    public ResponseEntity<GenericResponse> deleteQuestion(
+            @PathVariable Long courseId,
+            @PathVariable Long moduleId,
+            @PathVariable Long activityId,
+            @PathVariable Long id) {
         return ResponseEntity.ok(courseService.deleteQuestion(id));
     }
 
     // ==========================================
-    // ALTERNATIVES CRUD
+    // ALTERNATIVES
     // ==========================================
 
-    @PostMapping("/alternatives")
-    public ResponseEntity<Alternatives> createAlternative(@RequestBody @Valid AlternativeCreateRequestDto request) {
+    @PreAuthorize("@securityEvaluator.isCourseOwner(#courseId, principal)")
+    @PostMapping("/{courseId}/modules/{moduleId}/activities/{activityId}/questions/{questionId}/alternatives")
+    public ResponseEntity<Alternatives> createAlternative(
+            @PathVariable Long courseId,
+            @PathVariable Long moduleId,
+            @PathVariable Long activityId,
+            @PathVariable Long questionId,
+            @RequestBody @Valid AlternativeCreateRequestDto request) {
         return ResponseEntity.ok(courseService.createAlternative(request));
     }
 
-    @PutMapping("/alternatives/{id}")
+    @PreAuthorize("@securityEvaluator.isCourseOwner(#courseId, principal)")
+    @PutMapping("/{courseId}/modules/{moduleId}/activities/{activityId}/questions/{questionId}/alternatives/{id}")
     public ResponseEntity<Alternatives> updateAlternative(
+            @PathVariable Long courseId,
+            @PathVariable Long moduleId,
+            @PathVariable Long activityId,
+            @PathVariable Long questionId,
             @PathVariable Long id,
             @RequestBody @Valid AlternativeUpdateRequestDto request) {
         return ResponseEntity.ok(courseService.updateAlternative(id, request));
     }
 
-    @DeleteMapping("/alternatives/{id}")
-    public ResponseEntity<GenericResponse> deleteAlternative(@PathVariable Long id) {
+    @PreAuthorize("@securityEvaluator.isCourseOwner(#courseId, principal)")
+    @DeleteMapping("/{courseId}/modules/{moduleId}/activities/{activityId}/questions/{questionId}/alternatives/{id}")
+    public ResponseEntity<GenericResponse> deleteAlternative(
+            @PathVariable Long courseId,
+            @PathVariable Long moduleId,
+            @PathVariable Long activityId,
+            @PathVariable Long questionId,
+            @PathVariable Long id) {
         return ResponseEntity.ok(courseService.deleteAlternative(id));
     }
 
     // ==========================================
-    // ESSAYS CRUD
+    // ESSAYS
     // ==========================================
 
-    @PostMapping("/essays")
-    public ResponseEntity<Essays> createEssay(@RequestBody @Valid EssayCreateRequestDto request) {
+    @PreAuthorize("@securityEvaluator.isCourseOwner(#courseId, principal)")
+    @PostMapping("/{courseId}/modules/{moduleId}/activities/{activityId}/questions/{questionId}/essays")
+    public ResponseEntity<Essays> createEssay(
+            @PathVariable Long courseId,
+            @PathVariable Long moduleId,
+            @PathVariable Long activityId,
+            @PathVariable Long questionId,
+            @RequestBody @Valid EssayCreateRequestDto request) {
         return ResponseEntity.ok(courseService.createEssay(request));
     }
 
-    @PutMapping("/essays/{id}")
+    @PreAuthorize("@securityEvaluator.isCourseOwner(#courseId, principal)")
+    @PutMapping("/{courseId}/modules/{moduleId}/activities/{activityId}/questions/{questionId}/essays/{id}")
     public ResponseEntity<Essays> updateEssay(
+            @PathVariable Long courseId,
+            @PathVariable Long moduleId,
+            @PathVariable Long activityId,
+            @PathVariable Long questionId,
             @PathVariable Long id,
             @RequestBody @Valid EssayUpdateRequestDto request) {
         return ResponseEntity.ok(courseService.updateEssay(id, request));
     }
 
-    @DeleteMapping("/essays/{id}")
-    public ResponseEntity<GenericResponse> deleteEssay(@PathVariable Long id) {
+    @PreAuthorize("@securityEvaluator.isCourseOwner(#courseId, principal)")
+    @DeleteMapping("/{courseId}/modules/{moduleId}/activities/{activityId}/questions/{questionId}/essays/{id}")
+    public ResponseEntity<GenericResponse> deleteEssay(
+            @PathVariable Long courseId,
+            @PathVariable Long moduleId,
+            @PathVariable Long activityId,
+            @PathVariable Long questionId,
+            @PathVariable Long id) {
         return ResponseEntity.ok(courseService.deleteEssay(id));
     }
 
     // ==========================================
-    // ACTIVITY SUBMISSIONS CRUD
+    // SUBMISSIONS & ANSWERS
     // ==========================================
 
-    @GetMapping("/submissions/{id}")
+    @GetMapping("/{courseId}/modules/{moduleId}/activities/{activityId}/submissions/{id}")
     public ResponseEntity<ActivitySubmissionResponseDto> getActivitySubmissionById(@PathVariable Long id) {
         return ResponseEntity.ok(courseService.getActivitySubmissionById(id));
     }
 
-    @GetMapping("/activities/{activityId}/submissions")
-    public ResponseEntity<List<ActivitySubmissionResponseDto>> getSubmissionsByActivityId(
-            @PathVariable Long activityId) {
+    @GetMapping("/{courseId}/modules/{moduleId}/activities/{activityId}/submissions")
+    public ResponseEntity<List<ActivitySubmissionResponseDto>> getSubmissionsByActivityId(@PathVariable Long activityId) {
         return ResponseEntity.ok(courseService.getSubmissionsByActivityId(activityId));
     }
 
-    @GetMapping("/users/{userId}/submissions")
+    @GetMapping("/{courseId}/modules/{moduleId}/activities/{activityId}/submissions/users/{userId}")
     public ResponseEntity<List<ActivitySubmissionResponseDto>> getSubmissionsByUserId(@PathVariable Long userId) {
         return ResponseEntity.ok(courseService.getSubmissionsByUserId(userId));
     }
 
-    @PutMapping("/submissions/{id}")
+    @PutMapping("/{courseId}/modules/{moduleId}/activities/{activityId}/submissions/{id}")
     public ResponseEntity<GenericResponse> updateActivitySubmission(
             @PathVariable Long id,
             @RequestBody @Valid ActivitySubmissionUpdateRequestDto request) {
         return ResponseEntity.ok(courseService.updateActivitySubmission(id, request));
     }
 
-    @DeleteMapping("/submissions/{id}")
+    @DeleteMapping("/{courseId}/modules/{moduleId}/activities/{activityId}/submissions/{id}")
     public ResponseEntity<GenericResponse> deleteActivitySubmission(@PathVariable Long id) {
         return ResponseEntity.ok(courseService.deleteActivitySubmission(id));
     }
-
-    // ==========================================
-    // STUDENT ANSWERS CRUD
-    // ==========================================
 
     @GetMapping("/student-answers/{id}")
     public ResponseEntity<StudentAnswerResponseDto> getStudentAnswerById(@PathVariable Long id) {
@@ -298,8 +340,6 @@ public class CourseController {
     public ResponseEntity<ActivitySubmissionResponseDto> submitActivity(
             @AuthenticationPrincipal CustomUserDetails loggedUser,
             @RequestBody @Valid SubmitActivityRequestDto data) {
-
         return ResponseEntity.ok(courseService.correctSubmission(data, loggedUser));
     }
-
 }
