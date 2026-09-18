@@ -49,17 +49,7 @@ public class CourseProvider {
 
     @Transactional
     public Courses createCourse(CourseDto courseData, CustomUserDetails loggedUser) {
-
-        Subjects subject = null;
-        if (courseData.subjectId() != null) {
-            Optional<Subjects> subjectOptional = subjectsRepository.findById(courseData.subjectId());
-
-            if (subjectOptional.isEmpty()) {
-                throw new EntityNotFoundException("The selected subject doesn't exists or not found");
-            }
-
-            subject = subjectOptional.get();
-        }
+        Subjects subject = this.getSubjectbyId(courseData.subjectId());
 
         Courses course = Courses.builder().name(courseData.name()).description(courseData.description())
                 .difficulty_level(courseData.difficulty_level())
@@ -75,6 +65,11 @@ public class CourseProvider {
     }
 
     @Transactional
+    public Courses getCourseByid(Long id){
+        return coursesRepository.findById(id).orElseThrow(()-> new EntityNotFoundException("Course not found"));
+    }
+
+    @Transactional
     public GenericResponse deleteUserRelation(Long userId, Long courseId) {
 
         courseUserRelationRepository.deleteRelation(userId, courseId);
@@ -85,15 +80,8 @@ public class CourseProvider {
     @Transactional
     public GenericResponse createUserRelation(Long userId, Long courseId) {
 
-        Optional<UserModel> userOptional = userRepository.findById(userId);
-        Optional<Courses> courseOptional = coursesRepository.findById(courseId);
-
-        if (courseOptional.isEmpty() || userOptional.isEmpty()) {
-            return new GenericResponse("Error", "User or course not found", 404);
-        }
-
-        UserModel user = userOptional.get();
-        Courses course = courseOptional.get();
+        UserModel user =  userRepository.findById(userId).orElseThrow(()->new EntityNotFoundException("User not found"));
+        Courses course = this.getCourseByid(courseId);
         CourseUserRelation relation = CourseUserRelation.builder().user(user).course(course).build();
         courseUserRelationRepository.save(relation);
 
@@ -101,7 +89,7 @@ public class CourseProvider {
     }
 
     public List<Courses> getEnrolledCoursesByUser(CustomUserDetails userDetails) {
-        UserModel user = userDetails.getUserModel();
+        UserModel user = userRepository.getReferenceById(userDetails.getUserModel().getId());
         return courseUserRelationRepository.findCoursesByUserIdAndNotCreator(user.getId());
     }
 
@@ -117,9 +105,7 @@ public class CourseProvider {
 
     @Transactional
     public GenericResponse deleteUserRelationsByCourseId(Long id) {
-
         courseUserRelationRepository.deleteByCourseId(id);
-
         return new GenericResponse("ok", "Success on delete this relations ", 200);
     }
 
@@ -131,13 +117,8 @@ public class CourseProvider {
 
     @Transactional
     public Modules createModule(ModuleRequestDto moduleData) {
-
         // add a user validation after
-        Optional<Courses> courseOptional = coursesRepository.findById(moduleData.courseId());
-        if (courseOptional.isEmpty()) {
-            throw new EntityNotFoundException("This course doesn't exist or not found");
-        }
-        Courses course = courseOptional.get();
+        Courses course = this.getCourseByid(moduleData.courseId());
 
         Modules module = Modules.builder().name(moduleData.name()).description(moduleData.description())
                 .creation_date(moduleData.creationDate())
@@ -154,15 +135,8 @@ public class CourseProvider {
 
     @Transactional
     public GenericResponse deleteModule(long id) {
-
-        Optional<Modules> opModule = this.getModuleById(id);
-
-        if (opModule.isEmpty()) {
-            return new GenericResponse("Error", "Module not found", 404);
-        }
-
-        Modules module = opModule.get();
-        Courses course = this.getCourseById(module.getCourse().getId()).get();
+        Modules module = this.getModuleById(id);
+        Courses course = module.getCourse();
         storageService.deleteAllFilesByModuleId(module.getId());
 
         modulesRepository.deleteById(id);
@@ -177,19 +151,13 @@ public class CourseProvider {
         return modulesRepository.findByCourseId(courseId);
     }
 
-    public Optional<Modules> getModuleById(Long moduleId) {
-        return modulesRepository.findById(moduleId);
+    public Modules getModuleById(Long moduleId) {
+        return modulesRepository.findById(moduleId).orElseThrow(()->new EntityNotFoundException("Module not Found"));
     }
 
     @Transactional
     public Modules updateModule(Long id, UpdateModuleDto moduleData) {
-        Optional<Modules> moduleOptional = modulesRepository.findById(id);
-
-        if (moduleOptional.isEmpty()) {
-            throw new EntityNotFoundException("Module doesn't exist or not found");
-        }
-
-        Modules module = moduleOptional.get();
+        Modules module = this.getModuleById(id);
 
         module.setName(moduleData.name());
         module.setDescription(moduleData.description());
@@ -203,20 +171,10 @@ public class CourseProvider {
 
     @Transactional
     public Courses updateCourse(Long id, CourseDto courseData) {
-        Optional<Courses> courseOptional = coursesRepository.findById(id);
-
-        if (courseOptional.isEmpty()) {
-            throw new EntityNotFoundException("Course not found");
-        }
-
-        Courses course = courseOptional.get();
+        Courses course = this.getCourseByid(id);
 
         if (courseData.subjectId() != null) {
-            Optional<Subjects> subjecOptional = subjectsRepository.findById(courseData.subjectId());
-            if (subjecOptional.isEmpty()) {
-                throw new EntityNotFoundException("Subject not found");
-            }
-            course.setSubject(subjecOptional.get());
+            course.setSubject(this.getSubjectbyId(courseData.subjectId()));
         }
 
         course.setName(courseData.name());
@@ -251,6 +209,10 @@ public class CourseProvider {
         Subjects subject = Subjects.builder().subject(subjectName).build();
         subjectsRepository.save(subject);
         return subject;
+    }
+
+    public Subjects getSubjectbyId(Long id){
+        return subjectsRepository.findById(id).orElseThrow(()-> new EntityNotFoundException("Subject not Found"));
     }
 
     public List<Subjects> getSubjects() {

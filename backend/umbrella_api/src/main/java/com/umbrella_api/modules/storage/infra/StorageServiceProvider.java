@@ -1,5 +1,6 @@
 package com.umbrella_api.modules.storage.infra;
 
+import com.umbrella_api.modules.course.api.CourseService;
 import com.umbrella_api.modules.storage.repository.VideoRepository;
 import com.umbrella_api.modules.storage.util.ExtensionExtractor;
 import com.umbrella_api.modules.user.model.UserModel;
@@ -40,10 +41,11 @@ public class StorageServiceProvider {
     private final ExtensionExtractor extractor;
     private final ModulesRepository modulesRepository;
     private final UserRepository userRepository;
+    private final CourseService courseService;
 
     public StorageServiceProvider(VideoRepository videoRepository, FileDbService fileDbService,
-            ImageRepository imageRepository, RawRepository rawRepository, FileMetaDataRepository fileRepository,
-            ExtensionExtractor extractor, ModulesRepository modulesRepository, UserRepository userRepository) {
+                                  ImageRepository imageRepository, RawRepository rawRepository, FileMetaDataRepository fileRepository,
+                                  ExtensionExtractor extractor, ModulesRepository modulesRepository, UserRepository userRepository, CourseService courseService) {
         this.videoRepository = videoRepository;
         this.fileDbService = fileDbService;
         this.imageRepository = imageRepository;
@@ -52,12 +54,13 @@ public class StorageServiceProvider {
         this.extractor = extractor;
         this.modulesRepository = modulesRepository;
         this.userRepository = userRepository;
+        this.courseService = courseService;
     }
 
     @Transactional
     public FileUploadResponse upload(MultipartFile file, String resourceType, String alternativeText, String fileName,
             String fileDescription, Long moduleId, CustomUserDetails loggedUser) {
-        /**
+        /*
          * Uploads a file to the cloud storage and links it to local entities.
          * 
          * NOTE ON MODULE LINKAGE:
@@ -80,7 +83,7 @@ public class StorageServiceProvider {
 
             FileMetaData fileMetaData = null;
             if (moduleId != null) {
-                Modules module = modulesRepository.findById(moduleId).get();
+                Modules module = courseService.getModuleById(moduleId);
                 fileMetaData = FileMetaData.builder()
                         .title(fileName)
                         .description(fileDescription)
@@ -106,7 +109,7 @@ public class StorageServiceProvider {
                 Image entity = Image.create(storageEntityData, fileMetaData, alternativeText);
 
                 if (fileMetaData == null) {
-                    UserModel user = loggedUser.getUserModel();
+                    UserModel user = userRepository.getReferenceById(loggedUser.getUserModel().getId());
                     entity.setUser(user);
                 }
 
@@ -237,7 +240,7 @@ public class StorageServiceProvider {
         }
     }
 
-    // It have to be implemented in the future
+    // It has to be implemented in the future
     /*
      * @Transactional
      * public void deleteAllFilesByQuestionId(Long questionId) {

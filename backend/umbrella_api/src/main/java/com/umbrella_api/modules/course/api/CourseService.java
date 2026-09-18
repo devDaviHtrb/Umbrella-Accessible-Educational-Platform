@@ -48,6 +48,7 @@ public interface CourseService {
     // Subject crud
     public Subjects createSubject(String subjectName);
 
+
     public List<Subjects> getSubjects();
 
     public GenericResponse deleteSubject(Long subjectId);

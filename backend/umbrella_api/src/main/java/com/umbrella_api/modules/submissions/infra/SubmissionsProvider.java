@@ -12,6 +12,7 @@ import com.umbrella_api.modules.submissions.model.StudentAnswers;
 import com.umbrella_api.modules.submissions.repository.ActivitySubmissionsRepository;
 import com.umbrella_api.modules.submissions.repository.StudentAnswersRepository;
 import com.umbrella_api.modules.user.model.UserModel;
+import com.umbrella_api.modules.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Component;
@@ -26,18 +27,20 @@ public class SubmissionsProvider {
     private final StudentAnswersRepository studentAnswersRepository;
     private final ActivitySubmissionsRepository activitySubmissionsRepository;
     private final ActivityService activityService;
+    private final UserRepository userRepository;
 
     public SubmissionsProvider(StudentAnswersRepository studentAnswersRepository,
                                ActivitySubmissionsRepository activitySubmissionsRepository,
-                               ActivityService activityService) {
+                               ActivityService activityService, UserRepository userRepository) {
         this.studentAnswersRepository = studentAnswersRepository;
         this.activitySubmissionsRepository = activitySubmissionsRepository;
         this.activityService = activityService;
+        this.userRepository = userRepository;
     }
 
     @Transactional
     public ActivitySubmissions createActivitySubmission(Long activityId, CustomUserDetails userDetails) {
-        UserModel user = userDetails.getUserModel();
+        UserModel user = userRepository.getReferenceById(userDetails.getUserModel().getId());
         Activities activity = activityService.getActivityById(activityId);
 
         ActivitySubmissions submission = ActivitySubmissions.builder()
@@ -81,7 +84,7 @@ public class SubmissionsProvider {
     @Transactional
     public GenericResponse deleteActivitySubmission(Long id) {
         if (!activitySubmissionsRepository.existsById(id)) {
-            return new GenericResponse("Error", "Activity submission not found", 404);
+           throw new EntityNotFoundException("Submission not found");
         }
         studentAnswersRepository.deleteBySubmissionId(id);
         activitySubmissionsRepository.deleteById(id);
@@ -120,7 +123,7 @@ public class SubmissionsProvider {
     @Transactional
     public GenericResponse deleteStudentAnswer(Long id) {
         if (!studentAnswersRepository.existsById(id)) {
-            return new GenericResponse("Error", "Student answer not found", 404);
+            throw new EntityNotFoundException("Answer not found");
         }
         studentAnswersRepository.deleteById(id);
         return new GenericResponse("ok", "Success on delete student answer", 200);

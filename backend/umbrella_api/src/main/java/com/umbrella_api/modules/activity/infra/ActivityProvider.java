@@ -62,13 +62,7 @@ public class ActivityProvider {
 
     @Transactional
     public Activities updateActivity(Long id, ActivityUpdateRequestDto request) {
-
-        Optional<Activities> activityOpt = activitiesRepository.findById(id);
-        if (activityOpt.isEmpty()) {
-            throw new EntityNotFoundException("Activity not found");
-        }
-
-        Activities activity = activityOpt.get();
+        Activities activity = this.getActivityById(id);
 
         if (request.title() != null)
             activity.setTitle(request.title());
@@ -91,9 +85,7 @@ public class ActivityProvider {
 
     @Transactional
     public GenericResponse deleteActivity(Long id) {
-
-        Optional<Activities> activityOpt = activitiesRepository.findById(id);
-        if (activityOpt.isEmpty()) {
+        if(!activitiesRepository.existsById(id)){
             throw new EntityNotFoundException("Activity not found");
         }
 
@@ -118,17 +110,14 @@ public class ActivityProvider {
     @Transactional
     public Questions createQuestion(QuestionCreateRequestDto request) {
 
-        Optional<Activities> activityOpt = activitiesRepository.findById(request.activityId());
-        if (activityOpt.isEmpty()) {
-            throw new EntityNotFoundException("Activity not found");
-        }
+        Activities activity = this.getActivityById(request.activityId());
 
         Questions question = Questions.builder()
                 .points(request.points())
                 .status(request.status() != null ? request.status() : "awaiting the data dict")
                 .number(request.number())
                 .statement(request.statement())
-                .activity(activityOpt.get())
+                .activity(activity)
                 .build();
 
         questionsRepository.save(question);
@@ -142,13 +131,7 @@ public class ActivityProvider {
 
     @Transactional
     public Questions updateQuestion(Long id, QuestionUpdateRequestDto request) {
-
-        Optional<Questions> questionOpt = questionsRepository.findById(id);
-        if (questionOpt.isEmpty()) {
-            throw new EntityNotFoundException("Question not found");
-        }
-
-        Questions question = questionOpt.get();
+        Questions question = this.getQuestionById(id);
 
         if (request.points() != null)
             question.setPoints(request.points());
@@ -168,7 +151,7 @@ public class ActivityProvider {
     public GenericResponse deleteQuestion(Long id) {
 
         if (!questionsRepository.existsById(id)) {
-            return new GenericResponse("Error", "Question not found", 404);
+            throw new EntityNotFoundException("Question not found");
         }
 
         // Implements if images will can used in questions
@@ -185,17 +168,13 @@ public class ActivityProvider {
 
     @Transactional
     public Alternatives createAlternative(AlternativeCreateRequestDto request) {
-
-        Optional<Questions> questionOpt = questionsRepository.findById(request.questionId());
-        if (questionOpt.isEmpty()) {
-            throw new EntityNotFoundException("Question not found");
-        }
+       Questions question = this.getQuestionById(request.questionId());
 
         Alternatives alternative = Alternatives.builder()
                 .correct(request.correct())
                 .letter(request.letter())
                 .text(request.text())
-                .question(questionOpt.get())
+                .question(question)
                 .build();
 
         alternativesRepository.save(alternative);
@@ -205,12 +184,7 @@ public class ActivityProvider {
 
     @Transactional
     public Alternatives updateAlternative(Long id, AlternativeUpdateRequestDto request) {
-        Optional<Alternatives> altOpt = alternativesRepository.findById(id);
-        if (altOpt.isEmpty()) {
-            throw new EntityNotFoundException("Alternative not found");
-        }
-
-        Alternatives alternative = altOpt.get();
+        Alternatives alternative = this.getAlternativeById(id);
 
         if (request.correct() != null)
             alternative.setCorrect(request.correct());
@@ -227,7 +201,7 @@ public class ActivityProvider {
     public GenericResponse deleteAlternative(Long id) {
 
         if (!alternativesRepository.existsById(id)) {
-            return new GenericResponse("Error", "Alternative not found", 404);
+            throw new EntityNotFoundException("Alternative not found");
         }
 
         alternativesRepository.deleteById(id);
@@ -245,17 +219,13 @@ public class ActivityProvider {
 
     @Transactional
     public Essays createEssay(EssayCreateRequestDto request) {
-
-        Optional<Questions> questionOpt = questionsRepository.findById(request.questionId());
-        if (questionOpt.isEmpty()) {
-            throw new EntityNotFoundException("Question not found");
-        }
+        Questions question = this.getQuestionById(request.questionId());
 
         Essays essay = Essays.builder()
                 .expectedAnswer(request.expectedAnswer())
                 .minLetters(request.minLetters())
                 .maxLetters(request.maxLetters())
-                .question(questionOpt.get())
+                .question(question)
                 .build();
 
         essaysRepository.save(essay);
@@ -289,7 +259,7 @@ public class ActivityProvider {
     public GenericResponse deleteEssay(Long id) {
 
         if (!essaysRepository.existsById(id)) {
-            return new GenericResponse("Error", "Essay criteria not found", 404);
+           throw new EntityNotFoundException("Essay not found");
         }
 
         essaysRepository.deleteById(id);

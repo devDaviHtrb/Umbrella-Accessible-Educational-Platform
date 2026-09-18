@@ -58,8 +58,7 @@ public class CourseServiceImpl implements CourseService {
 
     @Override
     public Modules getModuleById(Long moduleId) {
-        return courseProvider.getModuleById(moduleId)
-                .orElseThrow(() -> new EntityNotFoundException("Module not found"));
+        return courseProvider.getModuleById(moduleId);
     }
 
     @Override
@@ -107,6 +106,7 @@ public class CourseServiceImpl implements CourseService {
     public List<Subjects> getSubjects() {
         return courseProvider.getSubjects();
     }
+
 
     @Override
     public GenericResponse deleteSubject(Long subjectId) {

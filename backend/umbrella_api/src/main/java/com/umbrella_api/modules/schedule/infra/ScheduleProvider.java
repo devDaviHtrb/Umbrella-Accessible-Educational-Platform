@@ -12,6 +12,7 @@ import com.umbrella_api.modules.schedule.model.UserEvents;
 import com.umbrella_api.modules.schedule.repository.EventsRepository;
 import com.umbrella_api.modules.schedule.repository.UserEventsRepository;
 import com.umbrella_api.modules.user.model.UserModel;
+import com.umbrella_api.modules.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 
@@ -30,17 +31,19 @@ public class ScheduleProvider {
     private final EventsRepository eventRepository;
     private final UserEventsRepository userEventRepository;
     private final CourseService courseService;
+    private final UserRepository userRepository;
 
     public ScheduleProvider(EventsRepository eventRepository, UserEventsRepository userEventRepository,
-            CourseService courseService) {
+                            CourseService courseService, UserRepository userRepository) {
         this.eventRepository = eventRepository;
         this.userEventRepository = userEventRepository;
         this.courseService = courseService;
+        this.userRepository = userRepository;
     }
 
     @Transactional
     public Events createEvent(EventPostRequestDto dto, CustomUserDetails userDetails) {
-        UserModel creator = userDetails.getUserModel();
+        UserModel creator = userRepository.getReferenceById(userDetails.getUserModel().getId());
 
         Courses course = null;
         if (dto.courseId() != null) {
@@ -87,7 +90,7 @@ public class ScheduleProvider {
     @Transactional
     public UserEvents personalizeEvent(Long eventId, CustomUserDetails userDetails, EventStatus status,
             Integer reminderOffset) {
-        UserModel user = userDetails.getUserModel();
+            UserModel user = userRepository.getReferenceById(userDetails.getUserModel().getId());
 
         Events event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event not found with: " + eventId));
@@ -120,7 +123,7 @@ public class ScheduleProvider {
     }
 
     public List<ScheduleGetRequestDto> getAllEvents(CustomUserDetails userDetails) {
-        UserModel user = userDetails.getUserModel();
+        UserModel user = userRepository.getReferenceById(userDetails.getUserModel().getId());
 
         List<UserEvents> userEventsList = userEventRepository.findByUserId(user.getId());
         Map<Long, UserEvents> userEventMap = userEventsList.stream()
