@@ -21,8 +21,8 @@ gemini:
     url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=
     key: ${GEMINI_API_KEY}
   config:
-    maxTokenOut: 200
-    systemInstruction: "generic instruction"
+    maxTokenOut: 4000
+    systemInstruction: ${IA_MODEL_INSTRUCTIONS}
     temp: 0.5
     
 cloudinary:
