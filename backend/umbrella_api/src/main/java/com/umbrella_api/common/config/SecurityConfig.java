@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -14,7 +13,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -32,49 +30,48 @@ import java.util.List;
 public class SecurityConfig {
 
         private final JwtAuthenticationFilter jwtFilter;
-        private final UserDetailsService userDetailsService;
 
         @Bean
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
                 return http
-                                .headers(headers -> headers
-                                                .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
-                                .cors(Customizer.withDefaults())
-                                .csrf(AbstractHttpConfigurer::disable)
+                        .headers(headers -> headers
+                                .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
+                        .cors(Customizer.withDefaults())
+                        .csrf(AbstractHttpConfigurer::disable)
 
-                                .sessionManagement(session -> session
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                        .sessionManagement(session -> session
+                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                                .authenticationProvider(authenticationProvider())
+                        
 
-                                .authorizeHttpRequests(auth -> auth
-                                                .requestMatchers(
-                                                                "/api/auth/**",
-                                                                "/api/public/**",
-                                                                "/error",
-                                                                "/h2-console/**",
-                                                                "/v3/api-docs/**",
-                                                                "/swagger-ui/**")
-                                                .permitAll()
-                                                .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
-                                                .requestMatchers("/h2-console/**").permitAll()
-                                                .requestMatchers("/v3/api-docs/**").permitAll()
+                        .authorizeHttpRequests(auth -> auth
+                                .requestMatchers(
+                                        "/api/auth/**",
+                                        "/api/public/**",
+                                        "/error",
+                                        "/h2-console/**",
+                                        "/v3/api-docs/**",
+                                        "/swagger-ui/**")
+                                .permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
+                                .requestMatchers("/h2-console/**").permitAll()
+                                .requestMatchers("/v3/api-docs/**").permitAll()
 
-                                                .requestMatchers("/api/admin/**")
-                                                .hasRole("ADMIN")
+                                .requestMatchers("/api/admin/**")
+                                .hasRole("ADMIN")
 
-                                                .requestMatchers("/api/teacher/**")
-                                                .hasAnyRole("TEACHER", "ADMIN")
+                                .requestMatchers("/api/teacher/**")
+                                .hasAnyRole("TEACHER", "ADMIN")
 
-                                                .anyRequest()
-                                                .authenticated())
+                                .anyRequest()
+                                .authenticated())
 
-                                .addFilterBefore(
-                                                jwtFilter,
-                                                UsernamePasswordAuthenticationFilter.class)
+                        .addFilterBefore(
+                                jwtFilter,
+                                UsernamePasswordAuthenticationFilter.class)
 
-                                .build();
+                        .build();
         }
 
         @Bean
@@ -83,16 +80,16 @@ public class SecurityConfig {
                 CorsConfiguration configuration = new CorsConfiguration();
 
                 configuration.setAllowedOrigins(List.of(
-                                "http://127.0.0.1:5500",
-                                "http://localhost:5500"));
+                        "http://127.0.0.1:5500",
+                        "http://localhost:5500"));
 
                 configuration.setAllowedMethods(List.of(
-                                "GET",
-                                "POST",
-                                "PUT",
-                                "PATCH",
-                                "DELETE",
-                                "OPTIONS"));
+                        "GET",
+                        "POST",
+                        "PUT",
+                        "PATCH",
+                        "DELETE",
+                        "OPTIONS"));
 
                 configuration.setAllowedHeaders(List.of("*"));
 
@@ -106,19 +103,8 @@ public class SecurityConfig {
         }
 
         @Bean
-        public DaoAuthenticationProvider authenticationProvider() {
-
-                DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-
-                provider.setUserDetailsService(userDetailsService);
-                provider.setPasswordEncoder(passwordEncoder());
-
-                return provider;
-        }
-
-        @Bean
         public AuthenticationManager authenticationManager(
-                        AuthenticationConfiguration configuration) throws Exception {
+                AuthenticationConfiguration configuration) throws Exception {
 
                 return configuration.getAuthenticationManager();
         }
