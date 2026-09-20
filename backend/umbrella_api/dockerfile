@@ -5,21 +5,17 @@ FROM maven:3.9.6-eclipse-temurin-21 AS build
 
 WORKDIR /app
 
-# Copia apenas arquivos necessários primeiro
-# para aproveitar cache do Docker
+# Copia apenas o pom.xml primeiro para aproveitar o cache do Docker
 COPY pom.xml .
-COPY .mvn .mvn
-COPY mvnw .
-RUN chmod +x mvnw
 
-# Baixa dependências
-RUN ./mvnw dependency:go-offline
+# Baixa as dependências do projeto para o cache
+RUN mvn dependency:go-offline -B
 
-# Copia código fonte
+# Copia o código-fonte
 COPY src ./src
 
-# Gera o jar
-RUN ./mvnw clean package -DskipTests
+# Compila o projeto sem executar os testes
+RUN mvn clean package -DskipTests
 
 # =========================
 # Stage 2 - Runtime
@@ -28,13 +24,17 @@ FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
-# Copia o jar gerado
+# Cria um usuário sem privilégios de root por segurança
+RUN addgroup --system spring && adduser --system --ingroup spring spring
+USER spring:spring
+
+# Copia o jar gerado no estágio de build
 COPY --from=build /app/target/*.jar app.jar
 
 # Porta padrão Spring Boot
 EXPOSE 8080
 
-# Configurações Java recomendadas para containers
+# Configurações JVM para containers
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
 
 # Executa aplicação
