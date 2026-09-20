@@ -1,21 +1,21 @@
 # =========================
 # Stage 1 - Build
 # =========================
-FROM maven:3.9.6-eclipse-temurin-21 AS build
+FROM eclipse-temurin:21-jdk AS build
 
 WORKDIR /app
 
-# Copia apenas o pom.xml primeiro para aproveitar o cache do Docker
+# Copia configurações do wrapper e pom.xml
+COPY .mvn .mvn
+COPY mvnw .
 COPY pom.xml .
 
-# Baixa as dependências do projeto para o cache
-RUN mvn dependency:go-offline -B
+RUN chmod +x mvnw
+RUN ./mvnw dependency:go-offline -B
 
-# Copia o código-fonte
+# Copia código-fonte e compila
 COPY src ./src
-
-# Compila o projeto sem executar os testes
-RUN mvn clean package -DskipTests
+RUN ./mvnw clean package -DskipTests
 
 # =========================
 # Stage 2 - Runtime
@@ -24,18 +24,13 @@ FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
-# Cria um usuário sem privilégios de root por segurança
 RUN addgroup --system spring && adduser --system --ingroup spring spring
 USER spring:spring
 
-# Copia o jar gerado no estágio de build
 COPY --from=build /app/target/*.jar app.jar
 
-# Porta padrão Spring Boot
 EXPOSE 8080
 
-# Configurações JVM para containers
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
 
-# Executa aplicação
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

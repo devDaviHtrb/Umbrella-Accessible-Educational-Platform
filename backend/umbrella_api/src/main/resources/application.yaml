@@ -18,7 +18,7 @@ jwt:
 
 gemini:
   api:
-    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=
+    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=
     key: ${GEMINI_API_KEY}
   config:
     maxTokenOut: 200
@@ -33,6 +33,11 @@ cloudinary:
 
 logging:
   level:
-    org:
-      springframework:
-        security: TRACE
+    root: INFO
+
+    org.springframework.security: INFO
+
+    org.springframework.boot.diagnostics: ERROR
+
+    org.hibernate.engine.jdbc.spi.SqlExceptionHelper: ERROR
+    org.springframework.dao: WARN
