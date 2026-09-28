@@ -39,7 +39,7 @@ export function useAuth() {
 
     const login = async (data: LoginData): Promise<AuthResponse> => {
         try {
-            return await post<AuthResponse>("/api/auth/login", data);
+            return await post<AuthResponse>("api/auth/login", data);
         } catch (error) {
             console.error("Error during login:", error);
             throw error;

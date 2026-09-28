@@ -1,11 +1,11 @@
 import axios from "axios"
 
 const umbrellaApi = axios.create({
-    baseURL: process.env.EXPO_PUBLIC_UMBRELA_PUBLIC_API_URL,
-    timeout: parseInt(process.env.EXPO_PUBLIC_REQUEST_TIME_OUT!),
-    headers: {
-        "Content-Type": "aplication/json"
-    }
+  baseURL: "http://localhost:8080/",
+  timeout: parseInt(process.env.EXPO_PUBLIC_REQUEST_TIME_OUT!),
+  headers: {
+    "Content-Type": "application/json"
+  }
 })
 
 export default umbrellaApi;

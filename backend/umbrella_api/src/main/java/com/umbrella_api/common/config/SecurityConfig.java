@@ -35,43 +35,41 @@ public class SecurityConfig {
         public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
                 return http
-                        .headers(headers -> headers
-                                .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
-                        .cors(Customizer.withDefaults())
-                        .csrf(AbstractHttpConfigurer::disable)
+                                .headers(headers -> headers
+                                                .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
+                                .cors(Customizer.withDefaults())
+                                .csrf(AbstractHttpConfigurer::disable)
 
-                        .sessionManagement(session -> session
-                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                                .sessionManagement(session -> session
+                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-                        
+                                .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers(
+                                                                "/api/auth/**",
+                                                                "/api/public/**",
+                                                                "/error",
+                                                                "/h2-console/**",
+                                                                "/v3/api-docs/**",
+                                                                "/swagger-ui/**")
+                                                .permitAll()
+                                                .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
+                                                .requestMatchers("/h2-console/**").permitAll()
+                                                .requestMatchers("/v3/api-docs/**").permitAll()
 
-                        .authorizeHttpRequests(auth -> auth
-                                .requestMatchers(
-                                        "/api/auth/**",
-                                        "/api/public/**",
-                                        "/error",
-                                        "/h2-console/**",
-                                        "/v3/api-docs/**",
-                                        "/swagger-ui/**")
-                                .permitAll()
-                                .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
-                                .requestMatchers("/h2-console/**").permitAll()
-                                .requestMatchers("/v3/api-docs/**").permitAll()
+                                                .requestMatchers("/api/admin/**")
+                                                .hasRole("ADMIN")
 
-                                .requestMatchers("/api/admin/**")
-                                .hasRole("ADMIN")
+                                                .requestMatchers("/api/teacher/**")
+                                                .hasAnyRole("TEACHER", "ADMIN")
 
-                                .requestMatchers("/api/teacher/**")
-                                .hasAnyRole("TEACHER", "ADMIN")
+                                                .anyRequest()
+                                                .authenticated())
 
-                                .anyRequest()
-                                .authenticated())
+                                .addFilterBefore(
+                                                jwtFilter,
+                                                UsernamePasswordAuthenticationFilter.class)
 
-                        .addFilterBefore(
-                                jwtFilter,
-                                UsernamePasswordAuthenticationFilter.class)
-
-                        .build();
+                                .build();
         }
 
         @Bean
@@ -80,16 +78,16 @@ public class SecurityConfig {
                 CorsConfiguration configuration = new CorsConfiguration();
 
                 configuration.setAllowedOrigins(List.of(
-                        "http://127.0.0.1:5500",
-                        "http://localhost:5500"));
+                                "http://127.0.0.1:8081",
+                                "http://localhost:8081"));
 
                 configuration.setAllowedMethods(List.of(
-                        "GET",
-                        "POST",
-                        "PUT",
-                        "PATCH",
-                        "DELETE",
-                        "OPTIONS"));
+                                "GET",
+                                "POST",
+                                "PUT",
+                                "PATCH",
+                                "DELETE",
+                                "OPTIONS"));
 
                 configuration.setAllowedHeaders(List.of("*"));
 
@@ -104,7 +102,7 @@ public class SecurityConfig {
 
         @Bean
         public AuthenticationManager authenticationManager(
-                AuthenticationConfiguration configuration) throws Exception {
+                        AuthenticationConfiguration configuration) throws Exception {
 
                 return configuration.getAuthenticationManager();
         }
