@@ -1,4 +1,4 @@
-package com.umbrella_api.modules.course.model;
+package com.umbrella_api.modules.activity.model;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,7 +6,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import com.umbrella_api.modules.schedule.model.Events;
+import com.umbrella_api.modules.course.model.Modules;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,46 +26,39 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "courses")
+@Table(name = "activities")
 @Getter
 @Setter
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Courses {
+public class Activities {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String name;
+    @Column(name = "title", nullable = false)
+    private String title;
 
-    @Column
-    private String description;
+    @Column(name = "test", nullable = false)
+    private boolean test;
 
-    @Column
-    private Integer module_amount;
+    @Column(name = "max_score", nullable = false)
+    private Float maxScore;
 
-    @Column
-    private Integer difficulty_level;
-
-    @OneToMany(mappedBy = "course")
+    @Column(name = "status", nullable = false)
     @Builder.Default
-    @JsonIgnore
-    private List<CourseUserRelation> relationships = new ArrayList<>();
-
-    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnoreProperties("course")
-    @Builder.Default
-    private List<Modules> modules = new ArrayList<>();
+    private String status = "awaiting the data dict";
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subject_id", nullable = true)
+    @JoinColumn(name = "module_id", nullable = false)
+    @JsonIgnoreProperties("activities")
     @JsonIgnore
-    private Subjects subject;
+    private Modules module;
 
+    @OneToMany(mappedBy = "activity", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("activity")
     @Builder.Default
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Events> events = new ArrayList<>();
-
+    private List<Questions> questions = new ArrayList<>();
 }
