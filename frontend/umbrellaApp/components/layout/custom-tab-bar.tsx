@@ -54,7 +54,7 @@ export function CustomTabBar(props: BottomTabBarProps) {
         styles.wrapper,
         { paddingBottom: Math.max(insets.bottom, Spacing.md) },
       ]}>
-      {state.routes.map((route, index) => {
+      {state.routes.map((route: any, index: number) => {
         const descriptor = descriptors?.[route.key];
         const options = descriptor?.options ?? {};
 

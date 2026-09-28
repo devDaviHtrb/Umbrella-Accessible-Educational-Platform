@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { Platform, useColorScheme } from 'react-native';
 
 const palette = {
   primary: '#153E90',
@@ -42,6 +42,20 @@ export const Colors = {
   light: lightTheme,
   dark: lightTheme,
 };
+
+export function useThemeColor(
+  props: { light?: string; dark?: string },
+  colorName: keyof typeof Colors.light & keyof typeof Colors.dark
+) {
+  const theme = (useColorScheme() ?? 'light') as 'light' | 'dark';
+  const colorFromProps = props[theme];
+
+  if (colorFromProps) {
+    return colorFromProps;
+  } else {
+    return Colors[theme][colorName];
+  }
+}
 
 export const Spacing = {
   xs: 4,

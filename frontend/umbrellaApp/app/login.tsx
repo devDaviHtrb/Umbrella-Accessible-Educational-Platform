@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Alert } from 'react-native';
 import { router } from 'expo-router';
 
 import { AppHeader } from '@/components/layout/app-header';
@@ -11,14 +11,35 @@ import { SecondaryButton } from '@/components/ui/secondary-button';
 import { TextField } from '@/components/ui/text-field';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Spacing } from '@/constants/theme';
+import { useAuth } from '@/hooks/api/auth/useAuth'; // Ajuste o caminho conforme sua estrutura
 
 export default function LoginScreen() {
+  const { login } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [staySignedIn, setStaySignedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  function handleLogin() {
-    router.replace('/(tabs)');
+  async function handleLogin() {
+    if (!email || !password) {
+      Alert.alert('Erro', 'Por favor, preencha todos os campos.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await login({ email, password });
+
+      // Aqui você salvaria o response.accessToken no AsyncStorage/Context depois!
+      console.log('Logado com sucesso! Token:', response.accessToken);
+
+      router.replace('/(tabs)');
+    } catch (error: any) {
+      Alert.alert('Erro de Acesso', 'E-mail ou senha incorretos.');
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
@@ -52,6 +73,7 @@ export default function LoginScreen() {
           autoCapitalize="none"
           value={email}
           onChangeText={setEmail}
+          editable={!isLoading}
         />
 
         <TextField
@@ -62,6 +84,7 @@ export default function LoginScreen() {
           labelActionText="Esqueceu a senha?"
           value={password}
           onChangeText={setPassword}
+          editable={!isLoading}
         />
 
         <Checkbox
@@ -70,7 +93,12 @@ export default function LoginScreen() {
           label="Mantenha-me conectado"
         />
 
-        <PrimaryButton label="Entrar" icon="arrow.right" onPress={handleLogin} />
+        <PrimaryButton
+          label={isLoading ? "Entrando..." : "Entrar"}
+          icon="arrow.right"
+          onPress={handleLogin}
+          disabled={isLoading}
+        />
 
         <View style={styles.divider} />
 
@@ -78,7 +106,11 @@ export default function LoginScreen() {
           Novo na Umbrella?
         </UmbrellaText>
 
-        <SecondaryButton variant="filled" label="Criar Conta" />
+        <SecondaryButton
+          variant="filled"
+          label="Criar Conta"
+          onPress={() => router.push('/signUp')} // Altere para a rota correta do seu Expo Router
+        />
       </Card>
 
       <View style={styles.footer}>

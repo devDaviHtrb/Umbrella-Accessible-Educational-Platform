@@ -50,7 +50,7 @@ import {
       justifyContent: 'flex-end',
     },
     backdrop: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: 'rgba(17, 24, 28, 0.45)',
     },
     sheet: {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Pressable, StyleSheet, View, Platform } from 'react-native';
-import { useHeaderHeight } from '@react-navigation/elements';
+import { useHeaderHeight } from "expo-router/react-navigation";
 
 import { AccessibilityAudioCard } from '@/components/class/accessibility-audio-card';
 import { ClassChatMessage } from '@/components/class/class-chat-message';
