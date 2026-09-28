@@ -1,6 +1,5 @@
 package com.umbrella_api.modules.storage.infra;
 
-import com.umbrella_api.modules.course.api.CourseService;
 import com.umbrella_api.modules.storage.repository.VideoRepository;
 import com.umbrella_api.modules.storage.util.ExtensionExtractor;
 import com.umbrella_api.modules.user.model.UserModel;
@@ -41,11 +40,10 @@ public class StorageServiceProvider {
     private final ExtensionExtractor extractor;
     private final ModulesRepository modulesRepository;
     private final UserRepository userRepository;
-    private final CourseService courseService;
 
     public StorageServiceProvider(VideoRepository videoRepository, FileDbService fileDbService,
                                   ImageRepository imageRepository, RawRepository rawRepository, FileMetaDataRepository fileRepository,
-                                  ExtensionExtractor extractor, ModulesRepository modulesRepository, UserRepository userRepository, CourseService courseService) {
+                                  ExtensionExtractor extractor, ModulesRepository modulesRepository, UserRepository userRepository) {
         this.videoRepository = videoRepository;
         this.fileDbService = fileDbService;
         this.imageRepository = imageRepository;
@@ -54,23 +52,12 @@ public class StorageServiceProvider {
         this.extractor = extractor;
         this.modulesRepository = modulesRepository;
         this.userRepository = userRepository;
-        this.courseService = courseService;
+
     }
 
     @Transactional
     public FileUploadResponse upload(MultipartFile file, String resourceType, String alternativeText, String fileName,
-            String fileDescription, Long moduleId, CustomUserDetails loggedUser) {
-        /*
-         * Uploads a file to the cloud storage and links it to local entities.
-         * 
-         * NOTE ON MODULE LINKAGE:
-         * The 'moduleId' parameter is completely optional. If a 'moduleId' is provided,
-         * the system creates a central 'FileMetaData' record to link the file to the
-         * course structure.
-         * If 'moduleId' is null, the system bypasses metadata generation and directly
-         * persists
-         * the concrete resource entity (Image, Video, or RawFile) standalone.
-         */
+                                     String fileDescription, Long moduleId, CustomUserDetails loggedUser) {
 
         if (moduleId != null && !modulesRepository.existsById(moduleId)) {
             throw new EntityNotFoundException("The specified module doesn't exist or not found");
@@ -82,8 +69,21 @@ public class StorageServiceProvider {
             storageEntityData = fileDbService.upload(file, resourceType, resourceType);
 
             FileMetaData fileMetaData = null;
+            /*
+             * Uploads a file to the cloud storage and links it to local entities.
+             *
+             * NOTE ON MODULE LINKAGE:
+             * The 'moduleId' parameter is completely optional. If a 'moduleId' is provided,
+             * the system creates a central 'FileMetaData' record to link the file to the
+             * course structure.
+             * If 'moduleId' is null, the system bypasses metadata generation and directly
+             * persists
+             * the concrete resource entity (Image, Video, or RawFile) standalone.
+             */
             if (moduleId != null) {
-                Modules module = courseService.getModuleById(moduleId);
+                Modules module = modulesRepository.findById(moduleId)
+                        .orElseThrow(() -> new EntityNotFoundException("The specified module doesn't exist or not found"));
+
                 fileMetaData = FileMetaData.builder()
                         .title(fileName)
                         .description(fileDescription)
@@ -138,7 +138,6 @@ public class StorageServiceProvider {
                 try {
                     fileDbService.delete(storageEntityData.publicId(), resourceType);
                 } catch (Exception cloudEx) {
-
                     throw new FileStorageException(
                             "Database failed and cloud cleanup also failed: " + cloudEx.getMessage(),
                             e);
