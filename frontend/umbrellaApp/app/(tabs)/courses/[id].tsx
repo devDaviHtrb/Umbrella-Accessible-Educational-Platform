@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, ActivityIndicator } from 'react-native';
 
 import { CourseHero } from '@/components/courses/course-hero';
 import { ModuleAccordion } from '@/components/courses/module-accordion';
@@ -9,29 +9,40 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
-import { mockCourseDetails, mockCourses } from '@/constants/mock/courses';
+import { useCourses } from '@/hooks/api/courses/useCourse';
 import type { CourseLesson } from '@/types/courses';
 
 export default function CourseDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const course = mockCourses.find((item) => item.id === id);
-  const details = mockCourseDetails;
+  const { useCourseDetails } = useCourses();
+  const { courseDetails, modules, detailLoading, detailError } = useCourseDetails(id);
 
   function handleLessonPress(lesson: CourseLesson) {
     router.push(`/courses/class/${lesson.id}`);
   }
 
-  if (!course) {
+  if (detailLoading) {
+    return (
+      <ScreenContainer disableTopInset>
+        <ActivityIndicator size="large" color={Colors.light.primary} style={{ marginTop: Spacing.xl }} />
+      </ScreenContainer>
+    );
+  }
+
+  if (detailError || !courseDetails) {
     return (
       <ScreenContainer disableTopInset>
         <UmbrellaText variant="title">Curso não encontrado</UmbrellaText>
+        <UmbrellaText variant="body" color={Colors.light.textSecondary} style={{ marginTop: Spacing.sm }}>
+          {detailError || 'Não foi possível carregar as informações deste curso.'}
+        </UmbrellaText>
       </ScreenContainer>
     );
   }
 
   return (
     <ScreenContainer disableTopInset>
-      <CourseHero title={course.title} badgeLabel={details.heroBadge} />
+      <CourseHero title={courseDetails.name} badgeLabel={courseDetails.subjectName ?? 'Geral'} />
 
       <Card>
         <View style={styles.instructorRow}>
@@ -40,23 +51,23 @@ export default function CourseDetailsScreen() {
           </View>
           <View>
             <UmbrellaText variant="caption" color={Colors.light.textSecondary} style={styles.caps}>
-              {details.instructorLabel}
+              Instrutor
             </UmbrellaText>
             <UmbrellaText variant="bodyMedium" color={Colors.light.primary}>
-              {details.instructorName}
+              {courseDetails.instructorName ?? courseDetails.creator?.name ?? 'Instrutor Umbrella'}
             </UmbrellaText>
           </View>
         </View>
 
         <View style={styles.infoList}>
-          <InfoRow label="Duração" value={details.duration} />
-          <InfoRow label="Nível" value={details.level} />
-          <InfoRow label="Certificação" value={details.certification} emphasis />
+          <InfoRow label="Duração" value={`${courseDetails.duration ?? '0'}h`} />
+          <InfoRow label="Nível" value={`Nível ${courseDetails.difficultyLevel ?? 'Iniciante'}`} />
+          <InfoRow label="Certificação" value="Disponível ao concluir" emphasis />
         </View>
 
-        <PrimaryButton label={details.ctaLabel} onPress={() => {}} style={styles.ctaButton} />
+        <PrimaryButton label="Inscrever-se no Curso" onPress={() => { }} style={styles.ctaButton} />
         <UmbrellaText variant="caption" color={Colors.light.textSecondary} style={styles.ctaCaption}>
-          {details.ctaCaption}
+          Acesso imediato e vitalício ao conteúdo
         </UmbrellaText>
       </Card>
 
@@ -65,37 +76,23 @@ export default function CourseDetailsScreen() {
           Visão Geral
         </UmbrellaText>
         <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.overviewText}>
-          {details.overviewText}
+          {courseDetails.description}
         </UmbrellaText>
-
-        <View style={styles.resourceList}>
-          {details.overviewResources.map((resource) => (
-            <View key={resource.id} style={styles.resourceRow}>
-              <IconSymbol name={resource.icon} size={18} color={Colors.light.primary} />
-              <View>
-                <UmbrellaText variant="bodyMedium">{resource.title}</UmbrellaText>
-                <UmbrellaText variant="caption" color={Colors.light.textSecondary}>
-                  {resource.subtitle}
-                </UmbrellaText>
-              </View>
-            </View>
-          ))}
-        </View>
       </Card>
 
       <View style={styles.contentHeader}>
         <UmbrellaText variant="title">Conteúdo do Curso</UmbrellaText>
         <UmbrellaText variant="body" color={Colors.light.textSecondary}>
-          {details.contentSubtitle}
+          {modules.length} {modules.length === 1 ? 'módulo disponível' : 'módulos disponíveis'}
         </UmbrellaText>
       </View>
 
       <View style={styles.moduleList}>
-        {details.modules.map((module, index) => (
+        {modules.map((module, index) => (
           <ModuleAccordion
             key={module.id}
             module={module}
-            defaultExpanded={index === 1}
+            defaultExpanded={index === 0}
             onLessonPress={handleLessonPress}
           />
         ))}
@@ -167,17 +164,6 @@ const styles = StyleSheet.create({
   },
   overviewText: {
     marginBottom: Spacing.lg,
-  },
-  resourceList: {
-    gap: Spacing.md,
-  },
-  resourceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    backgroundColor: Colors.light.surface,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
   },
   contentHeader: {
     gap: Spacing.xs,

@@ -150,7 +150,7 @@ export function useAuth() {
 
     const register = async (data: RegisterData): Promise<AuthResponse> => {
         try {
-            const response = await post<AuthResponse>("/api/auth/register", data);
+            const response = await post<AuthResponse>("auth/register", data);
             return response;
         } catch (error: any) {
             console.log("[useAuth register error]", error.response?.data || error.message);
@@ -160,7 +160,7 @@ export function useAuth() {
 
     const login = async (data: LoginData): Promise<AuthResponse> => {
         try {
-            const response = await post<AuthResponse>("/api/auth/login", data);
+            const response = await post<AuthResponse>("auth/login", data);
 
             // Salva dados no storage quando o login for bem-sucedido
             if (response && response.accessToken) {
