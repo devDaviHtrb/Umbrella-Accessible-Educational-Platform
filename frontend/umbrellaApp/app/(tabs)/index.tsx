@@ -10,12 +10,14 @@ import { Card } from '@/components/ui/card';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Spacing } from '@/constants/theme';
 import { mockActiveModules, mockTodayAgenda, mockUserName, mockWeeklyGoals } from '@/constants/mock/painel';
+import { useAuthContext } from '@/hooks/api/auth/authContext';
 
 export default function PainelScreen() {
+  const { userName, user } = useAuthContext();
   return (
     <ScreenContainer header={<AppHeader />}>
       <View>
-        <UmbrellaText variant="display">Bem-vindo de volta,{'\n'}{mockUserName}</UmbrellaText>
+        <UmbrellaText variant="display">Bem-vindo de volta,{'\n'}{userName || 'Estudante'}</UmbrellaText>
         <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.subtitle}>
           Seu santuário acadêmico está pronto para os insights de hoje.
         </UmbrellaText>

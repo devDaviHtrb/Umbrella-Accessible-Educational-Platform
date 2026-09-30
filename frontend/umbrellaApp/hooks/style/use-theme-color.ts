@@ -1,1 +1,1 @@
-export { useThemeColor } from \@/constants/theme\;
+export { useThemeColor } from '@/constants/theme';

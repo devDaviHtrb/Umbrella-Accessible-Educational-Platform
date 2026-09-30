@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View, Alert } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 
 import { AppHeader } from '@/components/layout/app-header';
@@ -11,32 +11,54 @@ import { SecondaryButton } from '@/components/ui/secondary-button';
 import { TextField } from '@/components/ui/text-field';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Spacing } from '@/constants/theme';
-import { useAuth } from '@/hooks/api/auth/useAuth'; // Ajuste o caminho conforme sua estrutura
+import { useAuthContext } from '@/hooks/api/auth/authContext';
+import { AuthFieldErrors } from '@/hooks/api/auth/useAuth';
 
 export default function LoginScreen() {
-  const { login } = useAuth();
+  const { login } = useAuthContext();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [staySignedIn, setStaySignedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<AuthFieldErrors>({});
+
+  function validate() {
+    const newErrors: AuthFieldErrors = {};
+    if (!email.trim()) {
+      newErrors.email = 'E-mail é obrigatório.';
+    } else if (!/\S+@\S+\.\S+/.test(email.trim())) {
+      newErrors.email = 'Insira um e-mail válido.';
+    }
+
+    if (!password) {
+      newErrors.password = 'Senha é obrigatória.';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }
 
   async function handleLogin() {
-    if (!email || !password) {
-      Alert.alert('Erro', 'Por favor, preencha todos os campos.');
+    if (!validate()) {
       return;
     }
 
     setIsLoading(true);
+    setErrors({});
+
     try {
-      const response = await login({ email, password });
-
-      // Aqui você salvaria o response.accessToken no AsyncStorage/Context depois!
+      const response = await login({ email: email.trim(), password });
       console.log('Logado com sucesso! Token:', response.accessToken);
-
       router.replace('/(tabs)');
     } catch (error: any) {
-      Alert.alert('Erro de Acesso', 'E-mail ou senha incorretos.');
+      if (error && error.fieldErrors) {
+        setErrors(error.fieldErrors);
+      } else {
+        setErrors({
+          general: error.message || 'E-mail ou senha incorretos.',
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -72,8 +94,14 @@ export default function LoginScreen() {
           keyboardType="email-address"
           autoCapitalize="none"
           value={email}
-          onChangeText={setEmail}
+          onChangeText={(text) => {
+            setEmail(text);
+            if (errors.email || errors.general) {
+              setErrors((prev) => ({ ...prev, email: undefined, general: undefined }));
+            }
+          }}
           editable={!isLoading}
+          error={errors.email}
         />
 
         <TextField
@@ -83,9 +111,21 @@ export default function LoginScreen() {
           secureTextEntry
           labelActionText="Esqueceu a senha?"
           value={password}
-          onChangeText={setPassword}
+          onChangeText={(text) => {
+            setPassword(text);
+            if (errors.password || errors.general) {
+              setErrors((prev) => ({ ...prev, password: undefined, general: undefined }));
+            }
+          }}
           editable={!isLoading}
+          error={errors.password}
         />
+
+        {errors.general ? (
+          <UmbrellaText variant="caption" color={Colors.light.error} style={styles.generalError}>
+            {errors.general}
+          </UmbrellaText>
+        ) : null}
 
         <Checkbox
           checked={staySignedIn}
@@ -109,7 +149,7 @@ export default function LoginScreen() {
         <SecondaryButton
           variant="filled"
           label="Criar Conta"
-          onPress={() => router.push('/signUp')} // Altere para a rota correta do seu Expo Router
+          onPress={() => router.push('/signUp')}
         />
       </Card>
 
@@ -134,6 +174,10 @@ const styles = StyleSheet.create({
   },
   cardSubtitle: {
     marginTop: Spacing.xs,
+  },
+  generalError: {
+    marginTop: -Spacing.xs,
+    fontSize: 12,
   },
   divider: {
     height: 1,

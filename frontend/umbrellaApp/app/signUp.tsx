@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View, Alert } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 
 import { AppHeader } from '@/components/layout/app-header';
@@ -10,7 +10,7 @@ import { SecondaryButton } from '@/components/ui/secondary-button';
 import { TextField } from '@/components/ui/text-field';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Spacing } from '@/constants/theme';
-import { useAuth } from '@/hooks/api/auth/useAuth'; // Ajuste o caminho conforme sua estrutura
+import { useAuth, AuthFieldErrors } from '@/hooks/api/auth/useAuth';
 
 export default function SignUpScreen() {
     const { register } = useAuth();
@@ -19,23 +19,55 @@ export default function SignUpScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [errors, setErrors] = useState<AuthFieldErrors>({});
+
+    function validate() {
+        const newErrors: AuthFieldErrors = {};
+        if (!name.trim()) {
+            newErrors.name = 'Nome é obrigatório.';
+        }
+
+        if (!email.trim()) {
+            newErrors.email = 'E-mail é obrigatório.';
+        } else if (!/\S+@\S+\.\S+/.test(email.trim())) {
+            newErrors.email = 'Insira um e-mail válido.';
+        }
+
+        if (!password) {
+            newErrors.password = 'Senha é obrigatória.';
+        } else if (password.length < 6) {
+            newErrors.password = 'A senha deve ter no mínimo 6 caracteres.';
+        }
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    }
 
     async function handleSignUp() {
-        if (!name || !email || !password) {
-            Alert.alert('Erro', 'Por favor, preencha todos os campos.');
+        if (!validate()) {
             return;
         }
 
         setIsLoading(true);
-        try {
-            const response = await register({ name, email, password });
+        setErrors({});
 
-            console.log('Conta criada com sucesso! Token:', response.accessToken);
-            Alert.alert('Sucesso', 'Sua conta Umbrella foi criada!', [
-                { text: 'Ir para o App', onPress: () => router.replace('/(tabs)') }
-            ]);
+        try {
+            await register({
+                name: name.trim(),
+                email: email.trim(),
+                password,
+            });
+
+            console.log('Conta criada com sucesso! Redirecionando para login...');
+            router.replace('/login');
         } catch (error: any) {
-            Alert.alert('Falha no Cadastro', 'Não foi possível criar sua conta. Verifique os dados ou tente outro e-mail.');
+            if (error && error.fieldErrors) {
+                setErrors(error.fieldErrors);
+            } else {
+                setErrors({
+                    general: error.message || 'Não foi possível criar sua conta. Tente novamente.',
+                });
+            }
         } finally {
             setIsLoading(false);
         }
@@ -65,12 +97,18 @@ export default function SignUpScreen() {
 
                 <TextField
                     label="Nome Completo"
-                    icon="person.fill" // Se o seu pacote de ícones tiver person
+                    icon="person.fill"
                     placeholder="Seu Nome Completo"
                     autoCapitalize="words"
                     value={name}
-                    onChangeText={setName}
+                    onChangeText={(text) => {
+                        setName(text);
+                        if (errors.name || errors.general) {
+                            setErrors((prev) => ({ ...prev, name: undefined, general: undefined }));
+                        }
+                    }}
                     editable={!isLoading}
+                    error={errors.name}
                 />
 
                 <TextField
@@ -80,8 +118,14 @@ export default function SignUpScreen() {
                     keyboardType="email-address"
                     autoCapitalize="none"
                     value={email}
-                    onChangeText={setEmail}
+                    onChangeText={(text) => {
+                        setEmail(text);
+                        if (errors.email || errors.general) {
+                            setErrors((prev) => ({ ...prev, email: undefined, general: undefined }));
+                        }
+                    }}
                     editable={!isLoading}
+                    error={errors.email}
                 />
 
                 <TextField
@@ -90,9 +134,21 @@ export default function SignUpScreen() {
                     placeholder="Mínimo 6 caracteres"
                     secureTextEntry
                     value={password}
-                    onChangeText={setPassword}
+                    onChangeText={(text) => {
+                        setPassword(text);
+                        if (errors.password || errors.general) {
+                            setErrors((prev) => ({ ...prev, password: undefined, general: undefined }));
+                        }
+                    }}
                     editable={!isLoading}
+                    error={errors.password}
                 />
+
+                {errors.general ? (
+                    <UmbrellaText variant="caption" color={Colors.light.error} style={styles.generalError}>
+                        {errors.general}
+                    </UmbrellaText>
+                ) : null}
 
                 <PrimaryButton
                     label={isLoading ? "Criando Conta..." : "Registrar Conta"}
@@ -133,6 +189,10 @@ const styles = StyleSheet.create({
     },
     cardSubtitle: {
         marginTop: Spacing.xs,
+    },
+    generalError: {
+        marginTop: -Spacing.xs,
+        fontSize: 12,
     },
     divider: {
         height: 1,

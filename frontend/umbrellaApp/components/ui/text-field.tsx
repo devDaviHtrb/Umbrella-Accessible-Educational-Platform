@@ -9,6 +9,7 @@ export type TextFieldProps = TextInputProps & {
   icon?: IconSymbolName;
   labelActionText?: string;
   onLabelActionPress?: () => void;
+  error?: string;
 };
 
 export function TextField({
@@ -16,6 +17,7 @@ export function TextField({
   icon,
   labelActionText,
   onLabelActionPress,
+  error,
   style,
   ...rest
 }: TextFieldProps) {
@@ -36,14 +38,29 @@ export function TextField({
 
       <View style={styles.inputRow}>
         <TextInput
-          style={[styles.input, style]}
+          style={[
+            styles.input,
+            error ? styles.inputError : null,
+            style,
+          ]}
           placeholderTextColor={Colors.light.textSecondary}
           {...rest}
         />
         {icon ? (
-          <IconSymbol name={icon} size={20} color={Colors.light.textSecondary} style={styles.icon} />
+          <IconSymbol
+            name={icon}
+            size={20}
+            color={error ? Colors.light.error : Colors.light.textSecondary}
+            style={styles.icon}
+          />
         ) : null}
       </View>
+
+      {error ? (
+        <UmbrellaText variant="caption" color={Colors.light.error} style={styles.errorText}>
+          {error}
+        </UmbrellaText>
+      ) : null}
     </View>
   );
 }
@@ -78,5 +95,13 @@ const styles = StyleSheet.create({
   icon: {
     position: 'absolute',
     right: Spacing.lg,
+  },
+  inputError: {
+    borderWidth: 1,
+    borderColor: Colors.light.error,
+  },
+  errorText: {
+    fontSize: 12,
+    marginTop: -2,
   },
 });

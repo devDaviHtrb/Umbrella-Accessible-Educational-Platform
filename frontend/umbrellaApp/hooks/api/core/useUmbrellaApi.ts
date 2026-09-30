@@ -19,7 +19,7 @@ export function useUmbrellaApi() {
             });
             return response.data;
         } catch (error: any) {
-            console.error(`Error on POST to ${relativeUrl}:`, error.response?.data || error.message);
+            console.log(`[useUmbrellaApi POST ${relativeUrl}]`, error.response?.data || error.message);
             throw error;
         }
     };
@@ -35,7 +35,7 @@ export function useUmbrellaApi() {
             });
             return response.data;
         } catch (error: any) {
-            console.error(`Error on GET to ${relativeUrl}:`, error.response?.data || error.message);
+            console.log(`[useUmbrellaApi GET ${relativeUrl}]`, error.response?.data || error.message);
             throw error;
         }
     };
