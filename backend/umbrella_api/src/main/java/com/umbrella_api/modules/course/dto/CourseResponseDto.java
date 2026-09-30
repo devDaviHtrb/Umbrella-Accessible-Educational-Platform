@@ -4,11 +4,18 @@ import com.umbrella_api.modules.course.model.Courses;
 import com.umbrella_api.modules.user.dto.UserResponseDto;
 import com.umbrella_api.modules.user.model.UserModel;
 
-public record CourseResponseDto(Long id, String name, String description, int module_amount, int difficulty_level,
+public record CourseResponseDto(
+        Long id,
+        String name,
+        String description,
+        int module_amount,
+        int difficulty_level,
         SubjectsResponseDto subject,
-        UserResponseDto userDto) {
+        UserResponseDto userDto,
+        String imageUrl) {
 
     public static CourseResponseDto fromEntity(Courses course, UserModel creator) {
+        String imgUrl = (course.getImage() != null) ? course.getImage().getUrl() : null;
 
         return new CourseResponseDto(
                 course.getId(),
@@ -17,7 +24,8 @@ public record CourseResponseDto(Long id, String name, String description, int mo
                 course.getModule_amount(),
                 course.getDifficulty_level(),
                 SubjectsResponseDto.fromEntity((course.getSubject())),
-                UserResponseDto.fromEntity(creator));
+                UserResponseDto.fromEntity(creator),
+                imgUrl);
     }
 
 }

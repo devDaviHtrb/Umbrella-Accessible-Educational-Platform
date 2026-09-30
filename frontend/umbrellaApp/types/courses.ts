@@ -17,6 +17,7 @@ export type Course = {
   description: string;
   imageBadge: string;
   imageTone: string;
+  imageUrl?: string;
   showTrendingIcon?: boolean;
   footer: CourseFooter;
 };

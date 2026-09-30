@@ -24,6 +24,9 @@ public interface CourseService {
 
     public GenericResponse deleteCourse(long id);
 
+    // Search courses with optional text query and subject filter
+    public java.util.List<com.umbrella_api.modules.course.dto.CourseGetResponseDto> searchCourses(String search, Long subjectId);
+
     // Module crud
     public Modules createModule(ModuleRequestDto moduleData); // awaiting the data dict for define the type of
                                                               // "timeLimit"

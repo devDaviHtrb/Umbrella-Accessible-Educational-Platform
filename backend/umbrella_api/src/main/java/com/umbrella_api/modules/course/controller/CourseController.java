@@ -46,10 +46,12 @@ public class CourseController {
         return ResponseEntity.ok(CourseResponseDto.fromEntity(course, creator));
     }
 
-    @PreAuthorize("@securityEvaluator.isCourseOwner(#id, principal)")
-    @DeleteMapping("/{id}")
-    public ResponseEntity<GenericResponse> deleteCourse(@PathVariable Long id) {
-        return ResponseEntity.ok(courseService.deleteCourse(id));
+    @GetMapping("/list")
+    public ResponseEntity<List<CourseGetResponseDto>> listCourses(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) Long subjectId) {
+        List<CourseGetResponseDto> courses = courseService.searchCourses(search, subjectId);
+        return ResponseEntity.ok(courses);
     }
 
     // ==========================================

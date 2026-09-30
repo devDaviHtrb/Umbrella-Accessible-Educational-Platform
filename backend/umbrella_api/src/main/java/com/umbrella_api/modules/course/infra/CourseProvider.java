@@ -238,4 +238,10 @@ public class CourseProvider {
         return CourseGetResponseDto.fromEntityList(courses);
     }
 
+    // Search courses with optional text and subject filter
+    public java.util.List<com.umbrella_api.modules.course.dto.CourseGetResponseDto> searchCourses(String search, Long subjectId) {
+        java.util.List<com.umbrella_api.modules.course.model.Courses> courses = coursesRepository.searchCourses(search, subjectId);
+        return com.umbrella_api.modules.course.dto.CourseGetResponseDto.fromEntityList(courses);
+    }
+
 }

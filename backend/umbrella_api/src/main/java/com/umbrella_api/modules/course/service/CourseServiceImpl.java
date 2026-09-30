@@ -117,6 +117,10 @@ public class CourseServiceImpl implements CourseService {
     public List<CourseGetResponseDto> getCoursesBySubject(Long subjectId) {
         return courseProvider.getCoursesBySubject(subjectId);
     }
+    @Override
+    public java.util.List<com.umbrella_api.modules.course.dto.CourseGetResponseDto> searchCourses(String search, Long subjectId) {
+        return courseProvider.searchCourses(search, subjectId);
+    }
 
 
 }
