@@ -12,7 +12,7 @@ public interface AiService {
 
     IaChat startNewChat(String title, CustomUserDetails userDetails);
 
-    List<IaChat> getChatsByUser(Long userId);
+    List<IaChat> getChatsByUser(CustomUserDetails userDetails);
 
     IaChat getChatById(Long chatId);
 

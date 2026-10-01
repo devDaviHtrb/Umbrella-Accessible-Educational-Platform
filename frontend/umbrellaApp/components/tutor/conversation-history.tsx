@@ -9,14 +9,18 @@ export type ConversationHistoryProps = {
   conversations: Conversation[];
   isLoading: boolean;
   onSelect: (conversation: Conversation) => void;
+  onDeleteConversation: (id: string) => void;
   onNewConversation: () => void;
+  activeConversationId?: string;
 };
 
 export function ConversationHistory({
   conversations,
   isLoading,
   onSelect,
+  onDeleteConversation,
   onNewConversation,
+  activeConversationId,
 }: ConversationHistoryProps) {
   return (
     <View style={styles.wrapper}>
@@ -35,6 +39,8 @@ export function ConversationHistory({
               key={conversation.id}
               conversation={conversation}
               onPress={() => onSelect(conversation)}
+              onDelete={() => onDeleteConversation(conversation.id)}
+              isActive={conversation.id === activeConversationId}
             />
           ))}
         </View>

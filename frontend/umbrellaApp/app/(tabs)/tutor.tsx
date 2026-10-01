@@ -6,6 +6,7 @@ import {
   ScrollView,
   StyleSheet,
   View,
+  TextInput,
 } from 'react-native';
 
 import { AITutorHeader } from '@/components/tutor/ai-tutor-header';
@@ -17,14 +18,16 @@ import { ScreenContainer } from '@/components/layout/screen-container';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ModalSheet } from '@/components/ui/modal-sheet';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
-import { Colors, Spacing } from '@/constants/theme';
-import { getHistory, sendMessage, startNewConversation } from '@/services/tutorApi';
+import { PrimaryButton } from '@/components/ui/primary-button';
+import { Colors, Spacing, Radius } from '@/constants/theme';
+import { useIaTutor } from '@/hooks/api/aiTutor/useIaTutor';
 import type { Conversation, Message } from '@/types/tutor';
 
 const AI_STATUS_LABEL = 'ANALISANDO DADOS DE FOCO';
 const AI_PROVIDER_BADGE = 'Gemini';
 
 export default function TutorScreen() {
+  const { getHistory, startNewConversation, sendMessage, deleteConversation } = useIaTutor();
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [isLoadingConversation, setLoadingConversation] = useState(true);
   const [isSending, setSending] = useState(false);
@@ -35,13 +38,16 @@ export default function TutorScreen() {
   const [historyConversations, setHistoryConversations] = useState<Conversation[]>([]);
   const [isHistoryLoading, setHistoryLoading] = useState(false);
 
+  const [isAddChatVisible, setAddChatVisible] = useState(false);
+  const [newChatTitle, setNewChatTitle] = useState('');
+
   const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     async function loadInitialConversation() {
       setLoadingConversation(true);
       const history = await getHistory();
-      const mostRecent = history[0] ?? (await startNewConversation());
+      const mostRecent = history[0] ?? (await startNewConversation('Nova Conversa'));
       setActiveConversation(mostRecent);
       setLoadingConversation(false);
     }
@@ -52,12 +58,19 @@ export default function TutorScreen() {
     scrollRef.current?.scrollToEnd({ animated: true });
   }, [activeConversation?.messages.length]);
 
-  const handleNewConversation = useCallback(async () => {
-    const conversation = await startNewConversation();
+  const handleOpenNewChatModal = useCallback(() => {
+    setHistoryVisible(false);
+    setNewChatTitle('');
+    setAddChatVisible(true);
+  }, []);
+
+  const handleConfirmNewConversation = async () => {
+    const titleToUse = newChatTitle.trim() || 'Nova conversa';
+    setAddChatVisible(false);
+    const conversation = await startNewConversation(titleToUse);
     setActiveConversation(conversation);
     setDraft('');
-    setHistoryVisible(false);
-  }, []);
+  };
 
   const handleOpenHistory = useCallback(async () => {
     setHistoryVisible(true);
@@ -71,6 +84,27 @@ export default function TutorScreen() {
     setActiveConversation(conversation);
     setHistoryVisible(false);
   }
+
+  const handleDeleteChat = async (conversationId: string) => {
+    try {
+      await deleteConversation(conversationId);
+
+      const updatedHistory = historyConversations.filter((c) => c.id !== conversationId);
+      setHistoryConversations(updatedHistory);
+
+      if (activeConversation?.id === conversationId) {
+        const nextChat = updatedHistory[0] ?? null;
+        if (nextChat) {
+          setActiveConversation(nextChat);
+        } else {
+          const fresh = await startNewConversation('Nova Conversa');
+          setActiveConversation(fresh);
+        }
+      }
+    } catch (error) {
+      console.error('Erro ao apagar conversa:', error);
+    }
+  };
 
   async function handleSend() {
     const trimmed = draft.trim();
@@ -113,7 +147,7 @@ export default function TutorScreen() {
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Nova conversa"
-                onPress={handleNewConversation}
+                onPress={handleOpenNewChatModal}
                 style={styles.fab}>
                 <IconSymbol name="plus" size={22} color={Colors.light.surface} />
               </Pressable>
@@ -149,8 +183,27 @@ export default function TutorScreen() {
           conversations={historyConversations}
           isLoading={isHistoryLoading}
           onSelect={handleSelectConversation}
-          onNewConversation={handleNewConversation}
+          onDeleteConversation={handleDeleteChat}
+          onNewConversation={handleOpenNewChatModal}
+          activeConversationId={activeConversation?.id}
         />
+      </ModalSheet>
+
+      <ModalSheet visible={isAddChatVisible} onClose={() => setAddChatVisible(false)} title="Criar Nova Conversa">
+        <View style={styles.modalContent}>
+          <UmbrellaText variant="body" color={Colors.light.textSecondary}>
+            Dê um título para a sua nova conversa com a IA:
+          </UmbrellaText>
+          <TextInput
+            style={styles.modalInput}
+            placeholder="Ex: Dúvidas sobre Matemática"
+            placeholderTextColor={Colors.light.textSecondary}
+            value={newChatTitle}
+            onChangeText={setNewChatTitle}
+            autoFocus
+          />
+          <PrimaryButton label="Criar Conversa" onPress={handleConfirmNewConversation} />
+        </View>
       </ModalSheet>
     </KeyboardAvoidingView>
   );
@@ -194,5 +247,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 3,
+  },
+  modalContent: {
+    gap: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  modalInput: {
+    backgroundColor: Colors.light.surfaceContainerLow,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    fontSize: 16,
+    color: Colors.light.text,
+    borderWidth: 1,
+    borderColor: Colors.light.outline,
   },
 });

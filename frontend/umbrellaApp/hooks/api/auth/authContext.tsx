@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<UserData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // 1. Verifica se já existe um token e dados do usuário salvos ao abrir o app
+
     useEffect(() => {
         async function loadStorageData() {
             try {

@@ -9,7 +9,7 @@ const baseUrl = cleanedUrl.replace(/\/+$/, "");
 
 const umbrellaApi = axios.create({
   baseURL: baseUrl,
-  timeout: parseInt(process.env.EXPO_PUBLIC_REQUEST_TIME_OUT || "10000") || 10000,
+  timeout: 300000,
   headers: {
     "Content-Type": "application/json",
   },

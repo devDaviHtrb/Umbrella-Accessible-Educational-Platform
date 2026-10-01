@@ -1,12 +1,14 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, Radius, Spacing } from '@/constants/theme';
 import type { Conversation } from '@/types/tutor';
 
 export type HistoryListItemProps = {
   conversation: Conversation;
   onPress: () => void;
+  onDelete?: () => void;
+  isActive?: boolean;
 };
 
 function formatConversationDate(iso: string): string {
@@ -19,26 +21,43 @@ function formatConversationDate(iso: string): string {
   return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
 }
 
-export function HistoryListItem({ conversation, onPress }: HistoryListItemProps) {
+export function HistoryListItem({ conversation, onPress, onDelete, isActive }: HistoryListItemProps) {
   const lastMessage = conversation.messages[conversation.messages.length - 1];
 
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={styles.row}>
-      <View style={styles.textColumn}>
-        <UmbrellaText variant="bodyMedium" numberOfLines={1}>
-          {conversation.title}
-        </UmbrellaText>
-        {lastMessage ? (
-          <UmbrellaText variant="caption" color={Colors.light.textSecondary} numberOfLines={1}>
-            {lastMessage.text}
+    <View style={[styles.row, isActive && styles.activeRow]}>
+      {/* Área principal para clicar e abrir a conversa */}
+      <Pressable onPress={onPress} style={styles.mainTouchable}>
+        <View style={styles.textColumn}>
+          <UmbrellaText variant="bodyMedium" numberOfLines={1}>
+            {conversation.title}
           </UmbrellaText>
-        ) : null}
-      </View>
-      <UmbrellaText variant="caption" color={Colors.light.textSecondary}>
-        {formatConversationDate(conversation.updatedAt)}
-      </UmbrellaText>
+          {lastMessage ? (
+            <UmbrellaText variant="caption" color={Colors.light.textSecondary} numberOfLines={1}>
+              {lastMessage.text}
+            </UmbrellaText>
+          ) : null}
+        </View>
+
+        <UmbrellaText variant="caption" color={Colors.light.textSecondary}>
+          {formatConversationDate(conversation.updatedAt)}
+        </UmbrellaText>
+      </Pressable>
+
+      {/* Botão da lixeira visível antes da seta */}
+      {onDelete ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Apagar conversa"
+          onPress={onDelete}
+          style={styles.deleteButton}
+          hitSlop={8}>
+          <IconSymbol name="trash.fill" size={16} color={Colors.light.error || '#FF3B30'} />
+        </Pressable>
+      ) : null}
+
       <IconSymbol name="chevron.right" size={16} color={Colors.light.textSecondary} />
-    </Pressable>
+    </View>
   );
 }
 
@@ -48,11 +67,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.md,
     paddingVertical: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.light.outline,
+    paddingHorizontal: Spacing.md,
+    borderRadius: Radius.md,
+    marginBottom: 6,
+    backgroundColor: Colors.light.surface,
+  },
+  activeRow: {
+    padding: 10,
+    borderRadius: 20,
+    borderWidth: 5,
+    borderColor: Colors.light.primary,
+  },
+  mainTouchable: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
   },
   textColumn: {
     flex: 1,
     gap: 2,
+    overflow: 'hidden',
+  },
+  deleteButton: {
+    padding: 4,
   },
 });

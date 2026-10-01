@@ -25,7 +25,8 @@ public class TutorIaController {
     }
 
     @PostMapping("/chat")
-    public ResponseEntity<IaChat> createChat(@RequestParam String title, @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<IaChat> createChat(@RequestParam String title,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         IaChat newChat = aiService.startNewChat(title, userDetails);
         return ResponseEntity.status(HttpStatus.CREATED).body(newChat);
     }
@@ -37,10 +38,13 @@ public class TutorIaController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/user/{userId}/chats")
-    @PreAuthorize("@securityEvaluator.isChatOwner(#chatId, principal)")
-    public ResponseEntity<List<IaChat>> getUserChats(@PathVariable Long userId) {
-        List<IaChat> chats = aiService.getChatsByUser(userId);
+    @GetMapping("/chats")
+    public ResponseEntity<List<IaChat>> getUserChats(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            // No authenticated user; return empty list
+            return ResponseEntity.ok(List.of());
+        }
+        List<IaChat> chats = aiService.getChatsByUser(userDetails);
         return ResponseEntity.ok(chats);
     }
 

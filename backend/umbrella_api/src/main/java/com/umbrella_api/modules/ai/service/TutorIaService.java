@@ -82,6 +82,16 @@ public class TutorIaService implements AiService {
         return tutorIaProvider.createNewChat(title, "", userDetails);
     }
 
+    @Override
+    public List<IaChat> getChatsByUser(CustomUserDetails userDetails) {
+        if (userDetails == null || userDetails.getUserModel() == null) {
+            // No authenticated user; return empty list to avoid NullPointerException
+            return java.util.Collections.emptyList();
+        }
+        return tutorIaProvider.listChatsByUser(userDetails.getUserModel().getId());
+    }
+
+    // Backward‑compatible overload used internally
     public List<IaChat> getChatsByUser(Long userId) {
         return tutorIaProvider.listChatsByUser(userId);
     }
@@ -98,6 +108,5 @@ public class TutorIaService implements AiService {
     public void removeChat(Long chatId) {
         tutorIaProvider.deleteChat(chatId);
     }
-
 
 }
