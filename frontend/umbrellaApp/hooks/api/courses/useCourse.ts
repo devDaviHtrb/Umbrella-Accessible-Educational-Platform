@@ -11,6 +11,7 @@ export function useCourses() {
     const [error, setError] = useState<string | null>(null);
     const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORY_ID);
     const [query, setQuery] = useState('');
+    const [enrolledCourses, setEnrroledCourses] = useState<Course[]>([])
 
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -126,6 +127,8 @@ export function useCourses() {
 
         return { courseDetails, modules, detailLoading, detailError };
     };
+
+    
 
     return {
         courses: filteredCourses,
