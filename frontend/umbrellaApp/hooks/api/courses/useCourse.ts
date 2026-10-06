@@ -3,23 +3,37 @@ import { useUmbrellaApi } from '../core/useUmbrellaApi';
 import type { Course, CourseCategory, CourseModule } from '@/types/courses';
 import { ALL_CATEGORY_ID } from '@/constants/mock/courses';
 
+export interface GenericResponse {
+    status: string;
+    message: string;
+    code: number;
+}
+
+export interface ExceptionResponse {
+    status: string;
+    message: string;
+    code: number;
+    timestamp: string; 
+}
+
 export function useCourses() {
-    const { get } = useUmbrellaApi();
+    const { post, get, del } = useUmbrellaApi();
     const [courses, setCourses] = useState<Course[]>([]);
     const [categories, setCategories] = useState<CourseCategory[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORY_ID);
     const [query, setQuery] = useState('');
-    const [enrolledCourses, setEnrroledCourses] = useState<Course[]>([])
+    const [enrollmentedCourses, setEnrrollmentedCourses] = useState<Course[]>([]);
 
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
                 setLoading(true);
-                const [coursesResponse, subjectsResponse] = await Promise.all([
+                const [coursesResponse, subjectsResponse, errolmentedCoursesResponse] = await Promise.all([
                     get('public/courses/list'),
-                    get('public/courses/subjects').catch(() => [])
+                    get('public/courses/subjects').catch(() => []),
+                    get('public/courses/errolment').catch(() => [])
                 ]);
 
                 const coursesArray = Array.isArray(coursesResponse) ? coursesResponse : [];
@@ -40,6 +54,25 @@ export function useCourses() {
                     },
                 }));
                 setCourses(transformedCourses);
+
+                const enrrolmentCoursesArray = Array.isArray(errolmentedCoursesResponse) ? errolmentedCoursesResponse : [];
+                const transformedEnrollmentedCourses = enrrolmentCoursesArray.map((c: any): Course => ({
+                    id: String(c.id),
+                    categoryId: c.subjectId ? String(c.subjectId) : ALL_CATEGORY_ID,
+                    eyebrow: c.name ?? '',
+                    title: c.name ?? '',
+                    description: c.description ?? '',
+                    imageBadge: c.subjectName ?? '',
+                    imageTone: '#153E90',
+                    imageUrl: c.imageUrl,
+                    showTrendingIcon: false,
+                    footer: {
+                        type: 'rating' as const,
+                        durationLabel: '0h',
+                        rating: 0
+                    },
+                }));
+                setEnrrollmentedCourses(transformedEnrollmentedCourses);
 
                 const subjectsArray = Array.isArray(subjectsResponse) ? subjectsResponse : [];
                 const dynamicCategories: CourseCategory[] = [
@@ -78,7 +111,6 @@ export function useCourses() {
         });
     }, [selectedCategory, query, courses]);
 
-    // Função para buscar os detalhes completos e módulos de um curso específico pelo ID
     const useCourseDetails = (id: string) => {
         const [courseDetails, setCourseDetails] = useState<any>(null);
         const [modules, setModules] = useState<CourseModule[]>([]);
@@ -91,7 +123,6 @@ export function useCourses() {
             const fetchDetails = async () => {
                 try {
                     setDetailLoading(true);
-                    // Como visto no seu Controller Spring Boot, temos rotas separadas para detalhes do curso e módulos
                     const [courseRes, modulesRes] = await Promise.all([
                         get(`public/courses/${id}`),
                         get(`public/courses/${id}/modules`)
@@ -99,11 +130,10 @@ export function useCourses() {
 
                     setCourseDetails(courseRes);
 
-                    // Mapeando os módulos vindos do backend para o formato do front (ModuleAccordion)
                     const modulesArray = Array.isArray(modulesRes) ? modulesRes : [];
                     const transformedModules = modulesArray.map((m: any, index: number) => ({
                         id: String(m.id),
-                        number: String(index + 1), // Convertido para string para satisfazer o tipo
+                        number: String(index + 1),
                         title: m.name ?? m.title ?? '',
                         subtitle: `${(m.lessons ?? []).length} aulas`,
                         lessons: (m.lessons ?? []).map((l: any) => ({
@@ -128,10 +158,62 @@ export function useCourses() {
         return { courseDetails, modules, detailLoading, detailError };
     };
 
-    
+    const createErrolment = async (id: string, userId: string): Promise<GenericResponse | ExceptionResponse> => {
+        try {
+            const response = await post<GenericResponse>(`public/courses/${id}/enrrolment/${userId}`);
+            
+            const courseToEnroll = courses.find((c) => c.id === id);
+            if (courseToEnroll) {
+                setEnrrollmentedCourses((prev) => {
+                    if (prev.some((c) => c.id === id)) return prev;
+                    return [...prev, courseToEnroll];
+                });
+            }
+
+            return response;
+        } catch (error: any) {
+            console.log("[useCourses enrollment error]", error.response?.data || error.message);
+            
+            if (error.response && error.response.data) {
+                return error.response.data as ExceptionResponse;
+            }
+            
+            return {
+                status: "Internal Server Error",
+                message: error.message || "Erro desconhecido ao realizar a matrícula.",
+                code: 500,
+                timestamp: new Date().toISOString()
+            };
+        }
+    };
+
+    const deleteEnrollment = async (id: string, userId: string): Promise<GenericResponse | ExceptionResponse> => {
+        try {
+            const response = await del<GenericResponse>(`public/courses/${id}/enrrolment/${userId}`);
+            
+            setEnrrollmentedCourses((prev) => prev.filter((c) => c.id !== id));
+
+            return response;
+        } catch (error: any) {
+            console.log("[useCourses delete enrollment error]", error.response?.data || error.message);
+            
+            if (error.response && error.response.data) {
+                return error.response.data as ExceptionResponse;
+            }
+            
+            return {
+                status: "Internal Server Error",
+                message: error.message || "Erro desconhecido ao remover a matrícula.",
+                code: 500,
+                timestamp: new Date().toISOString()
+            };
+        }
+    };
 
     return {
         courses: filteredCourses,
+        allCourses: courses,
+        enrollmentedCourses,
         categories,
         loading,
         error,
@@ -140,5 +222,7 @@ export function useCourses() {
         query,
         setQuery,
         useCourseDetails,
+        createErrolment,
+        deleteEnrollment,
     };
 }

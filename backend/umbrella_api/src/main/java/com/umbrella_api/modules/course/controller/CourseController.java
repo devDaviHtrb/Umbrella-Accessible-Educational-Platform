@@ -108,6 +108,11 @@ public class CourseController {
     public ResponseEntity<GenericResponse> deleteUserRelation(@PathVariable Long id, @PathVariable Long userId) {
         return ResponseEntity.ok(courseService.deleteUserRelation(userId, id));
     }
+    @GetMapping("/errolment")
+    public ResponseEntity<List<CourseGetResponseDto>> getErrolmentedCourses(AuthenticationPrincipal CustomUserDetails loggedUser){
+        return ResponseEntity.ok(courseService.getEnrolledCoursesByUser(loggedUser));
+
+    }
 
     @PostMapping("/subjects/register")
     public ResponseEntity<Subjects> newSubject(@RequestBody String name) {
