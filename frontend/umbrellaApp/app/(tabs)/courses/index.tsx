@@ -23,6 +23,7 @@ export default function CoursesScreen() {
     setSelectedCategory,
     query,
     setQuery,
+    isEnrolled,
   } = useCourses();
 
   return (
@@ -90,7 +91,9 @@ export default function CoursesScreen() {
             Nenhum curso encontrado para essa busca.
           </UmbrellaText>
         ) : (
-          filteredCourses.map((course) => <CourseCard key={course.id} course={course} />)
+          filteredCourses.map((course) => (
+            <CourseCard key={course.id} course={course} isEnrolled={isEnrolled(course.id)} />
+          ))
         )}
       </View>
     </ScreenContainer>

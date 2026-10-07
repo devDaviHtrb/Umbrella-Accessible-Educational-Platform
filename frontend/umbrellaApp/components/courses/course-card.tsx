@@ -9,18 +9,28 @@ import type { Course } from '@/types/courses';
 
 export type CourseCardProps = {
   course: Course;
+  isEnrolled?: boolean;
 };
 
-export function CourseCard({ course }: CourseCardProps) {
+export function CourseCard({ course, isEnrolled }: CourseCardProps) {
   return (
     <Link href={`/courses/${course.id}`} asChild>
       <Pressable accessibilityRole="button">
         <Card padded={false}>
           <View style={[styles.image, { backgroundColor: course.imageTone }]}>
-            <View style={styles.badge}>
-              <UmbrellaText variant="caption" color={Colors.light.surface} style={styles.badgeText}>
-                {course.imageBadge}
-              </UmbrellaText>
+            <View style={styles.badgeRow}>
+              <View style={styles.badge}>
+                <UmbrellaText variant="caption" color={Colors.light.surface} style={styles.badgeText}>
+                  {course.imageBadge}
+                </UmbrellaText>
+              </View>
+              {isEnrolled ? (
+                <View style={[styles.badge, styles.enrolledBadge]}>
+                  <UmbrellaText variant="caption" color={Colors.light.surface} style={styles.badgeText}>
+                    MATRICULADO
+                  </UmbrellaText>
+                </View>
+              ) : null}
             </View>
             {course.showTrendingIcon ? (
               <View style={styles.cornerIcon}>
@@ -91,6 +101,11 @@ const styles = StyleSheet.create({
     borderTopRightRadius: Radius.lg,
     justifyContent: 'flex-start',
   },
+  badgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+  },
   badge: {
     alignSelf: 'flex-start',
     margin: Spacing.md,
@@ -98,6 +113,10 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs,
     borderRadius: Radius.sm,
     backgroundColor: 'rgba(17, 24, 28, 0.55)',
+  },
+  enrolledBadge: {
+    backgroundColor: Colors.light.success,
+    marginLeft: 0,
   },
   badgeText: {
     letterSpacing: 0.4,

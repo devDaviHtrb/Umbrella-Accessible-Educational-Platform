@@ -74,8 +74,8 @@ export function CustomTabBar(props: BottomTabBarProps) {
             target: route.key,
             canPreventDefault: true,
           });
-          if (!isFocused && !event?.defaultPrevented) {
-            navigation?.navigate(route.name);
+          if (!event?.defaultPrevented) {
+            navigation?.navigate(route.name, { screen: 'index' });
           }
         };
 

@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import umbrellaApi from '@/services/umbrellaApi';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -18,7 +19,7 @@ function authHeaders(token: string | null) {
 }
 
 export function useUmbrellaApi() {
-    const post = async <T = any>(relativeUrl: string, body: Record<string, any> = {}): Promise<T> => {
+    const post = useCallback(async <T = any>(relativeUrl: string, body: Record<string, any> = {}): Promise<T> => {
         const token = await fetchToken();
         try {
             const response = await umbrellaApi.post<T>(relativeUrl, body, { headers: authHeaders(token) });
@@ -27,9 +28,9 @@ export function useUmbrellaApi() {
             console.log(`[useUmbrellaApi POST ${relativeUrl}]`, error.response?.data || error.message);
             throw error;
         }
-    };
+    }, []);
 
-    const get = async <T = any>(relativeUrl: string): Promise<T> => {
+    const get = useCallback(async <T = any>(relativeUrl: string): Promise<T> => {
         const token = await fetchToken();
         try {
             const response = await umbrellaApi.get<T>(relativeUrl, { headers: authHeaders(token) });
@@ -38,10 +39,9 @@ export function useUmbrellaApi() {
             console.log(`[useUmbrellaApi GET ${relativeUrl}]`, error.response?.data || error.message);
             throw error;
         }
-    };
+    }, []);
 
-
-    const del = async <T = any>(relativeUrl: string): Promise<T> => {
+    const del = useCallback(async <T = any>(relativeUrl: string): Promise<T> => {
         const token = await fetchToken();
         try {
             const response = await umbrellaApi.delete<T>(relativeUrl, { headers: authHeaders(token) });
@@ -50,7 +50,7 @@ export function useUmbrellaApi() {
             console.log(`[useUmbrellaApi DELETE ${relativeUrl}]`, error.response?.data || error.message);
             throw error;
         }
-    };
+    }, []);
 
     return { post, get, del };
 }

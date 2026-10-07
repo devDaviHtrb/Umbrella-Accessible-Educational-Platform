@@ -109,9 +109,13 @@ public class CourseController {
         return ResponseEntity.ok(courseService.deleteUserRelation(userId, id));
     }
     @GetMapping("/errolment")
-    public ResponseEntity<List<CourseGetResponseDto>> getErrolmentedCourses(AuthenticationPrincipal CustomUserDetails loggedUser){
-        return ResponseEntity.ok(courseService.getEnrolledCoursesByUser(loggedUser));
-
+    public ResponseEntity<List<CourseGetResponseDto>> getErrolmentedCourses(
+            @AuthenticationPrincipal CustomUserDetails loggedUser) {
+        if (loggedUser == null) {
+            return ResponseEntity.ok(List.of());
+        }
+        List<Courses> courses = courseService.getEnrolledCoursesByUser(loggedUser);
+        return ResponseEntity.ok(CourseGetResponseDto.fromEntityList(courses));
     }
 
     @PostMapping("/subjects/register")

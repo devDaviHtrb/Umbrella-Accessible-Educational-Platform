@@ -89,6 +89,9 @@ public class CourseProvider {
     }
 
     public List<Courses> getEnrolledCoursesByUser(CustomUserDetails userDetails) {
+        if (userDetails == null || userDetails.getUserModel() == null) {
+            return List.of();
+        }
         UserModel user = userRepository.getReferenceById(userDetails.getUserModel().getId());
         return courseUserRelationRepository.findCoursesByUserIdAndNotCreator(user.getId());
     }

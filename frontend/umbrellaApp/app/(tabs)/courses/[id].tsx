@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { StyleSheet, View, ActivityIndicator } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Alert } from 'react-native';
 
 import { CourseHero } from '@/components/courses/course-hero';
 import { ModuleAccordion } from '@/components/courses/module-accordion';
@@ -11,14 +12,55 @@ import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useCourses } from '@/hooks/api/courses/useCourse';
 import type { CourseLesson } from '@/types/courses';
+import type { ActivityDto } from '@/types/activities';
 
 export default function CourseDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { useCourseDetails } = useCourses();
+  const { useCourseDetails, isEnrolled, createEnrollment, deleteEnrollment } = useCourses();
   const { courseDetails, modules, detailLoading, detailError } = useCourseDetails(id);
+  const [enrolling, setEnrolling] = useState(false);
+
+  const enrolled = id ? isEnrolled(id) : false;
+
+  const handleEnrollmentToggle = async () => {
+    if (!id) return;
+    setEnrolling(true);
+    try {
+      if (enrolled) {
+        const response = await deleteEnrollment(id);
+        if ('code' in response && response.code >= 400) {
+          Alert.alert('Erro', response.message || 'Erro ao cancelar matrícula.');
+        } else {
+          Alert.alert('Sucesso', 'Matrícula cancelada com sucesso!');
+        }
+      } else {
+        const response = await createEnrollment(id);
+        if ('code' in response && response.code >= 400) {
+          Alert.alert('Erro', response.message || 'Erro ao realizar matrícula.');
+        } else {
+          Alert.alert('Sucesso', 'Matrícula realizada com sucesso!');
+        }
+      }
+    } catch (err) {
+      Alert.alert('Erro', 'Ocorreu um erro ao processar a matrícula.');
+    } finally {
+      setEnrolling(false);
+    }
+  };
 
   function handleLessonPress(lesson: CourseLesson) {
     router.push(`/courses/class/${lesson.id}`);
+  }
+
+  function handleActivityPress(activity: ActivityDto) {
+    router.push({
+      pathname: '/courses/activity/[activityId]' as any,
+      params: {
+        courseId: id,
+        moduleId: activity.moduleId,
+        activityId: activity.id,
+      },
+    });
   }
 
   if (detailLoading) {
@@ -65,9 +107,14 @@ export default function CourseDetailsScreen() {
           <InfoRow label="Certificação" value="Disponível ao concluir" emphasis />
         </View>
 
-        <PrimaryButton label="Inscrever-se no Curso" onPress={() => { }} style={styles.ctaButton} />
+        <PrimaryButton
+          label={enrolling ? 'Processando...' : enrolled ? 'Desfazer Matrícula' : 'Inscrever-se no Curso'}
+          onPress={handleEnrollmentToggle}
+          disabled={enrolling}
+          style={[styles.ctaButton, enrolled && styles.unenrollButton]}
+        />
         <UmbrellaText variant="caption" color={Colors.light.textSecondary} style={styles.ctaCaption}>
-          Acesso imediato e vitalício ao conteúdo
+          {enrolled ? 'Você está matriculado neste curso' : 'Acesso imediato e vitalício ao conteúdo'}
         </UmbrellaText>
       </Card>
 
@@ -92,8 +139,11 @@ export default function CourseDetailsScreen() {
           <ModuleAccordion
             key={module.id}
             module={module}
+            courseId={id}
             defaultExpanded={index === 0}
+            isEnrolled={enrolled}
             onLessonPress={handleLessonPress}
+            onActivityPress={handleActivityPress}
           />
         ))}
       </View>
@@ -155,6 +205,9 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     marginBottom: Spacing.sm,
+  },
+  unenrollButton: {
+    backgroundColor: Colors.light.error,
   },
   ctaCaption: {
     textAlign: 'center',

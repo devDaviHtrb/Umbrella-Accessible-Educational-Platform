@@ -40,6 +40,9 @@ public class SubmissionsProvider {
 
     @Transactional
     public ActivitySubmissions createActivitySubmission(Long activityId, CustomUserDetails userDetails) {
+        if (userDetails == null || userDetails.getUserModel() == null) {
+            throw new IllegalArgumentException("Usuário não autenticado.");
+        }
         UserModel user = userRepository.getReferenceById(userDetails.getUserModel().getId());
         Activities activity = activityService.getActivityById(activityId);
 

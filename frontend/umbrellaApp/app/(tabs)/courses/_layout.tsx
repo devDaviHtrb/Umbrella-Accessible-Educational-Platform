@@ -40,6 +40,14 @@ export default function CoursesStackLayout() {
           headerBackTitle: 'Voltar',
         }}
       />
+      <Stack.Screen
+        name="activity/[activityId]"
+        options={{
+          headerShown: true,
+          headerTitle: 'Atividade',
+          headerBackTitle: 'Voltar',
+        }}
+      />
     </Stack>
   );
 }
