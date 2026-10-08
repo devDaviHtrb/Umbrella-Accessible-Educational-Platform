@@ -27,16 +27,16 @@ export function ModuleCard({ module }: ModuleCardProps) {
         />
       </View>
 
-      <UmbrellaText variant="headline" style={styles.title}>
+      <UmbrellaText variant="headline" style={styles.title} numberOfLines={2}>
         {module.title}
       </UmbrellaText>
-      <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.description}>
+      <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.description} numberOfLines={2}>
         {module.description}
       </UmbrellaText>
 
       <View style={styles.progressRow}>
         <UmbrellaText variant="label" color={Colors.light.textSecondary}>
-          Conclusão do Módulo
+          Progresso
         </UmbrellaText>
         <UmbrellaText variant="label" color={Colors.light.text}>
           {module.progress}%

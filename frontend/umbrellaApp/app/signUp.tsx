@@ -13,7 +13,7 @@ import { Colors, Spacing } from '@/constants/theme';
 import { useAuth, AuthFieldErrors } from '@/hooks/api/auth/useAuth';
 
 export default function SignUpScreen() {
-    const { register } = useAuth();
+    const { register, login } = useAuth();
 
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -58,8 +58,13 @@ export default function SignUpScreen() {
                 password,
             });
 
-            console.log('Conta criada com sucesso! Redirecionando para login...');
-            router.replace('/login');
+            await login({
+                email: email.trim(),
+                password,
+            });
+
+            console.log('Conta criada e login automático feito com sucesso!');
+            router.replace('/(tabs)');
         } catch (error: any) {
             if (error && error.fieldErrors) {
                 setErrors(error.fieldErrors);
