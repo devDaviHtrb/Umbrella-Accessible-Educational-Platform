@@ -3,6 +3,8 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useSchedule } from '@/hooks/api/schedule/useSchedule';
 import { useAuthContext } from '@/hooks/api/auth/authContext';
+import { useIaTutor } from '@/hooks/api/aiTutor/useIaTutor';
+import { ActivityIndicator } from 'react-native';
 
 import { AgendaEventCard } from '@/components/agenda/agenda-event-card';
 import { EventDetails } from '@/components/agenda/event-details';
@@ -130,6 +132,32 @@ export default function AgendaScreen() {
 
   
 
+  const { startNewConversation, sendMessage } = useIaTutor();
+  const [tutorTip, setTutorTip] = useState<string | null>(null);
+  const [isTipLoading, setIsTipLoading] = useState(false);
+
+
+
+  const generateTip = async () => {
+    setIsTipLoading(true);
+    try {
+      const chat = await startNewConversation(`Dica de Agenda: ${selectedDate.toLocaleDateString()}`);
+      
+      let eventsText = eventsForSelectedDay.length > 0 
+        ? eventsForSelectedDay.map(e => `${e.time} - ${e.title}`).join(', ')
+        : 'Nenhum evento agendado.';
+        
+      const prompt = `Minha agenda para o dia ${selectedDate.toLocaleDateString()} tem os seguintes eventos: ${eventsText}. Você pode me dar uma breve dica (máximo 2 frases) de como organizar meu tempo e meus estudos hoje?`;
+      
+      const reply = await sendMessage(chat.id, prompt);
+      setTutorTip(reply.text);
+    } catch (e) {
+      setTutorTip("Não foi possível carregar a dica. Tente novamente.");
+    } finally {
+      setIsTipLoading(false);
+    }
+  };
+
   const [isEventsExpanded, setIsEventsExpanded] = useState(true);
 
   return (
@@ -147,9 +175,18 @@ export default function AgendaScreen() {
           weekLabel={weekLabel}
           days={calendarDays}
           selectedIndex={selectedDayIndex}
-          onSelectDay={setSelectedDayIndex}
-          onPrevWeek={() => setWeekOffset(prev => prev - 1)}
-          onNextWeek={() => setWeekOffset(prev => prev + 1)}
+          onSelectDay={(idx) => {
+            setSelectedDayIndex(idx);
+            setTutorTip(null);
+          }}
+          onPrevWeek={() => {
+            setWeekOffset(prev => prev - 1);
+            setTutorTip(null);
+          }}
+          onNextWeek={() => {
+            setWeekOffset(prev => prev + 1);
+            setTutorTip(null);
+          }}
         />
       </Card>
 
@@ -217,11 +254,22 @@ export default function AgendaScreen() {
             Dica do Tutor IA
           </UmbrellaText>
         </View>
-        <UmbrellaText variant="body" color={Colors.light.surface} style={styles.tutorTipText}>
-          Dica do Tutor IA: organize seu tempo estudando em blocos focados.
-        </UmbrellaText>
-        <Pressable accessibilityRole="button" style={styles.tutorTipAction}>
-          <IconSymbol name="calendar.badge.plus" size={18} color={Colors.light.surface} />
+        
+        {isTipLoading ? (
+          <ActivityIndicator color={Colors.light.surface} style={{ alignSelf: 'flex-start', marginVertical: Spacing.sm }} />
+        ) : (
+          <UmbrellaText variant="body" color={Colors.light.surface} style={styles.tutorTipText}>
+            {tutorTip || 'Clique no botão para receber uma dica de como organizar sua agenda do dia.'}
+          </UmbrellaText>
+        )}
+
+        <Pressable 
+          accessibilityRole="button" 
+          style={styles.tutorTipAction}
+          onPress={generateTip}
+          disabled={isTipLoading}
+        >
+          <IconSymbol name="sparkles" size={18} color={Colors.light.surface} />
         </Pressable>
       </View>
 
