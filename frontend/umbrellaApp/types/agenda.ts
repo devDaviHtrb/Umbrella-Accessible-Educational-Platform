@@ -1,3 +1,5 @@
+import { EventType } from "./schedule";
+
 export type CalendarDay = {
   weekdayLabel: string;
   dayNumber: number;
@@ -28,6 +30,9 @@ export type ActiveReminder = {
 
 export type NewReminderInput = {
   title: string;
-  dueLabel: string;
+  date: string; // ISO 8601 date string
   urgent: boolean;
+  type?: EventType;
+  description?: string;
+
 };

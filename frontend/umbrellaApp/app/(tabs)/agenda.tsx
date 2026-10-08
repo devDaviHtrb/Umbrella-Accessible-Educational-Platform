@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import { useSchedule } from '@/hooks/api/schedule/useSchedule';
+import { useAuthContext } from '@/hooks/api/auth/authContext';
 
 import { AgendaEventCard } from '@/components/agenda/agenda-event-card';
 import { EventDetails } from '@/components/agenda/event-details';
-import { NewReminderForm } from '@/components/agenda/new-reminder-form';
-import { ReminderCard } from '@/components/agenda/reminder-card';
+import NewReminderForm from '@/components/agenda/new-reminder-form';
+
 import { WeekCalendarStrip } from '@/components/agenda/week-calendar-strip';
 import { AppHeader } from '@/components/layout/app-header';
 import { ScreenContainer } from '@/components/layout/screen-container';
@@ -14,49 +17,120 @@ import { ModalSheet } from '@/components/ui/modal-sheet';
 import { SecondaryButton } from '@/components/ui/secondary-button';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
-import {
-  mockActiveReminders,
-  mockCalendarDays,
-  mockDefaultSelectedDayIndex,
-  mockEventsByDay,
-  mockMonthLabel,
-  mockTutorTip,
-  mockWeekLabel,
-} from '@/constants/mock/agenda';
 import { Colors, Radius, Spacing } from '@/constants/theme';
-import type { ActiveReminder, AgendaEvent, NewReminderInput } from '@/types/agenda';
+import type { AgendaEvent, NewReminderInput, CalendarDay } from '@/types/agenda';
+import { EventType, ScheduleGetRequestDto } from '@/types/schedule';
 
 export default function AgendaScreen() {
-  const [selectedDayIndex, setSelectedDayIndex] = useState(mockDefaultSelectedDayIndex);
-  const [reminders, setReminders] = useState<ActiveReminder[]>(mockActiveReminders);
+  const { getAllEvents, createEvent, deleteEvent } = useSchedule();
+  const { userId } = useAuthContext();
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+
   const [isReminderFormVisible, setReminderFormVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<AgendaEvent | null>(null);
+  const [events, setEvents] = useState<ScheduleGetRequestDto[]>([]);
 
-  const selectedDay = mockCalendarDays[selectedDayIndex];
-  const eventsForSelectedDay = mockEventsByDay[selectedDay.dayNumber] ?? [];
+  // Load events and reminders from backend on mount and every time the tab is focused
+  useFocusEffect(
+    useCallback(() => {
+      // Ensure we have a logged‑in user before fetching
+      if (!userId) return;
+      (async () => {
+        const data = await getAllEvents();
+        setEvents(data);
+      })();
+    }, [userId, getAllEvents])
+  );
 
-  function handleCreateReminder(input: NewReminderInput) {
-    const newReminder: ActiveReminder = {
-      id: `reminder-${Date.now()}`,
-      icon: input.urgent ? 'exclamationmark.circle.fill' : 'book.fill',
-      iconTone: input.urgent ? 'error' : 'primary',
-      title: input.title,
-      dueLabel: input.dueLabel,
-      urgent: input.urgent,
+  const [weekOffset, setWeekOffset] = useState(0);
+
+  // Helper to get the Monday of the currently viewed week
+  const getMondayOfWeek = () => {
+    const today = new Date();
+    const day = today.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + diff + (weekOffset * 7));
+    return monday;
+  };
+
+  const currentMonday = getMondayOfWeek();
+  const monthLabel = currentMonday.toLocaleString('pt-BR', { month: 'long' });
+  const weekLabel = weekOffset === 0 
+    ? 'Semana Atual' 
+    : weekOffset < 0 
+      ? `${Math.abs(weekOffset)} semana(s) atrás` 
+      : `Daqui a ${weekOffset} semana(s)`;
+
+  // Generate dynamic calendar data based on the selected week and events
+  const generateCalendarDays = (): CalendarDay[] => {
+    const monday = getMondayOfWeek();
+    const days: CalendarDay[] = [];
+    for (let i = 0; i < 7; i++) {
+      const cur = new Date(monday);
+      cur.setDate(monday.getDate() + i);
+      const dayNumber = cur.getDate();
+      const weekdayLabel = cur.toLocaleString('pt-BR', { weekday: 'short' });
+      const hasEvent = events.some(e => new Date(e.startTime).toDateString() === cur.toDateString());
+      days.push({ weekdayLabel, dayNumber, hasEvent });
+    }
+    return days;
+  };
+  
+  // Calendar days for the currently viewed week
+  const calendarDays = generateCalendarDays();
+  // Selected day based on current index
+  const selectedDay = calendarDays[selectedDayIndex];
+
+  // Determine the exact date for the selected calendar day
+  const selectedDate = (() => {
+    const date = new Date(currentMonday);
+    date.setDate(currentMonday.getDate() + selectedDayIndex);
+    return date;
+  })();
+
+  // Events for the currently selected day (full date match and time not passed)
+  const apiEventsForSelectedDay = selectedDay
+    ? events.filter(e => {
+        const eventDate = new Date(e.startTime);
+        // Only show if it's on the selected date AND the time hasn't completely passed
+        // (adding a small 1-minute buffer so it doesn't disappear the exact second it starts)
+        const isTodayOrFuture = eventDate.getTime() + 60000 >= new Date().getTime();
+        return eventDate.toDateString() === selectedDate.toDateString() && isTodayOrFuture;
+      })
+    : [];
+
+  const eventsForSelectedDay: AgendaEvent[] = apiEventsForSelectedDay.map(e => {
+    const d = new Date(e.startTime);
+    return {
+      id: String(e.id),
+      time: d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      title: e.title,
+      subtitle: e.description || e.type,
+      trailing: 'bell',
+      accentColor: Colors.light.primary,
     };
-    setReminders((prev) => [newReminder, ...prev]);
+  });
+
+  // Reminders active for the selected day only
+
+
+  // Create event by delegating to backend schedule service
+  async function handleCreateReminder(input: NewReminderInput) {
+    await createEvent({
+      title: input.title,
+      description: input.description,
+      startTime: input.date,
+      type: input.type || EventType.PERSONAL,
+    });
+    const refreshed = await getAllEvents();
+    setEvents(refreshed);
     setReminderFormVisible(false);
   }
 
-  function handleCompleteReminder(id: string) {
-    setReminders((prev) =>
-      prev.map((reminder) => (reminder.id === id ? { ...reminder, completed: true } : reminder)),
-    );
-  }
+  
 
-  function handleDeleteReminder(id: string) {
-    setReminders((prev) => prev.filter((reminder) => reminder.id !== id));
-  }
+  const [isEventsExpanded, setIsEventsExpanded] = useState(true);
 
   return (
     <ScreenContainer header={<AppHeader />}>
@@ -69,30 +143,49 @@ export default function AgendaScreen() {
 
       <Card>
         <WeekCalendarStrip
-          monthLabel={mockMonthLabel}
-          weekLabel={mockWeekLabel}
-          days={mockCalendarDays}
+          monthLabel={monthLabel}
+          weekLabel={weekLabel}
+          days={calendarDays}
           selectedIndex={selectedDayIndex}
           onSelectDay={setSelectedDayIndex}
+          onPrevWeek={() => setWeekOffset(prev => prev - 1)}
+          onNextWeek={() => setWeekOffset(prev => prev + 1)}
         />
       </Card>
 
       <Card>
-        <View style={styles.sectionHeaderRow}>
-          <UmbrellaText variant="headline">Horários de Hoje</UmbrellaText>
-          <StatusBadge label={`${eventsForSelectedDay.length} EVENTOS`} tone="teal" />
-        </View>
-
-        {eventsForSelectedDay.length === 0 ? (
-          <UmbrellaText variant="body" color={Colors.light.textSecondary}>
-            Nenhum evento para este dia.
-          </UmbrellaText>
-        ) : (
-          <View style={styles.eventList}>
-            {eventsForSelectedDay.map((event) => (
-              <AgendaEventCard key={event.id} event={event} onPress={() => setSelectedEvent(event)} />
-            ))}
+        <Pressable 
+          style={styles.sectionHeaderRow} 
+          onPress={() => setIsEventsExpanded(!isEventsExpanded)}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+            <UmbrellaText variant="headline">Horários de Hoje</UmbrellaText>
+            <StatusBadge label={`${eventsForSelectedDay.length} EVENTOS`} tone="teal" />
           </View>
+          <IconSymbol name={isEventsExpanded ? 'chevron.up' : 'chevron.down'} size={20} color={Colors.light.textSecondary} />
+        </Pressable>
+
+        {isEventsExpanded && (
+          eventsForSelectedDay.length === 0 ? (
+            <UmbrellaText variant="body" color={Colors.light.textSecondary}>
+              Nenhum evento para este dia.
+            </UmbrellaText>
+          ) : (
+            <View style={styles.eventList}>
+              {eventsForSelectedDay.map((event: AgendaEvent) => (
+                <AgendaEventCard 
+                  key={event.id} 
+                  event={event} 
+                  onPress={() => setSelectedEvent(event)} 
+                  onDelete={async () => {
+                    await deleteEvent(event.id);
+                    const refreshed = await getAllEvents();
+                    setEvents(refreshed);
+                  }}
+                />
+              ))}
+            </View>
+          )
         )}
       </Card>
 
@@ -114,35 +207,8 @@ export default function AgendaScreen() {
         />
       </View>
 
-      <Card tone="muted">
-        <View style={styles.remindersHeaderRow}>
-          <IconSymbol name="alarm.fill" size={18} color={Colors.light.text} />
-          <UmbrellaText variant="headline">Lembretes Ativos</UmbrellaText>
-        </View>
 
-        {reminders.length === 0 ? (
-          <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.noReminders}>
-            Nenhum lembrete ativo no momento.
-          </UmbrellaText>
-        ) : (
-          <View style={styles.reminderList}>
-            {reminders.map((reminder) => (
-              <ReminderCard
-                key={reminder.id}
-                reminder={reminder}
-                onComplete={() => handleCompleteReminder(reminder.id)}
-                onDelete={() => handleDeleteReminder(reminder.id)}
-              />
-            ))}
-          </View>
-        )}
 
-        <Pressable accessibilityRole="button" style={styles.viewAllButton}>
-          <UmbrellaText variant="label" color={Colors.light.primary}>
-            Ver todos os lembretes
-          </UmbrellaText>
-        </Pressable>
-      </Card>
 
       <View style={styles.tutorTipCard}>
         <View style={styles.tutorTipHeader}>
@@ -152,7 +218,7 @@ export default function AgendaScreen() {
           </UmbrellaText>
         </View>
         <UmbrellaText variant="body" color={Colors.light.surface} style={styles.tutorTipText}>
-          {mockTutorTip}
+          Dica do Tutor IA: organize seu tempo estudando em blocos focados.
         </UmbrellaText>
         <Pressable accessibilityRole="button" style={styles.tutorTipAction}>
           <IconSymbol name="calendar.badge.plus" size={18} color={Colors.light.surface} />
@@ -162,14 +228,16 @@ export default function AgendaScreen() {
       <ModalSheet
         visible={isReminderFormVisible}
         onClose={() => setReminderFormVisible(false)}
-        title="Novo Lembrete">
+        title="Novo Lembrete"
+      >
         <NewReminderForm onSubmit={handleCreateReminder} />
       </ModalSheet>
 
       <ModalSheet
         visible={selectedEvent !== null}
         onClose={() => setSelectedEvent(null)}
-        title="Detalhes do Evento">
+        title="Detalhes do Evento"
+      >
         {selectedEvent ? <EventDetails event={selectedEvent} /> : null}
       </ModalSheet>
     </ScreenContainer>

@@ -52,5 +52,29 @@ export function useUmbrellaApi() {
         }
     }, []);
 
-    return { post, get, del };
+    // PUT method for full updates
+    const put = useCallback(async <T = any>(relativeUrl: string, body: Record<string, any> = {}): Promise<T> => {
+        const token = await fetchToken();
+        try {
+            const response = await umbrellaApi.put<T>(relativeUrl, body, { headers: authHeaders(token) });
+            return response.data;
+        } catch (error: any) {
+            console.log(`[useUmbrellaApi PUT ${relativeUrl}]`, error.response?.data || error.message);
+            throw error;
+        }
+    }, []);
+
+    // PATCH method for partial updates
+    const patch = useCallback(async <T = any>(relativeUrl: string, body: Record<string, any> = {}): Promise<T> => {
+        const token = await fetchToken();
+        try {
+            const response = await umbrellaApi.patch<T>(relativeUrl, body, { headers: authHeaders(token) });
+            return response.data;
+        } catch (error: any) {
+            console.log(`[useUmbrellaApi PATCH ${relativeUrl}]`, error.response?.data || error.message);
+            throw error;
+        }
+    }, []);
+
+    return { post, get, del, put, patch };
 }

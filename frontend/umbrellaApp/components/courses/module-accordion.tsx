@@ -7,6 +7,8 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useModuleActivities, useActivity } from '@/hooks/api/activities/useActivity';
+import type { CourseModule, CourseLesson } from '@/types/courses';
+import type { ActivityDto } from '@/types/activities';
 
 export type ModuleAccordionProps = {
   module: CourseModule;

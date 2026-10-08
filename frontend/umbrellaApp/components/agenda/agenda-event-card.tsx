@@ -9,11 +9,12 @@ import type { AgendaEvent } from '@/types/agenda';
 export type AgendaEventCardProps = {
   event: AgendaEvent;
   onPress?: () => void;
+  onDelete?: () => void;
 };
 
-export function AgendaEventCard({ event, onPress }: AgendaEventCardProps) {
+export function AgendaEventCard({ event, onPress, onDelete }: AgendaEventCardProps) {
   return (
-    <Pressable style={styles.row} accessibilityRole="button" onPress={onPress}>
+    <Pressable style={styles.row} onPress={onPress}>
       <UmbrellaText variant="label" color={Colors.light.textSecondary} style={styles.time}>
         {event.time}
       </UmbrellaText>
@@ -27,11 +28,18 @@ export function AgendaEventCard({ event, onPress }: AgendaEventCardProps) {
           <UmbrellaText variant="bodyMedium" style={styles.title}>
             {event.title}
           </UmbrellaText>
-          <IconSymbol
-            name={event.trailing === 'bell' ? 'bell.fill' : 'ellipsis'}
-            size={16}
-            color={Colors.light.textSecondary}
-          />
+          <View style={{ flexDirection: 'row', gap: Spacing.md }}>
+            {onDelete && (
+              <Pressable onPress={(e) => { e.stopPropagation(); onDelete(); }} hitSlop={8}>
+                <IconSymbol name="trash.fill" size={16} color={Colors.light.error || '#FF3B30'} />
+              </Pressable>
+            )}
+            <IconSymbol
+              name={event.trailing === 'bell' ? 'bell.fill' : 'ellipsis'}
+              size={16}
+              color={Colors.light.textSecondary}
+            />
+          </View>
         </View>
         <UmbrellaText variant="caption" color={Colors.light.textSecondary}>
           {event.subtitle}
