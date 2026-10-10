@@ -105,8 +105,6 @@ export function useCourses() {
                 }));
                 setCourses(transformedCourses);
 
-                await fetchEnrolledCourses();
-
                 const subjectsArray = Array.isArray(subjectsResponse) ? subjectsResponse : [];
                 const dynamicCategories: CourseCategory[] = [
                     { id: ALL_CATEGORY_ID, label: 'Todos' },
@@ -128,6 +126,19 @@ export function useCourses() {
 
         fetchInitialData();
     }, []);
+
+    // Re-fetch enrolled courses whenever the logged-in user changes (e.g. after login)
+    // This makes the enrollment button reactive without needing a page refresh
+    useEffect(() => {
+        if (authUserId && authUserId !== '') {
+            // Reset global state so it's always fresh for the current user
+            setGlobalEnrolledCourses([]);
+            fetchEnrolledCourses();
+        } else {
+            // User logged out – clear enrolled state
+            setGlobalEnrolledCourses([]);
+        }
+    }, [authUserId]);
 
     const filteredCourses = useMemo(() => {
         const normalizedQuery = query.trim().toLowerCase();
@@ -206,37 +217,18 @@ export function useCourses() {
         return { courseDetails, modules, detailLoading, detailError };
     };
 
-    const createEnrollment = async (id: string, userId?: string): Promise<GenericResponse | ExceptionResponse> => {
-        const targetUserId = userId || authUserId;
-        if (!targetUserId) {
-            return {
-                status: "Bad Request",
-                message: "Usuário não autenticado.",
-                code: 400,
-                timestamp: new Date().toISOString()
-            };
-        }
+    // Uses JWT-authenticated endpoint – no userId required in URL
+    const createEnrollment = async (id: string): Promise<GenericResponse | ExceptionResponse> => {
         try {
-            const response = await post<GenericResponse>(`public/courses/${id}/enrrolment/${targetUserId}`);
-            
-            const courseToEnroll = courses.find((c) => String(c.id) === String(id));
-            if (courseToEnroll) {
-                setGlobalEnrolledCourses((prev) => {
-                    if (prev.some((c) => String(c.id) === String(id))) return prev;
-                    return [...prev, courseToEnroll];
-                });
-            } else {
-                await fetchEnrolledCourses();
-            }
-
+            const response = await post<GenericResponse>(`public/courses/${id}/enroll`);
+            // Optimistically update global enrolled state
+            await fetchEnrolledCourses();
             return response;
         } catch (error: any) {
             console.log("[useCourses enrollment error]", error.response?.data || error.message);
-            
             if (error.response && error.response.data) {
                 return error.response.data as ExceptionResponse;
             }
-            
             return {
                 status: "Internal Server Error",
                 message: error.message || "Erro desconhecido ao realizar a matrícula.",
@@ -246,29 +238,16 @@ export function useCourses() {
         }
     };
 
-    const deleteEnrollment = async (id: string, userId?: string): Promise<GenericResponse | ExceptionResponse> => {
-        const targetUserId = userId || authUserId;
-        if (!targetUserId) {
-            return {
-                status: "Bad Request",
-                message: "Usuário não autenticado.",
-                code: 400,
-                timestamp: new Date().toISOString()
-            };
-        }
+    const deleteEnrollment = async (id: string): Promise<GenericResponse | ExceptionResponse> => {
         try {
-            const response = await del<GenericResponse>(`public/courses/${id}/enrrolment/${targetUserId}`);
-            
+            const response = await del<GenericResponse>(`public/courses/${id}/enroll`);
             setGlobalEnrolledCourses((prev) => prev.filter((c) => String(c.id) !== String(id)));
-
             return response;
         } catch (error: any) {
             console.log("[useCourses delete enrollment error]", error.response?.data || error.message);
-            
             if (error.response && error.response.data) {
                 return error.response.data as ExceptionResponse;
             }
-            
             return {
                 status: "Internal Server Error",
                 message: error.message || "Erro desconhecido ao remover a matrícula.",

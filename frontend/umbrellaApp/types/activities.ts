@@ -9,8 +9,8 @@ export interface AlternativeDto {
 export interface EssayDto {
   id: number;
   expectedAnswer?: string | null;
-  minLines?: number | null;
-  maxLines?: number | null;
+  minLetters?: number | null;
+  maxLetters?: number | null;
   questionId: number;
 }
 

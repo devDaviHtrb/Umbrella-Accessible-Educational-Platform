@@ -8,8 +8,6 @@ import com.umbrella_api.modules.activity.model.Activities;
 import com.umbrella_api.modules.activity.model.Alternatives;
 import com.umbrella_api.modules.activity.model.Essays;
 import com.umbrella_api.modules.activity.model.Questions;
-import com.umbrella_api.modules.course.infra.CourseProvider;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -29,7 +27,7 @@ public class ActivityServiceImpl implements ActivityService {
 
     @Override
     public Activities getActivityById(Long id) {
-        Activities activity  = activityProvider.getActivityById(id);
+        Activities activity = activityProvider.getActivityById(id);
         return activity;
     }
 
@@ -93,8 +91,8 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public Alternatives getAlternativeById(Long id){
-        return  activityProvider.getAlternativeById(id);
+    public Alternatives getAlternativeById(Long id) {
+        return activityProvider.getAlternativeById(id);
     }
     // ==========================================
     // ESSAYS CRUD

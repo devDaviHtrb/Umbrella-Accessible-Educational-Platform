@@ -162,10 +162,16 @@ export function useAuth() {
         try {
             const response = await post<AuthResponse>("auth/login", data);
 
-            // Salva dados no storage quando o login for bem-sucedido
             if (response && response.accessToken) {
+                const userData = {
+                    id: String(response.userId),
+                    name: response.name,
+                    email: response.email,
+                    roles: response.roles || [],
+                };
                 await AsyncStorage.setItem("@user_name", response.name);
                 await AsyncStorage.setItem("@user_token", response.accessToken);
+                await AsyncStorage.setItem("@user_data", JSON.stringify(userData));
             }
 
             return response;

@@ -2,12 +2,11 @@ package com.umbrella_api.modules.ai.service;
 
 import org.springframework.stereotype.Service;
 
-import com.umbrella_api.modules.ai.api.AiService;
 import com.umbrella_api.modules.ai.dto.AiResponse;
 import com.umbrella_api.modules.ai.infra.GeminiProvider;
 
 @Service
-public class GeminiService{
+public class GeminiService {
 
     private final GeminiProvider geminiProvider;
 

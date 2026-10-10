@@ -75,11 +75,15 @@ export default function ActivityQuizScreen() {
 
   const handleEssayChange = (questionId: number, text: string) => {
     if (hasSubmitted) return;
+    // Find the question to enforce maxLetters limit (handles paste scenarios)
+    const q = questions.find((q) => q.id === questionId);
+    const max = q?.essay?.maxLetters;
+    const clipped = max && text.length > max ? text.slice(0, max) : text;
     setAnswersMap((prev) => ({
       ...prev,
       [questionId]: {
         ...prev[questionId],
-        essayAnswer: text,
+        essayAnswer: clipped,
       },
     }));
   };
@@ -105,6 +109,23 @@ export default function ActivityQuizScreen() {
       }
       return !ans?.essayAnswer || ans.essayAnswer.trim().length === 0;
     }).length;
+
+    // Check if any essay is below the minimum characters
+    const belowMinCount = questions.filter((q) => {
+      if (!q.essay?.minLetters) return false;
+      const len = answersMap[q.id]?.essayAnswer?.length ?? 0;
+      return len < q.essay.minLetters;
+    }).length;
+
+    if (belowMinCount > 0) {
+      const msg = `${belowMinCount} resposta(s) discursiva(s) está(ão) abaixo do mínimo de caracteres exigido.`;
+      if (Platform.OS === 'web') {
+        window.alert(msg);
+      } else {
+        Alert.alert('Resposta muito curta', msg);
+      }
+      return;
+    }
 
     const performSubmission = async () => {
       setSubmitting(true);
@@ -339,9 +360,38 @@ export default function ActivityQuizScreen() {
               editable={!hasSubmitted}
               placeholder="Digite sua resposta aqui..."
               value={answersMap[currentQuestion.id]?.essayAnswer || ''}
+              maxLength={currentQuestion.essay?.maxLetters ?? undefined}
               onChangeText={(text) => handleEssayChange(currentQuestion.id, text)}
               style={styles.essayInput}
             />
+
+            {/* Character counter */}
+            {(currentQuestion.essay?.maxLetters || currentQuestion.essay?.minLetters) && !hasSubmitted ? (
+              <View style={styles.charCounterRow}>
+                {currentQuestion.essay?.minLetters ? (
+                  <UmbrellaText
+                    variant="caption"
+                    color={
+                      (answersMap[currentQuestion.id]?.essayAnswer?.length ?? 0) >= currentQuestion.essay.minLetters
+                        ? Colors.light.success
+                        : Colors.light.textSecondary
+                    }>
+                    Mínimo: {currentQuestion.essay.minLetters} caracteres
+                  </UmbrellaText>
+                ) : <View />}
+                {currentQuestion.essay?.maxLetters ? (
+                  <UmbrellaText
+                    variant="caption"
+                    color={
+                      (answersMap[currentQuestion.id]?.essayAnswer?.length ?? 0) >= currentQuestion.essay.maxLetters
+                        ? Colors.light.error
+                        : Colors.light.textSecondary
+                    }>
+                    {answersMap[currentQuestion.id]?.essayAnswer?.length ?? 0} / {currentQuestion.essay.maxLetters}
+                  </UmbrellaText>
+                ) : null}
+              </View>
+            ) : null}
 
             {/* Expected Answer Feedback (Shown ONLY after submission) */}
             {hasSubmitted && currentQuestion.essay?.expectedAnswer ? (
@@ -518,6 +568,11 @@ const styles = StyleSheet.create({
   },
   essayContainer: {
     gap: Spacing.sm,
+  },
+  charCounterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   essayInput: {
     borderWidth: 1,

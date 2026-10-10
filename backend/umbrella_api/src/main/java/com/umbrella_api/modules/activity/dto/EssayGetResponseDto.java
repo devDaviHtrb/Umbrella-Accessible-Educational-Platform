@@ -5,8 +5,8 @@ import com.umbrella_api.modules.activity.model.Essays;
 public record EssayGetResponseDto(
         Long id,
         String expectedAnswer,
-        Integer minLines,
-        Integer maxLines,
+        Integer minLetters,
+        Integer maxLetters,
         Long questionId) {
 
     public static EssayGetResponseDto fromEntity(Essays essay) {

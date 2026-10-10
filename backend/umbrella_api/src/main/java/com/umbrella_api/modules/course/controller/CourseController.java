@@ -2,7 +2,6 @@ package com.umbrella_api.modules.course.controller;
 
 import java.util.List;
 
-import com.umbrella_api.modules.submissions.dto.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -108,6 +107,29 @@ public class CourseController {
     public ResponseEntity<GenericResponse> deleteUserRelation(@PathVariable Long id, @PathVariable Long userId) {
         return ResponseEntity.ok(courseService.deleteUserRelation(userId, id));
     }
+
+    // ── Self-enrollment endpoints (no userId needed – extracted from JWT) ──────
+
+    @PostMapping("/{id}/enroll")
+    public ResponseEntity<GenericResponse> enrollSelf(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails loggedUser) {
+        if (loggedUser == null || loggedUser.getUserModel() == null) {
+            return ResponseEntity.status(401).body(new GenericResponse("error", "Usuário não autenticado.", 401));
+        }
+        return ResponseEntity.ok(courseService.createUserRelation(loggedUser.getUserModel().getId(), id));
+    }
+
+    @DeleteMapping("/{id}/enroll")
+    public ResponseEntity<GenericResponse> unenrollSelf(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails loggedUser) {
+        if (loggedUser == null || loggedUser.getUserModel() == null) {
+            return ResponseEntity.status(401).body(new GenericResponse("error", "Usuário não autenticado.", 401));
+        }
+        return ResponseEntity.ok(courseService.deleteUserRelation(loggedUser.getUserModel().getId(), id));
+    }
+
     @GetMapping("/errolment")
     public ResponseEntity<List<CourseGetResponseDto>> getErrolmentedCourses(
             @AuthenticationPrincipal CustomUserDetails loggedUser) {
