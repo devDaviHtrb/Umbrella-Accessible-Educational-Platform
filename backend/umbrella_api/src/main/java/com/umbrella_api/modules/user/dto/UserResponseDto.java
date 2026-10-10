@@ -5,7 +5,8 @@ import com.umbrella_api.modules.user.model.UserModel;
 public record UserResponseDto(
         Long id,
         String name,
-        String email) {
+        String email,
+        String neurodivergence) {
 
     public static UserResponseDto fromEntity(UserModel user) {
         if (user == null)
@@ -14,6 +15,7 @@ public record UserResponseDto(
         return new UserResponseDto(
                 user.getId(),
                 user.getName(),
-                user.getEmail());
+                user.getEmail(),
+                user.getNeurodivergence());
     }
 }

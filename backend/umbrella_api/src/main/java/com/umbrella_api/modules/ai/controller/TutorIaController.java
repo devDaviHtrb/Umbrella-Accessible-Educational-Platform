@@ -33,8 +33,24 @@ public class TutorIaController {
 
     @PostMapping("/chat/{chatId}/ask")
     @PreAuthorize("@securityEvaluator.isChatOwner(#chatId, principal)")
-    public ResponseEntity<String> askTutor(@PathVariable Long chatId, @RequestParam String ask) {
-        String response = aiService.chatTutor(chatId, ask);
+    public ResponseEntity<String> askTutor(
+            @PathVariable Long chatId,
+            @RequestParam String ask,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        String enrichedAsk = ask;
+        if (userDetails != null && userDetails.getUserModel() != null) {
+            String neuro = userDetails.getUserModel().getNeurodivergence();
+            System.out.println("[TutorIA] User: " + userDetails.getUserModel().getEmail()
+                + " | Neurodivergence: " + neuro);
+            if (neuro != null && !neuro.isBlank()) {
+                enrichedAsk = "[Contexto do aluno – leve em conta ao responder: " + neuro + "]\n\n" + ask;
+            }
+        } else {
+            System.out.println("[TutorIA] userDetails is NULL – token not authenticated");
+        }
+
+        String response = aiService.chatTutor(chatId, enrichedAsk);
         return ResponseEntity.ok(response);
     }
 
