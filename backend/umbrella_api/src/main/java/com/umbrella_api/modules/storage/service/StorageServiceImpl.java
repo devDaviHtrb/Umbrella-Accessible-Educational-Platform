@@ -1,5 +1,7 @@
 package com.umbrella_api.modules.storage.service;
 
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -8,10 +10,12 @@ import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.FileDb.dto.FileUploadResponse;
 import com.umbrella_api.modules.storage.api.StorageService;
 import com.umbrella_api.modules.storage.common.StorageFileEntity;
+import com.umbrella_api.modules.storage.dto.FileMetaDataResponseDto;
 import com.umbrella_api.modules.storage.dto.ImageResponseDto;
 import com.umbrella_api.modules.storage.dto.RawFileResponseDto;
 import com.umbrella_api.modules.storage.dto.VideoResponseDto;
 import com.umbrella_api.modules.storage.infra.StorageServiceProvider;
+import com.umbrella_api.modules.storage.model.FileMetaData;
 import com.umbrella_api.modules.storage.model.Image;
 import com.umbrella_api.modules.storage.model.RawFile;
 import com.umbrella_api.modules.storage.model.Video;
@@ -73,6 +77,12 @@ public class StorageServiceImpl implements StorageService {
     @Override
     public void deleteAllFilesByModuleId(Long moduleId) {
         storageServiceProvider.deleteAllFilesByModuleId(moduleId);
+    }
+
+    @Override
+    public List<FileMetaDataResponseDto> getFilesByModuleId(Long moduleId) {
+        List<FileMetaData> files = storageServiceProvider.getFilesByModuleId(moduleId);
+        return FileMetaDataResponseDto.fromEntityList(files);
     }
 
 }

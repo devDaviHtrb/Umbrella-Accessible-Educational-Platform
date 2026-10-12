@@ -64,6 +64,8 @@ const MAPPING = {
   'square.and.arrow.down': 'file-download',
   'doc.richtext.fill': 'slideshow',
   'person.2.wave.2.fill': 'record-voice-over',
+  'photo.fill': 'image',
+  'folder.fill': 'folder',
 } as IconMapping;
 
 export function IconSymbol({

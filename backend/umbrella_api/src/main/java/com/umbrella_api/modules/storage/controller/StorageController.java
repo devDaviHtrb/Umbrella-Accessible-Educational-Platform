@@ -1,10 +1,13 @@
 package com.umbrella_api.modules.storage.controller;
 
+import java.util.List;
+
 import com.umbrella_api.common.dto.GenericResponse;
 import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.FileDb.dto.FileUploadResponse;
 import com.umbrella_api.modules.storage.api.StorageService;
 import com.umbrella_api.modules.storage.common.StorageFileEntity;
+import com.umbrella_api.modules.storage.dto.FileMetaDataResponseDto;
 import com.umbrella_api.modules.storage.dto.ImageResponseDto;
 import com.umbrella_api.modules.storage.dto.RawFileResponseDto;
 import com.umbrella_api.modules.storage.dto.VideoResponseDto;
@@ -16,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/api/public/storage")
+@RequestMapping({"/api/public/storage", "/api/storage"})
 public class StorageController {
 
     private final StorageService storageService;
@@ -62,6 +65,11 @@ public class StorageController {
     @GetMapping("/raw/{id}")
     public ResponseEntity<RawFileResponseDto> getRawById(@PathVariable long id) {
         return ResponseEntity.ok(storageService.getRawFileById(id));
+    }
+
+    @GetMapping("/module/{moduleId}")
+    public ResponseEntity<List<FileMetaDataResponseDto>> getFilesByModule(@PathVariable Long moduleId) {
+        return ResponseEntity.ok(storageService.getFilesByModuleId(moduleId));
     }
 
     @DeleteMapping("/{resourceType}/{id}")

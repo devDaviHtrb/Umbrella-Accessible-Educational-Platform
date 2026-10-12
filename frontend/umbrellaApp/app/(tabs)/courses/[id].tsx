@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { StyleSheet, View, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Alert, Linking } from 'react-native';
 
 import { CourseHero } from '@/components/courses/course-hero';
 import { ModuleAccordion } from '@/components/courses/module-accordion';
@@ -13,6 +13,7 @@ import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useCourses } from '@/hooks/api/courses/useCourse';
 import type { CourseLesson } from '@/types/courses';
 import type { ActivityDto } from '@/types/activities';
+import type { ModuleMaterial } from '@/types/materials';
 
 export default function CourseDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -61,6 +62,26 @@ export default function CourseDetailsScreen() {
         activityId: activity.id,
       },
     });
+  }
+
+  async function handleMaterialPress(material: ModuleMaterial) {
+    if (material.url) {
+      try {
+        const canOpen = await Linking.canOpenURL(material.url);
+        if (canOpen) {
+          await Linking.openURL(material.url);
+        } else {
+          Alert.alert('Material', `Arquivo: ${material.title}\nURL: ${material.url}`);
+        }
+      } catch {
+        Alert.alert('Erro', 'Não foi possível abrir o link do material.');
+      }
+    } else {
+      Alert.alert(
+        material.title,
+        material.description || 'Material disponível para acompanhamento do módulo.'
+      );
+    }
   }
 
   if (detailLoading) {
@@ -144,6 +165,7 @@ export default function CourseDetailsScreen() {
             isEnrolled={enrolled}
             onLessonPress={handleLessonPress}
             onActivityPress={handleActivityPress}
+            onMaterialPress={handleMaterialPress}
           />
         ))}
       </View>
