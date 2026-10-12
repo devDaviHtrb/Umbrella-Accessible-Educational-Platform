@@ -15,9 +15,11 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserRepository userRepository;
+    private final com.umbrella_api.modules.storage.repository.ImageRepository imageRepository;
 
-    public UserController(UserRepository userRepository) {
+    public UserController(UserRepository userRepository, com.umbrella_api.modules.storage.repository.ImageRepository imageRepository) {
         this.userRepository = userRepository;
+        this.imageRepository = imageRepository;
     }
 
     /** Returns the profile of the currently authenticated user. */
@@ -28,7 +30,10 @@ public class UserController {
         }
         UserModel user = userRepository.findById(userDetails.getUserModel().getId())
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
-        return ResponseEntity.ok(UserResponseDto.fromEntity(user));
+        String avatarUrl = imageRepository.findTopByUserIdOrderByIdDesc(user.getId())
+                .map(com.umbrella_api.modules.storage.model.Image::getUrl)
+                .orElse(null);
+        return ResponseEntity.ok(UserResponseDto.fromEntity(user, avatarUrl));
     }
 
     /** Updates the neurodivergence description for the authenticated user. */

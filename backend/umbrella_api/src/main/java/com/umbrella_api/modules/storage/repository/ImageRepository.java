@@ -5,5 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.umbrella_api.modules.storage.model.Image;
 
 public interface ImageRepository extends JpaRepository<Image, Object> {
-    // JpaRepository methods
+    java.util.Optional<Image> findTopByUserIdOrderByIdDesc(Long userId);
 }

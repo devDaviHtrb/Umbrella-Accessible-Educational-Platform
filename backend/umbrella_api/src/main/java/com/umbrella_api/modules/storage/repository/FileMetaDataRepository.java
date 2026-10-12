@@ -8,6 +8,8 @@ import com.umbrella_api.modules.storage.model.Video;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface FileMetaDataRepository extends JpaRepository<FileMetaData, Object> {
     FileMetaData findByImage(Image image);
@@ -17,5 +19,6 @@ public interface FileMetaDataRepository extends JpaRepository<FileMetaData, Obje
 
     FileMetaData findByVideo(Video video);
 
-    List<FileMetaData> findByModuleId(Long id);
+    @Query("SELECT f FROM FileMetaData f LEFT JOIN FETCH f.image LEFT JOIN FETCH f.rawFile LEFT JOIN FETCH f.video WHERE f.module.id = :id")
+    List<FileMetaData> findByModuleId(@Param("id") Long id);
 }

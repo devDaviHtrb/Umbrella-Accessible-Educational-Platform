@@ -98,7 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const logout = async () => {
         try {
             await apiLogout();
-            await AsyncStorage.multiRemove(['@user_token', '@user_name', '@user_data']);
+            await AsyncStorage.multiRemove(['@user_token', '@user_name', '@user_data', '@user_avatar_url']);
         } catch (error) {
             console.log("[AuthContext] Erro ao deslogar:", error);
         } finally {

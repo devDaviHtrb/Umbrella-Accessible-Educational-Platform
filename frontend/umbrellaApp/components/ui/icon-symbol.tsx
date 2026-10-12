@@ -65,6 +65,7 @@ const MAPPING = {
   'doc.richtext.fill': 'slideshow',
   'person.2.wave.2.fill': 'record-voice-over',
   'photo.fill': 'image',
+  'camera.fill': 'photo-camera',
   'folder.fill': 'folder',
 } as IconMapping;
 
