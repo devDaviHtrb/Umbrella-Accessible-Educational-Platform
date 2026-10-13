@@ -345,10 +345,11 @@
 
             // Recupera o token
             const token = localStorage.getItem("accessToken");
+            console.log("Token armazenado:", token);
 
             // Busca o usuário autenticado
             const loggedResponse = await fetch(
-              `${window.APP_CONFIG.API_URL}/logged`,
+              `${window.APP_CONFIG.API_URL}/api/logged`,
               {
                 method: "GET",
                 headers: {
