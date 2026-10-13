@@ -8,11 +8,11 @@ import java.util.List;
 
 public interface MessageRepository extends JpaRepository<MessageModel, Long> {
     List<MessageModel> findBySenderIdAndRecipientIdOrderByDateTimeDesc(
-            Long SenderId,
-            Long RecipientId
+            Long senderId,
+            Long recipientId
     );
     List<MessageModel> findByCourseIdOrderByDateTimeDesc(
-            Long CourseId
+            Long courseId
     );
 
 }

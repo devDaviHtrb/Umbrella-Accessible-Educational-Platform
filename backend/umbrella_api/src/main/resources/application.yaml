@@ -2,7 +2,7 @@ spring:
   application:
     name: umbrela_api
   profiles:
-    active: h2
+    active: postgres
   servlet:
     multipart:
       max-file-size: 10MB
@@ -11,6 +11,12 @@ spring:
     url: ${DB_URL}
     username: ${DB_USER}
     password: ${DB_PASS}
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true
 
 jwt:
   secret: ${JWT_SECRET}

@@ -49,7 +49,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/auth/**",
-                                "/api/public/**"
+                                "/api/public/**",
+                                "/h2-console/**",
+                                "/ws/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
 

@@ -4,6 +4,7 @@ import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.message.dto.SendMessageRequest;
 import com.umbrella_api.modules.message.model.MessageType;
 import com.umbrella_api.modules.message.service.MessageService;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -11,10 +12,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-
 @Controller
-@RequestMapping("/api/logged")
 public class MessageController {
+
     private final MessageService messageService;
 
     public MessageController(MessageService messageService) {
@@ -22,35 +22,35 @@ public class MessageController {
     }
 
     @MessageMapping("/message/{type}")
-    @PreAuthorize("isAuthenticated()")
-    public void sendMessagePerson(
-            @PathVariable String type,
+    public void sendMessage(
+            @DestinationVariable String type,
             SendMessageRequest request,
             Authentication authentication
     ) {
-        CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new IllegalStateException("Usuário não autenticado");
+        }
 
-        Long senderId = principal.getUserModel().getId();
+        // Neste exemplo, o nome do principal é o ID numérico do usuário.
+        Long senderId = Long.parseLong(authentication.getName());
 
-        MessageType messagetype;
+        MessageType messageType;
 
-        if(type.equals("user"))
-            messagetype = MessageType.PERSONAL;
-        else if(type.equals("course"))
-            messagetype = MessageType.COURSE;
-        else
+        if ("user".equals(type)) {
+            messageType = MessageType.PERSONAL;
+        } else if ("course".equals(type)) {
+            messageType = MessageType.COURSE;
+        } else {
             throw new IllegalArgumentException(
-                    "Message needs a type"
+                    "Tipo de mensagem inválido: " + type
             );
+        }
 
         messageService.sendMessage(
                 senderId,
                 request.getRecipientId(),
                 request.getContent(),
-                messagetype
+                messageType
         );
     }
-
 }
-
-

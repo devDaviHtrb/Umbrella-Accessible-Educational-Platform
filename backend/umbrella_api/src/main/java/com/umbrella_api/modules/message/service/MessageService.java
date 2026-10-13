@@ -5,84 +5,71 @@ import com.umbrella_api.modules.message.model.MessageType;
 import com.umbrella_api.modules.message.repository.MessageRepository;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-
 import java.lang.reflect.Type;
 import java.time.LocalDateTime;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class MessageService {
+
     private final MessageRepository messageRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
     public MessageService(
-            MessageRepository messageRepository, SimpMessagingTemplate messagingTemplate
+            MessageRepository messageRepository,
+            SimpMessagingTemplate messagingTemplate
     ) {
         this.messageRepository = messageRepository;
         this.messagingTemplate = messagingTemplate;
     }
-    /*
-    private void notifyUser(
 
-            Long userId,
-            MessageModel notification
-    ) {
-
-        messagingTemplate.convertAndSendToUser(
-                userId.toString(),
-                "/queue/notifications",
-                notification
-        );
-    }
-    private void notifyGroup(
-            Long groupId,
-            MessageModel notification
-    ) {
-
-        messagingTemplate.convertAndSend(
-                "/topic/group/" + groupId,
-                notification
-        );
-    }
-     */
-
+    @Transactional
     public MessageModel sendMessage(
-            Long sender_id,
-            Long recipient_id,
+            Long senderId,
+            Long recipientId,
             String content,
             MessageType type
-    ){
-        if(recipient_id == null)
-            throw new IllegalArgumentException(
-                    "Message needs a recipient"
-            );
-        MessageModel message = new MessageModel();
-        message.setSender_id(sender_id);
-        message.setContent(content);
-        message.setDateTime(LocalDateTime.now());
-
-        if (type == MessageType.PERSONAL){
-            message.setRecipient_id(recipient_id);
-            MessageModel saved = messageRepository.save(message);
-
-            messagingTemplate.convertAndSendToUser(
-                    recipient_id.toString(),
-                    "/queue/messages",
-                    saved
-            );
-
-            return saved;
+    ) {
+        if (senderId == null) {
+            throw new IllegalArgumentException("Remetente inválido");
         }
 
-        message.setCourse_id(recipient_id);
-        MessageModel saved = messageRepository.save(message);
+        if (recipientId == null) {
+            throw new IllegalArgumentException("Destinatário inválido");
+        }
 
-        messagingTemplate.convertAndSend(
-                "/topic/group/" + recipient_id,
-                saved
-        );
+        if (content == null || content.isBlank()) {
+            throw new IllegalArgumentException("A mensagem está vazia");
+        }
 
-        return saved;
+        MessageModel message = new MessageModel();
+        message.setSenderId(senderId);
+        message.setContent(content.trim());
+        message.setDateTime(LocalDateTime.now());
+
+        if (type == MessageType.PERSONAL) {
+            message.setRecipientId(recipientId);
+        } else if (type == MessageType.COURSE) {
+            message.setCourseId(recipientId);
+        } else {
+            throw new IllegalArgumentException("Tipo de mensagem inválido");
+        }
+
+        MessageModel savedMessage = messageRepository.save(message);
+
+        if (type == MessageType.PERSONAL) {
+            messagingTemplate.convertAndSendToUser(
+                    recipientId.toString(),
+                    "/queue/messages",
+                    savedMessage
+            );
+        } else {
+            messagingTemplate.convertAndSend(
+                    "/topic/group/" + recipientId,
+                    savedMessage
+            );
+        }
+
+        return savedMessage;
     }
-
-
 }

@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 
 @Entity
-@Table(name = "message")
+@Table(name = "messages")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -21,14 +21,14 @@ public class MessageModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = true)
-    private Long sender_id;
+    @Column(name = "sender_id", nullable = true)
+    private Long senderId;
 
-    @Column(nullable = true)
-    private Long recipient_id;
+    @Column(name = "recipient_id", nullable = true)
+    private Long recipientId;
 
-    @Column(nullable = true)
-    private Long course_id;
+    @Column(name = "course_id", nullable = true)
+    private Long courseId;
 
 
     @Column(nullable = false, columnDefinition = "TEXT")
