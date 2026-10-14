@@ -50,7 +50,8 @@ public class SecurityConfig {
                                                                 "/error",
                                                                 "/h2-console/**",
                                                                 "/v3/api-docs/**",
-                                                                "/swagger-ui/**")
+                                                                "/swagger-ui/**",
+                                                                "/ws/**")
                                                 .permitAll()
                                                 .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
                                                 .requestMatchers("/h2-console/**").permitAll()
@@ -70,6 +71,7 @@ public class SecurityConfig {
                                                 UsernamePasswordAuthenticationFilter.class)
 
                                 .build();
+
         }
 
         @Bean

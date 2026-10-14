@@ -13,6 +13,7 @@ import com.umbrella_api.modules.storage.dto.RawFileResponseDto;
 import com.umbrella_api.modules.storage.dto.VideoResponseDto;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import org.springframework.web.bind.annotation.*;
@@ -73,6 +74,7 @@ public class StorageController {
     }
 
     @DeleteMapping("/{resourceType}/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<GenericResponse> deleteFile(
             @PathVariable String resourceType,
             @PathVariable Long id) {
