@@ -10,13 +10,18 @@ import com.umbrella_api.modules.storage.dto.RawFileResponseDto;
 import com.umbrella_api.modules.storage.dto.VideoResponseDto;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
+<<<<<<< HEAD
 @RequestMapping("/api/public/storage")
+=======
+@RequestMapping("/api/logged/storage")
+>>>>>>> origin/Messages-Artur
 public class StorageController {
 
     private final StorageService storageService;
@@ -26,7 +31,12 @@ public class StorageController {
     }
 
     @PostMapping("/upload")
+<<<<<<< HEAD
     public ResponseEntity<FileUploadResponse> uploadFile(
+=======
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<GenericResponse> uploadFile(
+>>>>>>> origin/Messages-Artur
             @RequestParam("file") MultipartFile file,
             @RequestParam("resourceType") String resourceType,
             @RequestParam(value = "alternativeText", required = false) String alternativeText,
@@ -48,23 +58,39 @@ public class StorageController {
     }
 
     @GetMapping("/image/{id}")
+<<<<<<< HEAD
     public ResponseEntity<ImageResponseDto> getImageById(@PathVariable long id) {
+=======
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Image> getImageById(@PathVariable long id) {
+>>>>>>> origin/Messages-Artur
         return ResponseEntity.ok(storageService.getImageById(id));
 
     }
 
     @GetMapping("/video/{id}")
+<<<<<<< HEAD
     public ResponseEntity<VideoResponseDto> getVideoById(@PathVariable long id) {
+=======
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Video> getVideoById(@PathVariable long id) {
+>>>>>>> origin/Messages-Artur
         return ResponseEntity.ok(storageService.getVideoById(id));
 
     }
 
     @GetMapping("/raw/{id}")
+<<<<<<< HEAD
     public ResponseEntity<RawFileResponseDto> getRawById(@PathVariable long id) {
+=======
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<RawFile> getRawById(@PathVariable long id) {
+>>>>>>> origin/Messages-Artur
         return ResponseEntity.ok(storageService.getRawFileById(id));
     }
 
     @DeleteMapping("/{resourceType}/{id}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<GenericResponse> deleteFile(
             @PathVariable String resourceType,
             @PathVariable Long id) {

@@ -45,6 +45,7 @@ public class SecurityConfig {
 
                         
 
+<<<<<<< HEAD
                         .authorizeHttpRequests(auth -> auth
                                 .requestMatchers(
                                         "/api/auth/**",
@@ -57,6 +58,16 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
                                 .requestMatchers("/h2-console/**").permitAll()
                                 .requestMatchers("/v3/api-docs/**").permitAll()
+=======
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/api/public/**",
+                                "/h2-console/**",
+                                "/ws/**"
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
+>>>>>>> origin/Messages-Artur
 
                                 .requestMatchers("/api/admin/**")
                                 .hasRole("ADMIN")
