@@ -1,5 +1,7 @@
 package com.umbrella_api.modules.ai.infra;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import org.springframework.stereotype.Component;
@@ -16,13 +18,15 @@ public class GeminiProvider {
     private final GeminiData.Api geminiApi;
     private final GeminiData.Config geminiConfig;
     private final GeminiData geminiServiceConfig;
+    private final TutorIaProvider tutorIaProvider;
 
     public GeminiProvider(WebClientUtil webClientService,
-            GeminiData geminiServiceConfig) {
+                          GeminiData geminiServiceConfig, TutorIaProvider tutorIaProvider) {
         this.webClientService = webClientService;
         this.geminiApi = geminiServiceConfig.api();
         this.geminiConfig = geminiServiceConfig.config();
         this.geminiServiceConfig = geminiServiceConfig;
+        this.tutorIaProvider = tutorIaProvider;
     }
 
     public AiResponse requestAi(String text) {
@@ -33,7 +37,7 @@ public class GeminiProvider {
         JsonNode response = webClientService.makeRequest(body, apiUrl, "post");
 
         if (response.has("error")) {
-            System.out.println("erro na api");
+            System.err.println("Gemini API Error Payload: " + response.get("error").toString());
             throw new IllegalStateException("Ai provider integration failed.");
         }
 
@@ -41,4 +45,22 @@ public class GeminiProvider {
 
         return new AiResponse(200, reply, "gemini");
     }
+
+
+    public AiResponse requestAi(String summary, List<Map<String, String>> history) {
+        String apiUrl = Objects.requireNonNull(geminiApi.getCompleteUrl(), "null ai api url or key");
+        
+        GeminiRequestBody body = GeminiRequestBody.createWithHistory(summary, history, geminiConfig);
+        JsonNode response = webClientService.makeRequest(body, apiUrl, "post");
+
+        if (response.has("error")) {
+            System.err.println("Gemini API Error Payload: " + response.get("error").toString());
+            throw new IllegalStateException("Ai provider integration failed.");
+        }
+
+        String reply = response.at("/candidates/0/content/parts/0/text").asText();
+        return new AiResponse(200, reply, "gemini");
+    }
+
+
 }
