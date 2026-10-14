@@ -298,6 +298,7 @@
                 const data = await response.json();
                 alert("Cadastro realizado com sucesso!");
                 console.log(data);
+                window.location.href = "SignIn.html";
             } else {
                 const error = await response.text();
                 console.error(error);

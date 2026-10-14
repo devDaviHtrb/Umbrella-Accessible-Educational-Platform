@@ -25,22 +25,42 @@ public class TutorIaController {
     }
 
     @PostMapping("/chat")
-    public ResponseEntity<IaChat> createChat(@RequestParam String title, @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<IaChat> createChat(@RequestParam String title,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         IaChat newChat = aiService.startNewChat(title, userDetails);
         return ResponseEntity.status(HttpStatus.CREATED).body(newChat);
     }
 
     @PostMapping("/chat/{chatId}/ask")
     @PreAuthorize("@securityEvaluator.isChatOwner(#chatId, principal)")
-    public ResponseEntity<String> askTutor(@PathVariable Long chatId, @RequestParam String ask) {
-        String response = aiService.chatTutor(chatId, ask);
+    public ResponseEntity<String> askTutor(
+            @PathVariable Long chatId,
+            @RequestParam String ask,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        String enrichedAsk = ask;
+        if (userDetails != null && userDetails.getUserModel() != null) {
+            String neuro = userDetails.getUserModel().getNeurodivergence();
+            System.out.println("[TutorIA] User: " + userDetails.getUserModel().getEmail()
+                + " | Neurodivergence: " + neuro);
+            if (neuro != null && !neuro.isBlank()) {
+                enrichedAsk = "[Contexto do aluno – leve em conta ao responder: " + neuro + "]\n\n" + ask;
+            }
+        } else {
+            System.out.println("[TutorIA] userDetails is NULL – token not authenticated");
+        }
+
+        String response = aiService.chatTutor(chatId, enrichedAsk);
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/user/{userId}/chats")
-    @PreAuthorize("@securityEvaluator.isChatOwner(#chatId, principal)")
-    public ResponseEntity<List<IaChat>> getUserChats(@PathVariable Long userId) {
-        List<IaChat> chats = aiService.getChatsByUser(userId);
+    @GetMapping("/chats")
+    public ResponseEntity<List<IaChat>> getUserChats(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            // No authenticated user; return empty list
+            return ResponseEntity.ok(List.of());
+        }
+        List<IaChat> chats = aiService.getChatsByUser(userDetails);
         return ResponseEntity.ok(chats);
     }
 

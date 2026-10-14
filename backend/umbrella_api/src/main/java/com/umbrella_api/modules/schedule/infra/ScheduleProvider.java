@@ -9,6 +9,7 @@ import com.umbrella_api.modules.schedule.dto.ScheduleGetRequestDto;
 import com.umbrella_api.modules.schedule.model.EventStatus;
 import com.umbrella_api.modules.schedule.model.Events;
 import com.umbrella_api.modules.schedule.model.UserEvents;
+import com.umbrella_api.modules.schedule.model.EventType;
 import com.umbrella_api.modules.schedule.repository.EventsRepository;
 import com.umbrella_api.modules.schedule.repository.UserEventsRepository;
 import com.umbrella_api.modules.user.model.UserModel;
@@ -19,6 +20,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -34,7 +36,7 @@ public class ScheduleProvider {
     private final UserRepository userRepository;
 
     public ScheduleProvider(EventsRepository eventRepository, UserEventsRepository userEventRepository,
-                            CourseService courseService, UserRepository userRepository) {
+            CourseService courseService, UserRepository userRepository) {
         this.eventRepository = eventRepository;
         this.userEventRepository = userEventRepository;
         this.courseService = courseService;
@@ -57,22 +59,28 @@ public class ScheduleProvider {
             System.out.println("aquiiiii");
         }
 
-        if (dto.endTime().isBefore(dto.startTime())) {
+        // Ensure startTime and endTime are not null for DB constraints
+        var start = dto.startTime() != null ? dto.startTime() : LocalDateTime.now();
+        var end = dto.endTime() != null ? dto.endTime() : start;
+
+        // Validate that end is not before start
+        if (end.isBefore(start)) {
             throw new IllegalArgumentException("The end date/time must be after the start date/time.");
         }
 
         Events event = Events.builder()
                 .title(dto.title())
-                .description(dto.description())
-                .startTime(dto.startTime())
-                .endTime(dto.endTime())
-                .type(dto.type())
+                .description(dto.description() != null ? dto.description() : "")
+                .startTime(start)
+                .endTime(end)
+                .type(dto.type() != null ? dto.type() : EventType.PERSONAL)
                 .createdBy(creator)
                 .course(course)
                 .build();
-
+        // Persist the event
         event = eventRepository.save(event);
 
+        // If this is a personal event (no associated course), create a UserEvents entry
         if (course == null) {
             UserEvents userEvent = UserEvents.builder()
                     .user(creator)
@@ -90,7 +98,7 @@ public class ScheduleProvider {
     @Transactional
     public UserEvents personalizeEvent(Long eventId, CustomUserDetails userDetails, EventStatus status,
             Integer reminderOffset) {
-            UserModel user = userRepository.getReferenceById(userDetails.getUserModel().getId());
+        UserModel user = userRepository.getReferenceById(userDetails.getUserModel().getId());
 
         Events event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event not found with: " + eventId));
@@ -164,6 +172,8 @@ public class ScheduleProvider {
         if (!isPersonalCreator && !isCourseCreator) {
             throw new AccessDeniedException("You can't delete this event.");
         }
+        
+        userEventRepository.deleteByEventId(eventId);
         eventRepository.delete(event);
     }
 

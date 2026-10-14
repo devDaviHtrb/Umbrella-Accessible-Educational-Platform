@@ -239,6 +239,11 @@ public class StorageServiceProvider {
         }
     }
 
+    @Transactional(readOnly = true)
+    public List<FileMetaData> getFilesByModuleId(Long moduleId) {
+        return fileRepository.findByModuleId(moduleId);
+    }
+
     // It has to be implemented in the future
     /*
      * @Transactional

@@ -5,5 +5,6 @@ public enum EventType {
     ACTIVITY,
     CLASSROOM,
     MEETING,
-    STUDY_SESSION
+    STUDY_SESSION,
+    PERSONAL
 }

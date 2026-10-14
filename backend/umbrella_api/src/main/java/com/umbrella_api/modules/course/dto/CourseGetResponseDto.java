@@ -11,7 +11,8 @@ public record CourseGetResponseDto(
         Integer difficultyLevel,
         int moduleAmount,
         Long subjectId,
-        String subjectName) {
+        String subjectName,
+        String imageUrl) {
 
     public static CourseGetResponseDto fromEntity(Courses course) {
         if (course == null)
@@ -19,6 +20,7 @@ public record CourseGetResponseDto(
 
         Long sId = (course.getSubject() != null) ? course.getSubject().getId() : null;
         String sName = (course.getSubject() != null) ? course.getSubject().getSubject() : null;
+        String imgUrl = (course.getImage() != null) ? course.getImage().getUrl() : null;
 
         return new CourseGetResponseDto(
                 course.getId(),
@@ -27,7 +29,8 @@ public record CourseGetResponseDto(
                 course.getDifficulty_level(),
                 course.getModule_amount(),
                 sId,
-                sName);
+                sName,
+                imgUrl);
     }
 
     public static List<CourseGetResponseDto> fromEntityList(List<Courses> courses) {

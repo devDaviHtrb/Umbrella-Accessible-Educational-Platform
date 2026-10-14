@@ -1,6 +1,7 @@
 package com.umbrella_api.common.infra;
 
 import com.umbrella_api.modules.schedule.repository.EventsRepository;
+import com.umbrella_api.modules.schedule.repository.UserEventsRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,12 +15,17 @@ import java.time.LocalDateTime;
 @Slf4j
 public class Scheduler {
     private final EventsRepository eventsRepository;
+    private final UserEventsRepository userEventsRepository;
 
-    @Scheduled(cron = "0 0 3 * * ?")
+    @Scheduled(cron = "0 * * * * ?")
     @Transactional
     public void cleanExpiredEvents() {
         LocalDateTime now = LocalDateTime.now();
+        int deletedUserEvents = userEventsRepository.deleteExpiredUserEvents(now);
         int deletedCount = eventsRepository.deleteExpiredEvents(now);
-        log.info("Schedule clean was completed: {} expired event were removed.", deletedCount);
+        if (deletedCount > 0 || deletedUserEvents > 0) {
+            log.info("Schedule clean was completed: {} user events and {} events were removed.", deletedUserEvents,
+                    deletedCount);
+        }
     }
 }

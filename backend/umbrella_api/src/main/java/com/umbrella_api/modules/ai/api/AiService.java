@@ -1,7 +1,6 @@
 package com.umbrella_api.modules.ai.api;
 
 import com.umbrella_api.common.security.CustomUserDetails;
-import com.umbrella_api.modules.ai.dto.AiResponse;
 import com.umbrella_api.modules.ai.model.IaChat;
 import com.umbrella_api.modules.ai.model.TutorIaInteractions;
 
@@ -12,7 +11,7 @@ public interface AiService {
 
     IaChat startNewChat(String title, CustomUserDetails userDetails);
 
-    List<IaChat> getChatsByUser(Long userId);
+    List<IaChat> getChatsByUser(CustomUserDetails userDetails);
 
     IaChat getChatById(Long chatId);
 

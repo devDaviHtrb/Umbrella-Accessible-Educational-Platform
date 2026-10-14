@@ -2,10 +2,13 @@ package com.umbrella_api.modules.storage.api;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 import com.umbrella_api.common.dto.GenericResponse;
 import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.FileDb.dto.FileUploadResponse;
 import com.umbrella_api.modules.storage.common.StorageFileEntity;
+import com.umbrella_api.modules.storage.dto.FileMetaDataResponseDto;
 import com.umbrella_api.modules.storage.dto.ImageResponseDto;
 import com.umbrella_api.modules.storage.dto.RawFileResponseDto;
 import com.umbrella_api.modules.storage.dto.VideoResponseDto;
@@ -25,4 +28,6 @@ public interface StorageService {
     public StorageFileEntity findEntityByTypeAndId(String resourceType, Long id);
 
     public void deleteAllFilesByModuleId(Long moduleId);
+
+    public List<FileMetaDataResponseDto> getFilesByModuleId(Long moduleId);
 }

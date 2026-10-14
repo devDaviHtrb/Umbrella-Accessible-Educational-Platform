@@ -89,6 +89,9 @@ public class CourseProvider {
     }
 
     public List<Courses> getEnrolledCoursesByUser(CustomUserDetails userDetails) {
+        if (userDetails == null || userDetails.getUserModel() == null) {
+            return List.of();
+        }
         UserModel user = userRepository.getReferenceById(userDetails.getUserModel().getId());
         return courseUserRelationRepository.findCoursesByUserIdAndNotCreator(user.getId());
     }
@@ -236,6 +239,12 @@ public class CourseProvider {
     public List<CourseGetResponseDto> getCoursesBySubject(Long subjectId) {
         List<Courses> courses = coursesRepository.findBySubjectId(subjectId);
         return CourseGetResponseDto.fromEntityList(courses);
+    }
+
+    // Search courses with optional text and subject filter
+    public java.util.List<com.umbrella_api.modules.course.dto.CourseGetResponseDto> searchCourses(String search, Long subjectId) {
+        java.util.List<com.umbrella_api.modules.course.model.Courses> courses = coursesRepository.searchCourses(search, subjectId);
+        return com.umbrella_api.modules.course.dto.CourseGetResponseDto.fromEntityList(courses);
     }
 
 }

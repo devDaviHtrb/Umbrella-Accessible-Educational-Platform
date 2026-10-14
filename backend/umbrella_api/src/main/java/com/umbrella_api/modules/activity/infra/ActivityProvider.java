@@ -51,12 +51,29 @@ public class ActivityProvider {
         return activity;
     }
 
+    @Transactional
     public Activities getActivityById(Long id) {
-        return activitiesRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Activity not found."));
+        Activities activity = activitiesRepository.findById(id).orElseThrow(()->new EntityNotFoundException("Activity not found."));
+        if (activity.getQuestions() != null) {
+            activity.getQuestions().forEach(q -> {
+                if (q.getAlternatives() != null) q.getAlternatives().size();
+                if (q.getEssay() != null) q.getEssay().getId();
+            });
+        }
+        return activity;
     }
 
+    @Transactional
     public List<ActivityGetResponseDto> getActivitiesByModuleId(Long moduleId) {
         List<Activities> activities = activitiesRepository.findByModuleId(moduleId);
+        for (Activities activity : activities) {
+            if (activity.getQuestions() != null) {
+                activity.getQuestions().forEach(q -> {
+                    if (q.getAlternatives() != null) q.getAlternatives().size();
+                    if (q.getEssay() != null) q.getEssay().getId();
+                });
+            }
+        }
         return ActivityGetResponseDto.fromEntityList(activities);
     }
 

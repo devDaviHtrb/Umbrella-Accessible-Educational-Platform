@@ -19,7 +19,7 @@ spring:
         web-allow-others: true
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: 1111111111111111111111234123vasdasdasdasdasdas
   expiration: 3600000
 
 gemini:
