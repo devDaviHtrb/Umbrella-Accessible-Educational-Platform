@@ -1,0 +1,53 @@
+services:
+
+  app:
+    build:
+      context: .
+      dockerfile: dockerfile
+
+    container_name: umbrela_api_container
+
+    ports:
+      - "8080:8080"
+
+    env_file:
+      - .env
+
+    volumes:
+      - ~/.m2:/root/.m2
+
+    depends_on:
+      - postgres
+
+    networks:
+      - spring-network
+
+  postgres:
+    image: postgres:16
+
+    container_name: postgres-db
+
+    restart: always
+
+    environment:
+      POSTGRES_DB: umbrella_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 2309
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    networks:
+      - spring-network
+
+volumes:
+  postgres_data:
+
+networks:
+  spring-network:
+
+
+

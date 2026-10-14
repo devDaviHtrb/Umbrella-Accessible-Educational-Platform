@@ -1,5 +1,6 @@
 package com.umbrella_api.modules.ai.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -20,11 +21,23 @@ public class GeminiRequestBody {
                 .build();
     }
 
+    public static GeminiRequestBody createWithHistory(String summary, List<Map<String, String>> history, GeminiData.Config config) {
+        return new Builder()
+                .contextSummary(summary)
+                .chatHistory(history)
+                .instruction(config.systemInstruction())
+                .maxTokens(config.maxTokenOut())
+                .temperature(config.temp())
+                .build();
+    }
+
     private static class Builder {
         private String systemInstruction;
         private String text;
         private Double temp;
         private Integer maxTokensOut;
+        private String summary;
+        private List<Map<String, String>> history = List.of();
 
         Builder instruction(String systemInstruction) {
             this.systemInstruction = systemInstruction;
@@ -46,9 +59,49 @@ public class GeminiRequestBody {
             return this;
         }
 
+        Builder contextSummary(String summary) {
+            this.summary = summary;
+            return this;
+        }
+
+        Builder chatHistory(List<Map<String, String>> history) {
+            if (history != null) {
+                this.history = history;
+            }
+            return this;
+        }
+
         GeminiRequestBody build() {
             var body = new GeminiRequestBody();
-            body.contents = List.of(Map.of("parts", List.of(Map.of("text", this.text))));
+            List<Map<String, Object>> contentsList = new ArrayList<>();
+
+            if (this.summary != null && !this.summary.trim().isEmpty() && !this.summary.equalsIgnoreCase("\"\"")) {
+                String formattedSummary = "[CHAT CONTEXT: " + this.summary + "]";
+                contentsList.add(Map.of(
+                        "role", "user",
+                        "parts", List.of(Map.of("text", formattedSummary))
+                ));
+                contentsList.add(Map.of(
+                        "role", "model",
+                        "parts", List.of(Map.of("text", "Understood. I am aware of the student's progress so far and ready to continue helping."))
+                ));
+            }
+
+            for (Map<String, String> msg : this.history) {
+                contentsList.add(Map.of(
+                        "role", msg.get("role"),
+                        "parts", List.of(Map.of("text", msg.get("content")))
+                ));
+            }
+
+            if (this.text != null) {
+                contentsList.add(Map.of(
+                        "role", "user",
+                        "parts", List.of(Map.of("text", this.text))
+                ));
+            }
+
+            body.contents = contentsList;
             body.system_instruction = Map.of("parts", List.of(Map.of("text", this.systemInstruction)));
             body.generationConfig = Map.of(
                     "temperature", this.temp,
@@ -56,5 +109,4 @@ public class GeminiRequestBody {
             return body;
         }
     }
-
 }

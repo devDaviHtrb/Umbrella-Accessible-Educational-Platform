@@ -5,16 +5,21 @@ import com.umbrella_api.modules.storage.util.ExtensionExtractor;
 import com.umbrella_api.modules.user.model.UserModel;
 import com.umbrella_api.modules.user.repository.UserRepository;
 
+import jakarta.persistence.EntityNotFoundException;
+
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.umbrella_api.common.Exceptions.FileStorageException;
 import com.umbrella_api.common.dto.GenericResponse;
 import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.FileDb.api.FileDbService;
 import com.umbrella_api.modules.FileDb.dto.FileUploadResponse;
+import com.umbrella_api.modules.course.model.Modules;
 import com.umbrella_api.modules.course.repository.ModulesRepository;
 import com.umbrella_api.modules.storage.common.StorageFileEntity;
 import com.umbrella_api.modules.storage.model.FileMetaData;
@@ -37,8 +42,8 @@ public class StorageServiceProvider {
     private final UserRepository userRepository;
 
     public StorageServiceProvider(VideoRepository videoRepository, FileDbService fileDbService,
-            ImageRepository imageRepository, RawRepository rawRepository, FileMetaDataRepository fileRepository,
-            ExtensionExtractor extractor, ModulesRepository modulesRepository, UserRepository userRepository) {
+                                  ImageRepository imageRepository, RawRepository rawRepository, FileMetaDataRepository fileRepository,
+                                  ExtensionExtractor extractor, ModulesRepository modulesRepository, UserRepository userRepository) {
         this.videoRepository = videoRepository;
         this.fileDbService = fileDbService;
         this.imageRepository = imageRepository;
@@ -47,25 +52,15 @@ public class StorageServiceProvider {
         this.extractor = extractor;
         this.modulesRepository = modulesRepository;
         this.userRepository = userRepository;
+
     }
 
     @Transactional
-    public GenericResponse upload(MultipartFile file, String resourceType, String alternativeText, String fileName,
-            String fileDescription, Long moduleId, CustomUserDetails loggedUser) {
-        /**
-         * Uploads a file to the cloud storage and links it to local entities.
-         * 
-         * NOTE ON MODULE LINKAGE:
-         * The 'moduleId' parameter is completely optional. If a 'moduleId' is provided,
-         * the system creates a central 'FileMetaData' record to link the file to the
-         * course structure.
-         * If 'moduleId' is null, the system bypasses metadata generation and directly
-         * persists
-         * the concrete resource entity (Image, Video, or RawFile) standalone.
-         */
+    public FileUploadResponse upload(MultipartFile file, String resourceType, String alternativeText, String fileName,
+                                     String fileDescription, Long moduleId, CustomUserDetails loggedUser) {
 
         if (moduleId != null && !modulesRepository.existsById(moduleId)) {
-            return new GenericResponse("Error", "Module not found", 404);
+            throw new EntityNotFoundException("The specified module doesn't exist or not found");
         }
 
         FileUploadResponse storageEntityData = null;
@@ -74,13 +69,27 @@ public class StorageServiceProvider {
             storageEntityData = fileDbService.upload(file, resourceType, resourceType);
 
             FileMetaData fileMetaData = null;
+            /*
+             * Uploads a file to the cloud storage and links it to local entities.
+             *
+             * NOTE ON MODULE LINKAGE:
+             * The 'moduleId' parameter is completely optional. If a 'moduleId' is provided,
+             * the system creates a central 'FileMetaData' record to link the file to the
+             * course structure.
+             * If 'moduleId' is null, the system bypasses metadata generation and directly
+             * persists
+             * the concrete resource entity (Image, Video, or RawFile) standalone.
+             */
             if (moduleId != null) {
+                Modules module = modulesRepository.findById(moduleId)
+                        .orElseThrow(() -> new EntityNotFoundException("The specified module doesn't exist or not found"));
+
                 fileMetaData = FileMetaData.builder()
                         .title(fileName)
                         .description(fileDescription)
                         .size(storageEntityData.bytes())
                         .status("ok")
-                        .moduleId(moduleId)
+                        .module(module)
                         .build();
 
                 fileMetaData = fileRepository.save(fileMetaData);
@@ -100,8 +109,8 @@ public class StorageServiceProvider {
                 Image entity = Image.create(storageEntityData, fileMetaData, alternativeText);
 
                 if (fileMetaData == null) {
-                    UserModel user = loggedUser.getUserModel();
-                    entity.setUserId(user.getId());
+                    UserModel user = userRepository.getReferenceById(loggedUser.getUserModel().getId());
+                    entity.setUser(user);
                 }
 
                 entity = imageRepository.save(entity);
@@ -121,20 +130,24 @@ public class StorageServiceProvider {
                 }
             }
 
-            return new GenericResponse("Ok", "Success on upload", 200);
+            return storageEntityData;
 
         } catch (Exception e) {
-            e.printStackTrace();
+
             if (storageEntityData != null) {
                 try {
                     fileDbService.delete(storageEntityData.publicId(), resourceType);
                 } catch (Exception cloudEx) {
-                    System.err.println("Failed to delete orphaned file from cloud provider: " + cloudEx.getMessage());
+                    throw new FileStorageException(
+                            "Database failed and cloud cleanup also failed: " + cloudEx.getMessage(),
+                            e);
                 }
             }
+
             org.springframework.transaction.interceptor.TransactionAspectSupport
                     .currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error on upload", 400);
+
+            throw new FileStorageException("Failed to save file records in database. Cloud file rolled back.", e);
         }
     }
 
@@ -145,40 +158,33 @@ public class StorageServiceProvider {
          * This ensures data integrity: if the database transaction fails, the cloud
          * file remains untouched, preventing "orphaned" cloud files with no DB record.
          */
-        try {
-            if (file instanceof Image img) {
-                FileMetaData metaData = fileRepository.findByImage(img);
-                if (metaData != null) {
-                    metaData.setImage(null);
-                    fileRepository.delete(metaData);
-                }
-                imageRepository.delete(img);
-
-            } else if (file instanceof RawFile raw) {
-                FileMetaData metaData = fileRepository.findByRawFile(raw);
-                if (metaData != null) {
-                    metaData.setRawFile(null);
-                    fileRepository.delete(metaData);
-                }
-                rawRepository.delete(raw);
-
-            } else if (file instanceof Video video) {
-                FileMetaData metaData = fileRepository.findByVideo(video);
-                if (metaData != null) {
-                    metaData.setVideo(null);
-                    fileRepository.delete(metaData);
-                }
-                videoRepository.delete(video);
+        if (file instanceof Image img) {
+            FileMetaData metaData = fileRepository.findByImage(img);
+            if (metaData != null) {
+                metaData.setImage(null);
+                fileRepository.delete(metaData);
             }
+            imageRepository.delete(img);
 
-            fileDbService.delete(file.getFileDbId(), file.getResourceType());
-            return new GenericResponse("Ok", "Success on delete", 200);
-        } catch (Exception e) {
-            e.printStackTrace();
-            org.springframework.transaction.interceptor.TransactionAspectSupport
-                    .currentTransactionStatus().setRollbackOnly();
-            return new GenericResponse("Error", "Error on delete", 400);
+        } else if (file instanceof RawFile raw) {
+            FileMetaData metaData = fileRepository.findByRawFile(raw);
+            if (metaData != null) {
+                metaData.setRawFile(null);
+                fileRepository.delete(metaData);
+            }
+            rawRepository.delete(raw);
+
+        } else if (file instanceof Video video) {
+            FileMetaData metaData = fileRepository.findByVideo(video);
+            if (metaData != null) {
+                metaData.setVideo(null);
+                fileRepository.delete(metaData);
+            }
+            videoRepository.delete(video);
         }
+
+        fileDbService.delete(file.getFileDbId(), file.getResourceType());
+        return new GenericResponse("Ok", "Success on delete", 200);
     }
 
     public Optional<Image> getImageById(long id) {
@@ -212,4 +218,52 @@ public class StorageServiceProvider {
 
         return Optional.empty();
     }
+
+    @Transactional
+    public void deleteAllFilesByModuleId(Long moduleId) {
+
+        List<FileMetaData> metaList = fileRepository.findByModuleId(moduleId);
+
+        for (FileMetaData meta : metaList) {
+            StorageFileEntity realFile = null;
+            if (meta.getImage() != null)
+                realFile = meta.getImage();
+            else if (meta.getVideo() != null)
+                realFile = meta.getVideo();
+            else if (meta.getRawFile() != null)
+                realFile = meta.getRawFile();
+
+            if (realFile != null) {
+                this.delete(realFile);
+            }
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public List<FileMetaData> getFilesByModuleId(Long moduleId) {
+        return fileRepository.findByModuleId(moduleId);
+    }
+
+    // It has to be implemented in the future
+    /*
+     * @Transactional
+     * public void deleteAllFilesByQuestionId(Long questionId) {
+     * 
+     * List<FileMetaData> metaList = fileRepository.findByQuestionId(questionId);
+     * 
+     * for (FileMetaData meta : metaList) {
+     * StorageFileEntity realFile = null;
+     * if (meta.getImage() != null)
+     * realFile = meta.getImage();
+     * else if (meta.getVideo() != null)
+     * realFile = meta.getVideo();
+     * else if (meta.getRawFile() != null)
+     * realFile = meta.getRawFile();
+     * 
+     * if (realFile != null) {
+     * this.delete(realFile);
+     * }
+     * }
+     * }
+     */
 }
