@@ -1,5 +1,4 @@
-
-package com.umbrella_api.config;
+package com.umbrella_api.common.config;
 
 import com.umbrella_api.common.WebSocket.WebSocketAuthInterceptor;
 import org.springframework.context.annotation.Configuration;
@@ -32,8 +31,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .addEndpoint("/ws")
                 .setAllowedOriginPatterns(
                         "http://localhost:5500",
-                        "http://127.0.0.1:5500"
-                )
+                        "http://127.0.0.1:5500")
                 .withSockJS();
     }
 
