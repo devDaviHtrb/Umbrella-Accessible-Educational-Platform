@@ -91,6 +91,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 3. Função de Cadastro integrada ao Contexto
     const register = async (data: RegisterData): Promise<AuthResponse> => {
         const response = await apiRegister(data);
+        if (response && response.accessToken) {
+            const userData: UserData = {
+                id: response.userId,
+                name: response.name,
+                email: response.email,
+                roles: response.roles || [],
+            };
+            setUserToken(response.accessToken);
+            setUser(userData);
+            await Promise.all([
+                AsyncStorage.setItem('@user_token', response.accessToken),
+                AsyncStorage.setItem('@user_data', JSON.stringify(userData)),
+                AsyncStorage.setItem('@user_name', response.name),
+            ]);
+        }
         return response;
     };
 

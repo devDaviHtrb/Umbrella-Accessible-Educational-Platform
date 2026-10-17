@@ -10,10 +10,11 @@ import { SecondaryButton } from '@/components/ui/secondary-button';
 import { TextField } from '@/components/ui/text-field';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Spacing } from '@/constants/theme';
-import { useAuth, AuthFieldErrors } from '@/hooks/api/auth/useAuth';
+import { useAuthContext } from '@/hooks/api/auth/authContext';
+import { AuthFieldErrors } from '@/hooks/api/auth/useAuth';
 
 export default function SignUpScreen() {
-    const { register, login } = useAuth();
+    const { register, login } = useAuthContext();
 
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');

@@ -7,7 +7,7 @@ export type ActiveModule = {
   status: ModuleStatus;
   statusLabel: string;
   progress: number; 
-  icon: 'atom' | 'scalemass.fill';
+  icon: 'atom' | 'scalemass.fill' | 'book.fill';
 };
 
 export type WeeklyGoal = {
