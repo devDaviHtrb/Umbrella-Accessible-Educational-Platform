@@ -65,8 +65,8 @@ public class CourseProvider {
     }
 
     @Transactional
-    public Courses getCourseByid(Long id){
-        return coursesRepository.findById(id).orElseThrow(()-> new EntityNotFoundException("Course not found"));
+    public Courses getCourseByid(Long id) {
+        return coursesRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Course not found"));
     }
 
     @Transactional
@@ -80,7 +80,8 @@ public class CourseProvider {
     @Transactional
     public GenericResponse createUserRelation(Long userId, Long courseId) {
 
-        UserModel user =  userRepository.findById(userId).orElseThrow(()->new EntityNotFoundException("User not found"));
+        UserModel user = userRepository.findById(userId)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
         Courses course = this.getCourseByid(courseId);
         CourseUserRelation relation = CourseUserRelation.builder().user(user).course(course).build();
         courseUserRelationRepository.save(relation);
@@ -155,7 +156,7 @@ public class CourseProvider {
     }
 
     public Modules getModuleById(Long moduleId) {
-        return modulesRepository.findById(moduleId).orElseThrow(()->new EntityNotFoundException("Module not Found"));
+        return modulesRepository.findById(moduleId).orElseThrow(() -> new EntityNotFoundException("Module not Found"));
     }
 
     @Transactional
@@ -199,8 +200,7 @@ public class CourseProvider {
 
     @Transactional
     public void deleteAllModulesByCourseId(Long courseId) {
-        List<Modules> modules = modulesRepository.findByCourseId(courseId);
-
+        List<Modules> modules = this.getModulesByCourse(courseId);
         for (Modules module : modules) {
             storageService.deleteAllFilesByModuleId(module.getId());
             modulesRepository.deleteById(module.getId());
@@ -214,8 +214,8 @@ public class CourseProvider {
         return subject;
     }
 
-    public Subjects getSubjectbyId(Long id){
-        return subjectsRepository.findById(id).orElseThrow(()-> new EntityNotFoundException("Subject not Found"));
+    public Subjects getSubjectbyId(Long id) {
+        return subjectsRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Subject not Found"));
     }
 
     public List<Subjects> getSubjects() {
@@ -242,8 +242,10 @@ public class CourseProvider {
     }
 
     // Search courses with optional text and subject filter
-    public java.util.List<com.umbrella_api.modules.course.dto.CourseGetResponseDto> searchCourses(String search, Long subjectId) {
-        java.util.List<com.umbrella_api.modules.course.model.Courses> courses = coursesRepository.searchCourses(search, subjectId);
+    public java.util.List<com.umbrella_api.modules.course.dto.CourseGetResponseDto> searchCourses(String search,
+            Long subjectId) {
+        java.util.List<com.umbrella_api.modules.course.model.Courses> courses = coursesRepository.searchCourses(search,
+                subjectId);
         return com.umbrella_api.modules.course.dto.CourseGetResponseDto.fromEntityList(courses);
     }
 
