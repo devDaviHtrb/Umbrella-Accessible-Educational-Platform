@@ -14,6 +14,7 @@ import 'react-native-reanimated';
 
 import { Colors } from '@/constants/theme';
 import { AuthProvider } from '@/hooks/api/auth/authContext';
+import { SpeechProvider } from '@/hooks/accessibility/speech-context';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -54,12 +55,14 @@ export default function RootLayout() {
   return (
     <ThemeProvider value={UmbrellaNavigationTheme}>
       <AuthProvider>
-        <Stack>
-          <Stack.Screen name="login" options={{ headerShown: false }} />
-          <Stack.Screen name="signUp" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        </Stack>
-        <StatusBar style="dark" />
+        <SpeechProvider>
+          <Stack>
+            <Stack.Screen name="login" options={{ headerShown: false }} />
+            <Stack.Screen name="signUp" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          </Stack>
+          <StatusBar style="dark" />
+        </SpeechProvider>
       </AuthProvider>
     </ThemeProvider>
   );

@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { SecondaryButton } from '@/components/ui/secondary-button';
+import { SpeechReaderButton } from '@/components/ui/speech-reader-button';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useAuthContext } from '@/hooks/api/auth/authContext';
@@ -284,32 +285,50 @@ export default function SettingsScreen() {
 
       {/* ABA: ACESSIBILIDADE */}
       {activeTab === 'accessibility' && (
-        <Card style={styles.card}>
-          <UmbrellaText variant="title">Acessibilidade para o Tutor IA</UmbrellaText>
-          <UmbrellaText variant="body" color={Colors.light.textSecondary}>
-            Descreva aqui sua neurodivergência ou necessidade de aprendizagem. O Tutor IA usará essa informação para adaptar suas respostas a você.
-          </UmbrellaText>
+        <>
+          <Card style={styles.card}>
+            <UmbrellaText variant="title">Acessibilidade para o Tutor IA</UmbrellaText>
+            <UmbrellaText variant="body" color={Colors.light.textSecondary}>
+              Descreva aqui sua neurodivergência ou necessidade de aprendizagem. O Tutor IA usará essa informação para adaptar suas respostas a você.
+            </UmbrellaText>
 
-          {loading ? (
-            <ActivityIndicator color={Colors.light.primary} />
-          ) : (
-            <>
-              <TextInput
-                multiline
-                numberOfLines={4}
-                placeholder="Ex: Tenho TDAH e processo melhor informações em listas curtas e exemplos práticos..."
-                value={neurodivergenceText}
-                onChangeText={setNeurodivergenceText}
-                style={styles.textArea}
-              />
-              <PrimaryButton
-                label={saving ? 'Salvando...' : 'Salvar Alterações'}
-                onPress={handleSaveNeurodivergence}
-                disabled={saving}
-              />
-            </>
-          )}
-        </Card>
+            {loading ? (
+              <ActivityIndicator color={Colors.light.primary} />
+            ) : (
+              <>
+                <TextInput
+                  multiline
+                  numberOfLines={4}
+                  placeholder="Ex: Tenho TDAH e processo melhor informações em listas curtas e exemplos práticos..."
+                  value={neurodivergenceText}
+                  onChangeText={setNeurodivergenceText}
+                  style={styles.textArea}
+                />
+                <PrimaryButton
+                  label={saving ? 'Salvando...' : 'Salvar Alterações'}
+                  onPress={handleSaveNeurodivergence}
+                  disabled={saving}
+                />
+              </>
+            )}
+          </Card>
+
+          <Card style={styles.card}>
+            <View style={{ gap: Spacing.sm }}>
+              <UmbrellaText variant="title">Leitor de Tela e Síntese de Voz</UmbrellaText>
+              <UmbrellaText variant="body" color={Colors.light.textSecondary}>
+                O Umbrella conta com suporte nativo de áudio para auxiliar na leitura de aulas, questões e respostas da inteligência artificial.
+              </UmbrellaText>
+              <View style={{ marginTop: Spacing.xs, alignSelf: 'flex-start' }}>
+                <SpeechReaderButton
+                  text="Olá! Este é o leitor de voz acessível da plataforma Umbrella. Ele narra em português as questões, os conteúdos das aulas e as explicações do tutor inteligente."
+                  variant="pill"
+                  label="Ouvir Demonstração"
+                />
+              </View>
+            </View>
+          </Card>
+        </>
       )}
     </ScreenContainer>
   );

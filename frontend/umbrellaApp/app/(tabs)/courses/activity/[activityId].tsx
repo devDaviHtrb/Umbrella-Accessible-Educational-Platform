@@ -15,6 +15,7 @@ import { ScreenContainer } from '@/components/layout/screen-container';
 import { Card } from '@/components/ui/card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { PrimaryButton } from '@/components/ui/primary-button';
+import { SpeechReaderButton } from '@/components/ui/speech-reader-button';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useActivityDetail } from '@/hooks/api/activities/useActivity';
@@ -280,13 +281,22 @@ export default function ActivityQuizScreen() {
       {/* Main Question Card (One question per page) */}
       <Card style={styles.questionCard}>
         <View style={styles.questionHeader}>
-          <UmbrellaText variant="title" color={Colors.light.primary}>
-            Questão {currentIndex + 1} de {questions.length}
-          </UmbrellaText>
+          <View style={{ flex: 1, marginRight: Spacing.sm }}>
+            <UmbrellaText variant="title" color={Colors.light.primary}>
+              Questão {currentIndex + 1} de {questions.length}
+            </UmbrellaText>
+            <UmbrellaText variant="caption" color={Colors.light.textSecondary}>
+              Valha: {currentQuestion.points} {currentQuestion.points === 1 ? 'ponto' : 'pontos'}
+            </UmbrellaText>
+          </View>
 
-          <UmbrellaText variant="caption" color={Colors.light.textSecondary}>
-            Valha: {currentQuestion.points} {currentQuestion.points === 1 ? 'ponto' : 'pontos'}
-          </UmbrellaText>
+          <SpeechReaderButton
+            text={`Questão ${currentIndex + 1}. ${currentQuestion.statement}. ${
+              currentQuestion.alternatives?.map((a) => `Alternativa ${a.letter}: ${a.text}`).join('. ') || ''
+            }`}
+            variant="pill"
+            label="Ouvir"
+          />
         </View>
 
         <UmbrellaText variant="bodyMedium" style={styles.statementText}>
