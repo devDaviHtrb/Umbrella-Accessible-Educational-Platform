@@ -1,5 +1,6 @@
-import { Link } from 'expo-router';
-import { Pressable, ScrollView, StyleSheet, View, ActivityIndicator, Text } from 'react-native';
+import { Link, useFocusEffect } from 'expo-router';
+import { useCallback, useRef } from 'react';
+import { Pressable, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
 
 import { AppHeader } from '@/components/layout/app-header';
 import { ScreenContainer } from '@/components/layout/screen-container';
@@ -24,7 +25,19 @@ export default function CoursesScreen() {
     query,
     setQuery,
     isEnrolled,
+    refetchCourses,
   } = useCourses();
+  const firstFocus = useRef(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (firstFocus.current) {
+        firstFocus.current = false;
+        return;
+      }
+      refetchCourses();
+    }, [refetchCourses])
+  );
 
   return (
     <ScreenContainer header={<AppHeader />}>
@@ -48,7 +61,9 @@ export default function CoursesScreen() {
       )}
 
       {error && (
-        <Text style={{ color: Colors.light.error, marginTop: Spacing.lg }}>{error}</Text>
+        <UmbrellaText variant="body" color={Colors.light.error} style={{ marginTop: Spacing.lg }}>
+          {error}
+        </UmbrellaText>
       )}
 
       <View style={styles.section}>

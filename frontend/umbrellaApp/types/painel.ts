@@ -6,16 +6,8 @@ export type ActiveModule = {
   description: string;
   status: ModuleStatus;
   statusLabel: string;
-  progress: number; 
+  progress: number;
   icon: 'atom' | 'scalemass.fill' | 'book.fill';
-};
-
-export type WeeklyGoal = {
-  id: string;
-  label: string;
-  progress: number; 
-  progressLabel: string;
-  completed?: boolean;
 };
 
 export type AgendaEventState = 'past' | 'now' | 'upcoming';

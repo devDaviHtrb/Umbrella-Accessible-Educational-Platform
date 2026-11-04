@@ -10,16 +10,18 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
-import { useCourses } from '@/hooks/api/courses/useCourse';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
+import { useCourseDetails, useCourses } from '@/hooks/api/courses/useCourse';
 import type { CourseLesson } from '@/types/courses';
 import type { ActivityDto } from '@/types/activities';
 import type { ModuleMaterial } from '@/types/materials';
 
 export default function CourseDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { useCourseDetails, isEnrolled, createEnrollment, deleteEnrollment } = useCourses();
+  const { isEnrolled, createEnrollment, deleteEnrollment } = useCourses();
   const { courseDetails, modules, detailLoading, detailError } = useCourseDetails(id);
   const [enrolling, setEnrolling] = useState(false);
+  const { translate } = usePreferences();
 
   const enrolled = id ? isEnrolled(id) : false;
 
@@ -27,22 +29,13 @@ export default function CourseDetailsScreen() {
     if (!id) return;
     setEnrolling(true);
     try {
-      if (enrolled) {
-        const response = await deleteEnrollment(id);
-        if ('code' in response && response.code >= 400) {
-          Alert.alert('Erro', response.message || 'Erro ao cancelar matrícula.');
-        } else {
-          Alert.alert('Sucesso', 'Matrícula cancelada com sucesso!');
-        }
+      const response = enrolled ? await deleteEnrollment(id) : await createEnrollment(id);
+      if ('code' in response && response.code >= 400) {
+        Alert.alert('Erro', response.message || (enrolled ? 'Erro ao cancelar matrícula.' : 'Erro ao realizar matrícula.'));
       } else {
-        const response = await createEnrollment(id);
-        if ('code' in response && response.code >= 400) {
-          Alert.alert('Erro', response.message || 'Erro ao realizar matrícula.');
-        } else {
-          Alert.alert('Sucesso', 'Matrícula realizada com sucesso!');
-        }
+        Alert.alert('Sucesso', enrolled ? 'Matrícula cancelada com sucesso!' : 'Matrícula realizada com sucesso!');
       }
-    } catch (err) {
+    } catch {
       Alert.alert('Erro', 'Ocorreu um erro ao processar a matrícula.');
     } finally {
       setEnrolling(false);
@@ -105,7 +98,7 @@ export default function CourseDetailsScreen() {
 
   return (
     <ScreenContainer disableTopInset>
-      <CourseHero title={courseDetails.name} badgeLabel={courseDetails.subjectName ?? 'Geral'} />
+      <CourseHero title={courseDetails.name} badgeLabel={courseDetails.subject?.name ?? 'Geral'} />
 
       <Card>
         <View style={styles.instructorRow}>
@@ -117,14 +110,13 @@ export default function CourseDetailsScreen() {
               Instrutor
             </UmbrellaText>
             <UmbrellaText variant="bodyMedium" color={Colors.light.primary}>
-              {courseDetails.instructorName ?? courseDetails.creator?.name ?? 'Instrutor Umbrella'}
+              {courseDetails.userDto?.name ?? 'Instrutor Umbrella'}
             </UmbrellaText>
           </View>
         </View>
 
         <View style={styles.infoList}>
-          <InfoRow label="Duração" value={`${courseDetails.duration ?? '0'}h`} />
-          <InfoRow label="Nível" value={`Nível ${courseDetails.difficultyLevel ?? 'Iniciante'}`} />
+          <InfoRow label="Nível" value={`Nível ${courseDetails.difficulty_level ?? 'Iniciante'}`} />
           <InfoRow label="Certificação" value="Disponível ao concluir" emphasis />
         </View>
 
@@ -132,7 +124,7 @@ export default function CourseDetailsScreen() {
           label={enrolling ? 'Processando...' : enrolled ? 'Desfazer Matrícula' : 'Inscrever-se no Curso'}
           onPress={handleEnrollmentToggle}
           disabled={enrolling}
-          style={[styles.ctaButton, enrolled && styles.unenrollButton]}
+          style={[styles.ctaButton, enrolled && { backgroundColor: translate(Colors.light.error) }]}
         />
         <UmbrellaText variant="caption" color={Colors.light.textSecondary} style={styles.ctaCaption}>
           {enrolled ? 'Você está matriculado neste curso' : 'Acesso imediato e vitalício ao conteúdo'}
@@ -227,9 +219,6 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     marginBottom: Spacing.sm,
-  },
-  unenrollButton: {
-    backgroundColor: Colors.light.error,
   },
   ctaCaption: {
     textAlign: 'center',

@@ -1,6 +1,7 @@
-// Fallback for using MaterialIcons on Android and web.
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
 import { SymbolWeight } from 'expo-symbols';
 import { ComponentProps } from 'react';
 import { OpaqueColorValue, type StyleProp, type TextStyle } from 'react-native';
@@ -60,7 +61,6 @@ const MAPPING = {
   'trash.fill': 'delete',
   'sparkles': 'auto-awesome',
   'speaker.wave.2.fill': 'volume-up',
-  'stop.fill': 'stop',
   'arrow.up.left.and.arrow.down.right': 'fullscreen',
   'square.and.arrow.down': 'file-download',
   'doc.richtext.fill': 'slideshow',
@@ -68,6 +68,19 @@ const MAPPING = {
   'photo.fill': 'image',
   'camera.fill': 'photo-camera',
   'folder.fill': 'folder',
+  'square.and.pencil': 'edit',
+  'list.bullet': 'format-list-bulleted',
+  'video.fill': 'videocam',
+  'link': 'link',
+  'square.and.arrow.up': 'file-upload',
+  'photo': 'image',
+  'tablecells': 'table-chart',
+  'eye.fill': 'visibility',
+  'eye.slash.fill': 'visibility-off',
+  'stop.fill': 'stop',
+  'questionmark.circle.fill': 'help',
+  'paintpalette.fill': 'palette',
+  'lock.shield.fill': 'security',
 } as IconMapping;
 
 export function IconSymbol({
@@ -82,5 +95,7 @@ export function IconSymbol({
   style?: StyleProp<TextStyle>;
   weight?: SymbolWeight;
 }) {
-  return <MaterialIcons color={color} size={size} name={MAPPING[name] as any} style={style} />;
+  const { translate } = usePreferences();
+  const resolved = typeof color === 'string' ? translate(color) : color;
+  return <MaterialIcons color={resolved} size={size} name={MAPPING[name] as any} style={style} />;
 }

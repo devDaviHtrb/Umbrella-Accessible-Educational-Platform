@@ -41,11 +41,6 @@ export interface StudentAnswerCorrectionDto {
   essayAnswer?: string | null;
 }
 
-export interface SubmitActivityRequestDto {
-  activityId: number;
-  answers: StudentAnswerCorrectionDto[];
-}
-
 export interface StudentAnswerResponseDto {
   id: number;
   submissionId: number;

@@ -1,10 +1,9 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useState, useCallback } from 'react';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useSchedule } from '@/hooks/api/schedule/useSchedule';
 import { useAuthContext } from '@/hooks/api/auth/authContext';
 import { useIaTutor } from '@/hooks/api/aiTutor/useIaTutor';
-import { ActivityIndicator } from 'react-native';
 
 import { AgendaEventCard } from '@/components/agenda/agenda-event-card';
 import { EventDetails } from '@/components/agenda/event-details';
@@ -20,33 +19,40 @@ import { SecondaryButton } from '@/components/ui/secondary-button';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
 import type { AgendaEvent, NewReminderInput, CalendarDay } from '@/types/agenda';
-import { EventType, ScheduleGetRequestDto } from '@/types/schedule';
+import { EventType, type ScheduleGetRequestDto } from '@/types/schedule';
 
 export default function AgendaScreen() {
   const { getAllEvents, createEvent, deleteEvent } = useSchedule();
   const { userId } = useAuthContext();
+  const { translate } = usePreferences();
+  const { startNewConversation, sendMessage } = useIaTutor();
+
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [isEventsExpanded, setIsEventsExpanded] = useState(true);
+  const [tutorTip, setTutorTip] = useState<string | null>(null);
+  const [isTipLoading, setIsTipLoading] = useState(false);
 
   const [isReminderFormVisible, setReminderFormVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<AgendaEvent | null>(null);
   const [events, setEvents] = useState<ScheduleGetRequestDto[]>([]);
 
-  // Load events and reminders from backend on mount and every time the tab is focused
   useFocusEffect(
     useCallback(() => {
-      // Ensure we have a logged‑in user before fetching
       if (!userId) return;
       (async () => {
-        const data = await getAllEvents();
-        setEvents(data);
+        try {
+          const data = await getAllEvents();
+          setEvents(data);
+        } catch {
+          Alert.alert('Erro', 'Não foi possível carregar sua agenda.');
+        }
       })();
     }, [userId, getAllEvents])
   );
 
-  const [weekOffset, setWeekOffset] = useState(0);
-
-  // Helper to get the Monday of the currently viewed week
   const getMondayOfWeek = () => {
     const today = new Date();
     const day = today.getDay();
@@ -64,7 +70,6 @@ export default function AgendaScreen() {
       ? `${Math.abs(weekOffset)} semana(s) atrás` 
       : `Daqui a ${weekOffset} semana(s)`;
 
-  // Generate dynamic calendar data based on the selected week and events
   const generateCalendarDays = (): CalendarDay[] => {
     const monday = getMondayOfWeek();
     const days: CalendarDay[] = [];
@@ -79,28 +84,19 @@ export default function AgendaScreen() {
     return days;
   };
   
-  // Calendar days for the currently viewed week
   const calendarDays = generateCalendarDays();
-  // Selected day based on current index
-  const selectedDay = calendarDays[selectedDayIndex];
 
-  // Determine the exact date for the selected calendar day
   const selectedDate = (() => {
     const date = new Date(currentMonday);
     date.setDate(currentMonday.getDate() + selectedDayIndex);
     return date;
   })();
 
-  // Events for the currently selected day (full date match and time not passed)
-  const apiEventsForSelectedDay = selectedDay
-    ? events.filter(e => {
-        const eventDate = new Date(e.startTime);
-        // Only show if it's on the selected date AND the time hasn't completely passed
-        // (adding a small 1-minute buffer so it doesn't disappear the exact second it starts)
-        const isTodayOrFuture = eventDate.getTime() + 60000 >= new Date().getTime();
-        return eventDate.toDateString() === selectedDate.toDateString() && isTodayOrFuture;
-      })
-    : [];
+  const apiEventsForSelectedDay = events.filter(e => {
+    const eventDate = new Date(e.startTime);
+    const isTodayOrFuture = eventDate.getTime() + 60000 >= new Date().getTime();
+    return eventDate.toDateString() === selectedDate.toDateString() && isTodayOrFuture;
+  });
 
   const eventsForSelectedDay: AgendaEvent[] = apiEventsForSelectedDay.map(e => {
     const d = new Date(e.startTime);
@@ -114,51 +110,45 @@ export default function AgendaScreen() {
     };
   });
 
-  // Reminders active for the selected day only
-
-
-  // Create event by delegating to backend schedule service
   async function handleCreateReminder(input: NewReminderInput) {
-    await createEvent({
-      title: input.title,
-      description: input.description,
-      startTime: input.date,
-      type: input.type || EventType.PERSONAL,
-    });
-    const refreshed = await getAllEvents();
-    setEvents(refreshed);
+    try {
+      await createEvent({
+        title: input.title,
+        description: input.description,
+        startTime: input.date,
+        type: input.type || EventType.PERSONAL,
+      });
+    } catch {
+      Alert.alert('Erro', 'Não foi possível criar o lembrete. Tente novamente.');
+      return;
+    }
     setReminderFormVisible(false);
+    try {
+      setEvents(await getAllEvents());
+    } catch {
+      Alert.alert('Atenção', 'O lembrete foi criado, mas não foi possível atualizar a agenda.');
+    }
   }
-
-  
-
-  const { startNewConversation, sendMessage } = useIaTutor();
-  const [tutorTip, setTutorTip] = useState<string | null>(null);
-  const [isTipLoading, setIsTipLoading] = useState(false);
-
-
 
   const generateTip = async () => {
     setIsTipLoading(true);
     try {
       const chat = await startNewConversation(`Dica de Agenda: ${selectedDate.toLocaleDateString()}`);
       
-      let eventsText = eventsForSelectedDay.length > 0 
+      const eventsText = eventsForSelectedDay.length > 0
         ? eventsForSelectedDay.map(e => `${e.time} - ${e.title}`).join(', ')
         : 'Nenhum evento agendado.';
-        
+
       const prompt = `Minha agenda para o dia ${selectedDate.toLocaleDateString()} tem os seguintes eventos: ${eventsText}. Você pode me dar uma breve dica (máximo 2 frases) de como organizar meu tempo e meus estudos hoje?`;
       
       const reply = await sendMessage(chat.id, prompt);
       setTutorTip(reply.text);
-    } catch (e) {
-      setTutorTip("Não foi possível carregar a dica. Tente novamente.");
+    } catch {
+      setTutorTip('Não foi possível carregar a dica. Tente novamente.');
     } finally {
       setIsTipLoading(false);
     }
   };
-
-  const [isEventsExpanded, setIsEventsExpanded] = useState(true);
 
   return (
     <ScreenContainer header={<AppHeader />}>
@@ -195,7 +185,7 @@ export default function AgendaScreen() {
           style={styles.sectionHeaderRow} 
           onPress={() => setIsEventsExpanded(!isEventsExpanded)}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+          <View style={styles.sectionTitle}>
             <UmbrellaText variant="headline">Horários de Hoje</UmbrellaText>
             <StatusBadge label={`${eventsForSelectedDay.length} EVENTOS`} tone="teal" />
           </View>
@@ -215,9 +205,17 @@ export default function AgendaScreen() {
                   event={event} 
                   onPress={() => setSelectedEvent(event)} 
                   onDelete={async () => {
-                    await deleteEvent(event.id);
-                    const refreshed = await getAllEvents();
-                    setEvents(refreshed);
+                    try {
+                      await deleteEvent(event.id);
+                    } catch {
+                      Alert.alert('Erro', 'Não foi possível excluir o evento. Tente novamente.');
+                      return;
+                    }
+                    try {
+                      setEvents(await getAllEvents());
+                    } catch {
+                      Alert.alert('Atenção', 'O evento foi excluído, mas não foi possível atualizar a agenda.');
+                    }
                   }}
                 />
               ))}
@@ -244,10 +242,7 @@ export default function AgendaScreen() {
         />
       </View>
 
-
-
-
-      <View style={styles.tutorTipCard}>
+      <View style={[styles.tutorTipCard, { backgroundColor: translate(Colors.light.tertiary) }]}>
         <View style={styles.tutorTipHeader}>
           <IconSymbol name="lightbulb.fill" size={18} color={Colors.light.surface} />
           <UmbrellaText variant="bodyMedium" color={Colors.light.surface}>
@@ -302,6 +297,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: Spacing.lg,
   },
+  sectionTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
   eventList: {
     gap: Spacing.lg,
   },
@@ -328,22 +328,6 @@ const styles = StyleSheet.create({
   },
   newReminderButton: {
     alignSelf: 'stretch',
-  },
-  remindersHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginBottom: Spacing.lg,
-  },
-  reminderList: {
-    gap: Spacing.md,
-    marginBottom: Spacing.lg,
-  },
-  noReminders: {
-    marginBottom: Spacing.lg,
-  },
-  viewAllButton: {
-    alignItems: 'center',
   },
   tutorTipCard: {
     backgroundColor: Colors.light.tertiary,

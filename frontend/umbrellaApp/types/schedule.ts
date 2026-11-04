@@ -1,8 +1,3 @@
-/*
-  Types for Schedule / Events API.
-  Mirrors the backend DTOs.
-*/
-
 export enum EventType {
   TEST = 'TEST',
   ACTIVITY = 'ACTIVITY',
@@ -12,22 +7,11 @@ export enum EventType {
   PERSONAL = 'PERSONAL',
 }
 
-/** Input for creating a new reminder / event */
-export interface NewReminderInput {
-  title: string;
-  /** ISO date string (yyyy-mm-dd) */
-  date: string;
-  urgent: boolean;
-  /** Optional enum to specify the event type */
-  type?: EventType;
-}
-
-/** Input for updating an existing event */
 export type EventPutRequestDto = {
   title?: string;
   description?: string;
-  startTime?: string; // ISO
-  endTime?: string;   // ISO
+  startTime?: string;
+  endTime?: string;
   type?: EventType;
   reminderOffset?: number;
 };
@@ -35,7 +19,7 @@ export type EventPutRequestDto = {
 export type EventPostRequestDto = {
   title: string;
   description?: string;
-  startTime: string; // ISO date
+  startTime: string;
   endTime?: string;
   type?: EventType;
   courseId?: number;
@@ -50,10 +34,9 @@ export type Events = {
   endTime: string;
   type: EventType;
   reminderOffset?: number;
-  // other fields omitted for brevity
 };
 
-export type ScheduleGetRequestDto = Events; // alias for list endpoint
+export type ScheduleGetRequestDto = Events;
 
 export type EventStatus = 'PENDING' | 'COMPLETED' | 'CANCELLED';
 

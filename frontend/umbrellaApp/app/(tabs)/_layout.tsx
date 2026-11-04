@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { Tabs, router } from 'expo-router';
+import { Redirect, Tabs, router } from 'expo-router';
 import { CustomTabBar } from '@/components/layout/custom-tab-bar';
 import { useAuthContext } from '@/hooks/api/auth/authContext';
 import { Colors } from '@/constants/theme';
+import { isTeacher, professorRoutes } from '@/constants/routes';
 
 export default function TabLayout() {
-  const { isAuthenticated, isLoading } = useAuthContext();
+  const { isAuthenticated, isLoading, userRoles } = useAuthContext();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -14,7 +15,6 @@ export default function TabLayout() {
     }
   }, [isAuthenticated, isLoading]);
 
-  // While resolving auth state from storage, show a spinner
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.light.background }}>
@@ -23,9 +23,12 @@ export default function TabLayout() {
     );
   }
 
-  // Don't render tabs at all if not authenticated (redirect is in flight)
   if (!isAuthenticated) {
     return null;
+  }
+
+  if (isTeacher(userRoles)) {
+    return <Redirect href={professorRoutes.home} />;
   }
 
   return (

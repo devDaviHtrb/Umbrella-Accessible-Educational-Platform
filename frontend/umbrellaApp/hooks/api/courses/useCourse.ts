@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useUmbrellaApi } from '../core/useUmbrellaApi';
 import { useAuthContext } from '@/hooks/api/auth/authContext';
 import type { Course, CourseCategory, CourseModule } from '@/types/courses';
-import { ALL_CATEGORY_ID } from '@/constants/mock/courses';
+import type { CourseDetailApiDto } from '@/types/professor-api';
 
+export const ALL_CATEGORY_ID = 'todos';
 export const ENROLLED_CATEGORY_ID = 'matriculados';
 
 export interface GenericResponse {
@@ -12,25 +13,97 @@ export interface GenericResponse {
     code: number;
 }
 
-export interface ExceptionResponse {
-    status: string;
-    message: string;
-    code: number;
-    timestamp: string; 
+export interface ExceptionResponse extends GenericResponse {
+    timestamp: string;
 }
 
-// Module-level global state and subscriber list for enrolled courses
 let globalEnrolledCourses: Course[] = [];
 let listeners: Array<() => void> = [];
 
 const setGlobalEnrolledCourses = (newCourses: Course[] | ((prev: Course[]) => Course[])) => {
-    if (typeof newCourses === 'function') {
-        globalEnrolledCourses = newCourses(globalEnrolledCourses);
-    } else {
-        globalEnrolledCourses = newCourses;
-    }
+    globalEnrolledCourses = typeof newCourses === 'function' ? newCourses(globalEnrolledCourses) : newCourses;
     listeners.forEach((listener) => listener());
 };
+
+function mapCourse(c: any): Course {
+    return {
+        id: String(c.id),
+        categoryId: c.subjectId ? String(c.subjectId) : ALL_CATEGORY_ID,
+        eyebrow: c.name ?? '',
+        title: c.name ?? '',
+        description: c.description ?? '',
+        imageBadge: c.subjectName ?? '',
+        imageTone: '#153E90',
+        imageUrl: c.imageUrl,
+        showTrendingIcon: false,
+        footer: { type: 'rating', durationLabel: '0h', rating: 0 },
+    };
+}
+
+function enrollmentError(error: any, fallbackMessage: string): ExceptionResponse {
+    if (error.response?.data) {
+        return error.response.data as ExceptionResponse;
+    }
+    return {
+        status: 'Internal Server Error',
+        message: error.message || fallbackMessage,
+        code: 500,
+        timestamp: new Date().toISOString(),
+    };
+}
+
+export function useCourseDetails(id: string) {
+    const { get } = useUmbrellaApi();
+    const [courseDetails, setCourseDetails] = useState<CourseDetailApiDto | null>(null);
+    const [modules, setModules] = useState<CourseModule[]>([]);
+    const [detailLoading, setDetailLoading] = useState(true);
+    const [detailError, setDetailError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!id) return;
+
+        const fetchDetails = async () => {
+            try {
+                setDetailLoading(true);
+                const [courseRes, modulesRes] = await Promise.all([
+                    get<CourseDetailApiDto>(`public/courses/${id}`),
+                    get(`public/courses/${id}/modules`),
+                ]);
+
+                setCourseDetails(courseRes);
+
+                const modulesArray: any[] = Array.isArray(modulesRes) ? modulesRes : [];
+                setModules(
+                    modulesArray.map((m, index): CourseModule => {
+                        const lessons: any[] = m.lessons ?? [];
+                        return {
+                            id: String(m.id),
+                            number: String(index + 1),
+                            title: m.name ?? m.title ?? '',
+                            subtitle: `${lessons.length} aulas`,
+                            lessons: lessons.map((l) => ({
+                                id: String(l.id),
+                                type: 'video',
+                                title: l.title ?? '',
+                                meta: l.duration ?? '10m',
+                            })),
+                        };
+                    }),
+                );
+                setDetailError(null);
+            } catch (err) {
+                console.error('Erro ao buscar detalhes do curso:', err);
+                setDetailError('Erro ao carregar detalhes do curso.');
+            } finally {
+                setDetailLoading(false);
+            }
+        };
+
+        fetchDetails();
+    }, [id, get]);
+
+    return { courseDetails, modules, detailLoading, detailError };
+}
 
 export function useCourses() {
     const { post, get, del } = useUmbrellaApi();
@@ -41,7 +114,7 @@ export function useCourses() {
     const [error, setError] = useState<string | null>(null);
     const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORY_ID);
     const [query, setQuery] = useState('');
-    const [enrollmentedCourses, setLocalEnrolledCourses] = useState<Course[]>(globalEnrolledCourses);
+    const [enrolledCourses, setLocalEnrolledCourses] = useState<Course[]>(globalEnrolledCourses);
 
     useEffect(() => {
         const listener = () => setLocalEnrolledCourses([...globalEnrolledCourses]);
@@ -51,108 +124,69 @@ export function useCourses() {
         };
     }, []);
 
-    const fetchEnrolledCourses = async () => {
+    const fetchEnrolledCourses = useCallback(async (): Promise<Course[]> => {
         try {
-            const errolmentedCoursesResponse = await get('public/courses/errolment');
-            const enrrolmentCoursesArray = Array.isArray(errolmentedCoursesResponse) ? errolmentedCoursesResponse : [];
-            const transformedEnrollmentedCourses = enrrolmentCoursesArray.map((c: any): Course => ({
-                id: String(c.id),
-                categoryId: c.subjectId ? String(c.subjectId) : ALL_CATEGORY_ID,
-                eyebrow: c.name ?? '',
-                title: c.name ?? '',
-                description: c.description ?? '',
-                imageBadge: c.subjectName ?? '',
-                imageTone: '#153E90',
-                imageUrl: c.imageUrl,
-                showTrendingIcon: false,
-                footer: {
-                    type: 'rating' as const,
-                    durationLabel: '0h',
-                    rating: 0
-                },
-            }));
-            setGlobalEnrolledCourses(transformedEnrollmentedCourses);
+            const response = await get('public/courses/errolment');
+            const enrolled = (Array.isArray(response) ? response : []).map(mapCourse);
+            setGlobalEnrolledCourses(enrolled);
+            return enrolled;
         } catch (err) {
             console.log('[useCourses] Failed to fetch enrolled courses', err);
+            return globalEnrolledCourses;
         }
-    };
+    }, [get]);
+
+    const loadCourses = useCallback(async (silent = false) => {
+        try {
+            if (!silent) setLoading(true);
+            const [coursesResponse, subjectsResponse] = await Promise.all([
+                get('public/courses/list'),
+                get('public/courses/subjects').catch(() => []),
+            ]);
+
+            setCourses((Array.isArray(coursesResponse) ? coursesResponse : []).map(mapCourse));
+
+            const subjects: any[] = Array.isArray(subjectsResponse) ? subjectsResponse : [];
+            setCategories([
+                { id: ALL_CATEGORY_ID, label: 'Todos' },
+                { id: ENROLLED_CATEGORY_ID, label: 'Matriculados' },
+                ...subjects.map((s) => ({ id: String(s.id), label: s.name ?? '' })),
+            ]);
+            setError(null);
+        } catch (err) {
+            console.error('Erro ao buscar dados de cursos:', err);
+            if (!silent) setError('Falha ao carregar os cursos.');
+        } finally {
+            if (!silent) setLoading(false);
+        }
+    }, [get]);
 
     useEffect(() => {
-        const fetchInitialData = async () => {
-            try {
-                setLoading(true);
-                const [coursesResponse, subjectsResponse] = await Promise.all([
-                    get('public/courses/list'),
-                    get('public/courses/subjects').catch(() => [])
-                ]);
+        loadCourses();
+    }, [loadCourses]);
 
-                const coursesArray = Array.isArray(coursesResponse) ? coursesResponse : [];
-                const transformedCourses = coursesArray.map((c: any): Course => ({
-                    id: String(c.id),
-                    categoryId: c.subjectId ? String(c.subjectId) : ALL_CATEGORY_ID,
-                    eyebrow: c.name ?? '',
-                    title: c.name ?? '',
-                    description: c.description ?? '',
-                    imageBadge: c.subjectName ?? '',
-                    imageTone: '#153E90',
-                    imageUrl: c.imageUrl,
-                    showTrendingIcon: false,
-                    footer: {
-                        type: 'rating' as const,
-                        durationLabel: '0h',
-                        rating: 0
-                    },
-                }));
-                setCourses(transformedCourses);
+    const refetchCourses = useCallback(() => loadCourses(true), [loadCourses]);
 
-                const subjectsArray = Array.isArray(subjectsResponse) ? subjectsResponse : [];
-                const dynamicCategories: CourseCategory[] = [
-                    { id: ALL_CATEGORY_ID, label: 'Todos' },
-                    { id: ENROLLED_CATEGORY_ID, label: 'Matriculados' },
-                    ...subjectsArray.map((s: any) => ({
-                        id: String(s.id),
-                        label: s.name ?? '',
-                    }))
-                ];
-                setCategories(dynamicCategories);
-                setError(null);
-            } catch (err: any) {
-                console.error('Erro ao buscar dados de cursos:', err);
-                setError('Failed to load courses');
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchInitialData();
-    }, []);
-
-    // Re-fetch enrolled courses whenever the logged-in user changes (e.g. after login)
-    // This makes the enrollment button reactive without needing a page refresh
     useEffect(() => {
-        if (authUserId && authUserId !== '') {
-            // Reset global state so it's always fresh for the current user
-            setGlobalEnrolledCourses([]);
+        setGlobalEnrolledCourses([]);
+        if (authUserId) {
             fetchEnrolledCourses();
-        } else {
-            // User logged out – clear enrolled state
-            setGlobalEnrolledCourses([]);
         }
-    }, [authUserId]);
+    }, [authUserId, fetchEnrolledCourses]);
+
+    const isEnrolled = (courseId: string) => enrolledCourses.some((c) => c.id === String(courseId));
 
     const filteredCourses = useMemo(() => {
         const normalizedQuery = query.trim().toLowerCase();
 
         return courses.filter((course) => {
-            const isEnrolled = enrollmentedCourses.some((e) => String(e.id) === String(course.id));
+            const enrolled = enrolledCourses.some((e) => e.id === course.id);
 
-            let matchesCategory = false;
+            let matchesCategory = course.categoryId === selectedCategory;
             if (selectedCategory === ALL_CATEGORY_ID) {
                 matchesCategory = true;
             } else if (selectedCategory === ENROLLED_CATEGORY_ID) {
-                matchesCategory = isEnrolled;
-            } else {
-                matchesCategory = course.categoryId === selectedCategory;
+                matchesCategory = enrolled;
             }
 
             const matchesQuery =
@@ -160,107 +194,37 @@ export function useCourses() {
                 course.title.toLowerCase().includes(normalizedQuery) ||
                 course.description.toLowerCase().includes(normalizedQuery) ||
                 course.eyebrow.toLowerCase().includes(normalizedQuery) ||
-                (isEnrolled && ('matriculado'.includes(normalizedQuery) || 'matriculados'.includes(normalizedQuery)));
+                (enrolled && 'matriculados'.includes(normalizedQuery));
 
             return matchesCategory && matchesQuery;
         });
-    }, [selectedCategory, query, courses, enrollmentedCourses]);
+    }, [selectedCategory, query, courses, enrolledCourses]);
 
-    const isEnrolled = (courseId: string) => {
-        return enrollmentedCourses.some((c) => String(c.id) === String(courseId));
-    };
-
-    const useCourseDetails = (id: string) => {
-        const [courseDetails, setCourseDetails] = useState<any>(null);
-        const [modules, setModules] = useState<CourseModule[]>([]);
-        const [detailLoading, setDetailLoading] = useState(true);
-        const [detailError, setDetailError] = useState<string | null>(null);
-
-        useEffect(() => {
-            if (!id) return;
-
-            const fetchDetails = async () => {
-                try {
-                    setDetailLoading(true);
-                    const [courseRes, modulesRes] = await Promise.all([
-                        get(`public/courses/${id}`),
-                        get(`public/courses/${id}/modules`)
-                    ]);
-
-                    setCourseDetails(courseRes);
-
-                    const modulesArray = Array.isArray(modulesRes) ? modulesRes : [];
-                    const transformedModules = modulesArray.map((m: any, index: number) => ({
-                        id: String(m.id),
-                        number: String(index + 1),
-                        title: m.name ?? m.title ?? '',
-                        subtitle: `${(m.lessons ?? []).length} aulas`,
-                        lessons: (m.lessons ?? []).map((l: any) => ({
-                            id: String(l.id),
-                            title: l.title ?? '',
-                            duration: l.duration ?? '10m',
-                        }))
-                    }));
-
-                    setModules(transformedModules);
-                } catch (err) {
-                    console.error('Erro ao buscar detalhes do curso:', err);
-                    setDetailError('Erro ao carregar detalhes do curso.');
-                } finally {
-                    setDetailLoading(false);
-                }
-            };
-
-            fetchDetails();
-        }, [id]);
-
-        return { courseDetails, modules, detailLoading, detailError };
-    };
-
-    // Uses JWT-authenticated endpoint – no userId required in URL
     const createEnrollment = async (id: string): Promise<GenericResponse | ExceptionResponse> => {
         try {
             const response = await post<GenericResponse>(`public/courses/${id}/enroll`);
-            // Optimistically update global enrolled state
             await fetchEnrolledCourses();
             return response;
         } catch (error: any) {
-            console.log("[useCourses enrollment error]", error.response?.data || error.message);
-            if (error.response && error.response.data) {
-                return error.response.data as ExceptionResponse;
-            }
-            return {
-                status: "Internal Server Error",
-                message: error.message || "Erro desconhecido ao realizar a matrícula.",
-                code: 500,
-                timestamp: new Date().toISOString()
-            };
+            console.log('[useCourses enrollment error]', error.response?.data || error.message);
+            return enrollmentError(error, 'Erro desconhecido ao realizar a matrícula.');
         }
     };
 
     const deleteEnrollment = async (id: string): Promise<GenericResponse | ExceptionResponse> => {
         try {
             const response = await del<GenericResponse>(`public/courses/${id}/enroll`);
-            setGlobalEnrolledCourses((prev) => prev.filter((c) => String(c.id) !== String(id)));
+            setGlobalEnrolledCourses((prev) => prev.filter((c) => c.id !== String(id)));
             return response;
         } catch (error: any) {
-            console.log("[useCourses delete enrollment error]", error.response?.data || error.message);
-            if (error.response && error.response.data) {
-                return error.response.data as ExceptionResponse;
-            }
-            return {
-                status: "Internal Server Error",
-                message: error.message || "Erro desconhecido ao remover a matrícula.",
-                code: 500,
-                timestamp: new Date().toISOString()
-            };
+            console.log('[useCourses delete enrollment error]', error.response?.data || error.message);
+            return enrollmentError(error, 'Erro desconhecido ao remover a matrícula.');
         }
     };
 
     return {
         courses: filteredCourses,
-        allCourses: courses,
-        enrollmentedCourses,
+        enrolledCourses,
         categories,
         loading,
         error,
@@ -268,10 +232,10 @@ export function useCourses() {
         setSelectedCategory,
         query,
         setQuery,
-        useCourseDetails,
         createEnrollment,
         deleteEnrollment,
         isEnrolled,
         refetchEnrolledCourses: fetchEnrolledCourses,
+        refetchCourses,
     };
 }

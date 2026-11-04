@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
 import type { Course } from '@/types/courses';
 
 export type CourseCardProps = {
@@ -13,6 +14,7 @@ export type CourseCardProps = {
 };
 
 export function CourseCard({ course, isEnrolled }: CourseCardProps) {
+  const { translate } = usePreferences();
   return (
     <Link href={`/courses/${course.id}`} asChild>
       <Pressable accessibilityRole="button">
@@ -25,7 +27,7 @@ export function CourseCard({ course, isEnrolled }: CourseCardProps) {
                 </UmbrellaText>
               </View>
               {isEnrolled ? (
-                <View style={[styles.badge, styles.enrolledBadge]}>
+                <View style={[styles.badge, styles.enrolledBadge, { backgroundColor: translate(Colors.light.success) }]}>
                   <UmbrellaText variant="caption" color={Colors.light.surface} style={styles.badgeText}>
                     MATRICULADO
                   </UmbrellaText>

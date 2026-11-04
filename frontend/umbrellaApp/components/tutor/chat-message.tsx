@@ -1,7 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import { AIAgendaCard } from '@/components/tutor/ai-agenda-card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { SpeechReaderButton } from '@/components/ui/speech-reader-button';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import type { ChatMessageItem } from '@/types/tutor';
@@ -26,18 +25,9 @@ export function ChatMessage({ message, onConfirmAgenda, onAdjustAgenda }: ChatMe
       </View>
 
       <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleAI]}>
-        <View style={styles.messageContentRow}>
-          <UmbrellaText variant="body" color={isUser ? Colors.light.surface : Colors.light.text} style={styles.textFlex}>
-            {message.text}
-          </UmbrellaText>
-          {!isUser ? (
-            <SpeechReaderButton
-              text={message.text}
-              iconSize={15}
-              style={styles.speechBtn}
-            />
-          ) : null}
-        </View>
+        <UmbrellaText variant="body" color={isUser ? Colors.light.surface : Colors.light.text}>
+          {message.text}
+        </UmbrellaText>
 
         {message.kind === 'agenda-card' ? (
           <AIAgendaCard items={message.agendaItems} onConfirm={onConfirmAgenda} onAdjust={onAdjustAgenda} />
@@ -83,17 +73,5 @@ const styles = StyleSheet.create({
   bubbleUser: {
     backgroundColor: Colors.light.primary,
     borderBottomRightRadius: 4,
-  },
-  messageContentRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.xs,
-  },
-  textFlex: {
-    flex: 1,
-  },
-  speechBtn: {
-    marginLeft: 4,
-    marginTop: -2,
   },
 });

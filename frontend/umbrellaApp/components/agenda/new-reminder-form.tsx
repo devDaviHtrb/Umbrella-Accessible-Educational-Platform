@@ -33,7 +33,6 @@ export default function NewReminderForm({ onSubmit }: NewReminderFormProps) {
       return;
     }
     
-    // Format as local ISO string for backend LocalDateTime (YYYY-MM-DDTHH:mm:ss)
     const pad = (n: number) => n.toString().padStart(2, '0');
     const localIsoString = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
 
@@ -114,7 +113,7 @@ export default function NewReminderForm({ onSubmit }: NewReminderFormProps) {
             value={date}
             mode="date"
             display="default"
-            onChange={(event: any, selectedDate?: Date) => {
+            onChange={(_: unknown, selectedDate?: Date) => {
               setShowDatePicker(Platform.OS === 'ios');
               if (selectedDate) setDate(selectedDate);
             }}
@@ -127,7 +126,7 @@ export default function NewReminderForm({ onSubmit }: NewReminderFormProps) {
             mode="time"
             display="default"
             is24Hour={true}
-            onChange={(event: any, selectedDate?: Date) => {
+            onChange={(_: unknown, selectedDate?: Date) => {
               setShowTimePicker(Platform.OS === 'ios');
               if (selectedDate) setDate(selectedDate);
             }}

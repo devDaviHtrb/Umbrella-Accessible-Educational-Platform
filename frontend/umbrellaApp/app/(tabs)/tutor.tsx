@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Pressable,
   ScrollView,
   StyleSheet,
-  View,
   TextInput,
+  View,
 } from 'react-native';
 
 import { AITutorHeader } from '@/components/tutor/ai-tutor-header';
@@ -20,6 +21,7 @@ import { ModalSheet } from '@/components/ui/modal-sheet';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { Colors, Spacing, Radius } from '@/constants/theme';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
 import { useIaTutor } from '@/hooks/api/aiTutor/useIaTutor';
 import type { Conversation, Message } from '@/types/tutor';
 
@@ -27,9 +29,11 @@ const AI_STATUS_LABEL = 'ANALISANDO DADOS DE FOCO';
 const AI_PROVIDER_BADGE = 'Gemini';
 
 export default function TutorScreen() {
+  const { translate } = usePreferences();
   const { getHistory, startNewConversation, sendMessage, deleteConversation } = useIaTutor();
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [isLoadingConversation, setLoadingConversation] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [isSending, setSending] = useState(false);
 
   const [draft, setDraft] = useState('');
@@ -43,16 +47,23 @@ export default function TutorScreen() {
 
   const scrollRef = useRef<ScrollView>(null);
 
-  useEffect(() => {
-    async function loadInitialConversation() {
-      setLoadingConversation(true);
+  const loadInitialConversation = useCallback(async () => {
+    setLoadingConversation(true);
+    setLoadFailed(false);
+    try {
       const history = await getHistory();
       const mostRecent = history[0] ?? (await startNewConversation('Nova Conversa'));
       setActiveConversation(mostRecent);
+    } catch {
+      setLoadFailed(true);
+    } finally {
       setLoadingConversation(false);
     }
-    loadInitialConversation();
   }, []);
+
+  useEffect(() => {
+    loadInitialConversation();
+  }, [loadInitialConversation]);
 
   useEffect(() => {
     scrollRef.current?.scrollToEnd({ animated: true });
@@ -67,17 +78,27 @@ export default function TutorScreen() {
   const handleConfirmNewConversation = async () => {
     const titleToUse = newChatTitle.trim() || 'Nova conversa';
     setAddChatVisible(false);
-    const conversation = await startNewConversation(titleToUse);
-    setActiveConversation(conversation);
-    setDraft('');
+    try {
+      const conversation = await startNewConversation(titleToUse);
+      setActiveConversation(conversation);
+      setDraft('');
+    } catch {
+      Alert.alert('Erro', 'Não foi possível criar a conversa. Tente novamente.');
+    }
   };
 
   const handleOpenHistory = useCallback(async () => {
     setHistoryVisible(true);
     setHistoryLoading(true);
-    const history = await getHistory();
-    setHistoryConversations(history);
-    setHistoryLoading(false);
+    try {
+      const history = await getHistory();
+      setHistoryConversations(history);
+    } catch {
+      setHistoryConversations([]);
+      Alert.alert('Erro', 'Não foi possível carregar o histórico de conversas.');
+    } finally {
+      setHistoryLoading(false);
+    }
   }, []);
 
   function handleSelectConversation(conversation: Conversation) {
@@ -93,16 +114,10 @@ export default function TutorScreen() {
       setHistoryConversations(updatedHistory);
 
       if (activeConversation?.id === conversationId) {
-        const nextChat = updatedHistory[0] ?? null;
-        if (nextChat) {
-          setActiveConversation(nextChat);
-        } else {
-          const fresh = await startNewConversation('Nova Conversa');
-          setActiveConversation(fresh);
-        }
+        setActiveConversation(updatedHistory[0] ?? (await startNewConversation('Nova Conversa')));
       }
-    } catch (error) {
-      console.error('Erro ao apagar conversa:', error);
+    } catch {
+      Alert.alert('Erro', 'Não foi possível excluir a conversa. Tente novamente.');
     }
   };
 
@@ -127,6 +142,8 @@ export default function TutorScreen() {
     try {
       const aiReply = await sendMessage(activeConversation.id, trimmed);
       setActiveConversation((prev) => (prev ? { ...prev, messages: [...prev.messages, aiReply] } : prev));
+    } catch {
+      Alert.alert('Erro', 'Não foi possível enviar a mensagem. Tente novamente.');
     } finally {
       setSending(false);
     }
@@ -148,7 +165,7 @@ export default function TutorScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="Nova conversa"
                 onPress={handleOpenNewChatModal}
-                style={styles.fab}>
+                style={[styles.fab, { backgroundColor: translate(Colors.light.success) }]}>
                 <IconSymbol name="plus" size={22} color={Colors.light.surface} />
               </Pressable>
               <ChatInput value={draft} onChangeText={setDraft} onSend={handleSend} />
@@ -157,9 +174,16 @@ export default function TutorScreen() {
         }>
         <AITutorHeader statusLabel={AI_STATUS_LABEL} providerBadge={AI_PROVIDER_BADGE} onMenuPress={handleOpenHistory} />
 
-        {isLoadingConversation || !activeConversation ? (
+        {isLoadingConversation ? (
           <View style={styles.loadingWrapper}>
             <ActivityIndicator color={Colors.light.primary} />
+          </View>
+        ) : loadFailed || !activeConversation ? (
+          <View style={styles.loadingWrapper}>
+            <UmbrellaText variant="body" color={Colors.light.textSecondary}>
+              Não foi possível carregar o Tutor IA.
+            </UmbrellaText>
+            <PrimaryButton label="Tentar de novo" onPress={loadInitialConversation} />
           </View>
         ) : (
           <View style={styles.messageList}>

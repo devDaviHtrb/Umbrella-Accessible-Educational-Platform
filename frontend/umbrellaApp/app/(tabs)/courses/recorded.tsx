@@ -34,9 +34,6 @@ export default function RecordedClassesScreen() {
     });
   }, [selectedCategory, query]);
 
-  function handleLessonPress() {
-  }
-
   return (
     <ScreenContainer disableTopInset>
       <View>
@@ -84,7 +81,7 @@ export default function RecordedClassesScreen() {
           </UmbrellaText>
         ) : (
           filteredLessons.map((lesson) => (
-            <LessonCard key={lesson.id} lesson={lesson} onPress={handleLessonPress} />
+            <LessonCard key={lesson.id} lesson={lesson} />
           ))
         )}
       </View>

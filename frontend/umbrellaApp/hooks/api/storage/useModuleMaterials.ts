@@ -17,19 +17,13 @@ export function useModuleMaterials(moduleId?: string | number | null) {
     try {
       setLoading(true);
       setError(null);
-      let data: ModuleMaterial[] | null = null;
+      let data: ModuleMaterial[];
       try {
         data = await get<ModuleMaterial[]>(`public/storage/module/${moduleId}`);
-      } catch (firstErr: any) {
-        // Fallback in case endpoint is mounted at storage/module
+      } catch {
         data = await get<ModuleMaterial[]>(`storage/module/${moduleId}`);
       }
-      console.log(`[useModuleMaterials] Fetched for module ${moduleId}:`, data);
-      if (Array.isArray(data)) {
-        setMaterials(data);
-      } else {
-        setMaterials([]);
-      }
+      setMaterials(Array.isArray(data) ? data : []);
     } catch (err: any) {
       console.warn(`[useModuleMaterials] Error fetching materials for module ${moduleId}:`, err.response?.data || err.message);
       setError('Não foi possível carregar os materiais deste módulo.');

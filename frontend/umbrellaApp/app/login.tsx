@@ -11,6 +11,7 @@ import { SecondaryButton } from '@/components/ui/secondary-button';
 import { TextField } from '@/components/ui/text-field';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Spacing } from '@/constants/theme';
+import { homeHrefForRoles } from '@/constants/routes';
 import { useAuthContext } from '@/hooks/api/auth/authContext';
 import { AuthFieldErrors } from '@/hooks/api/auth/useAuth';
 
@@ -49,8 +50,7 @@ export default function LoginScreen() {
 
     try {
       const response = await login({ email: email.trim(), password });
-      console.log('Logado com sucesso! Token:', response.accessToken);
-      router.replace('/(tabs)');
+      router.replace(homeHrefForRoles(response.roles));
     } catch (error: any) {
       if (error && error.fieldErrors) {
         setErrors(error.fieldErrors);

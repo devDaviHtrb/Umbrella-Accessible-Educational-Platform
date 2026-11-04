@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'rea
 import { IconSymbol, type IconSymbolName } from '@/components/ui/icon-symbol';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, FontFamily, Radius, Spacing } from '@/constants/theme';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
 
 export type TextFieldProps = TextInputProps & {
   label: string;
@@ -21,6 +22,8 @@ export function TextField({
   style,
   ...rest
 }: TextFieldProps) {
+  const { translate, fontScale, preferences } = usePreferences();
+
   return (
     <View style={styles.wrapper}>
       <View style={styles.labelRow}>
@@ -28,7 +31,7 @@ export function TextField({
           {label}
         </UmbrellaText>
         {labelActionText ? (
-          <Pressable onPress={onLabelActionPress} hitSlop={8}>
+          <Pressable accessibilityRole="button" onPress={onLabelActionPress} hitSlop={8}>
             <UmbrellaText variant="label" color={Colors.light.primary}>
               {labelActionText}
             </UmbrellaText>
@@ -40,10 +43,16 @@ export function TextField({
         <TextInput
           style={[
             styles.input,
-            error ? styles.inputError : null,
+            {
+              backgroundColor: translate(Colors.light.surfaceContainerLow),
+              color: translate(Colors.light.text),
+              fontSize: 15 * fontScale,
+            },
+            preferences.highContrast && { borderWidth: 1, borderColor: translate(Colors.light.outline) },
+            error ? { borderWidth: 1, borderColor: translate(Colors.light.error) } : null,
             style,
           ]}
-          placeholderTextColor={Colors.light.textSecondary}
+          placeholderTextColor={translate(Colors.light.textSecondary)}
           {...rest}
         />
         {icon ? (
