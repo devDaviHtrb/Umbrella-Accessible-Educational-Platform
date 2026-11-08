@@ -3,6 +3,7 @@ import { StyleSheet, View, Pressable } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
 import type { AgendaEvent } from '@/types/painel';
 
 const DOT_COLUMN_WIDTH = 28;
@@ -36,12 +37,13 @@ export function AgendaTimeline({ events, onDeleteEvent }: AgendaTimelineProps) {
 function TimelineEvent({ event, isLast, onDelete }: { event: AgendaEvent; isLast: boolean; onDelete: () => void }) {
   const isNow = event.state === 'now';
   const isUpcoming = event.state === 'upcoming';
+  const { translate } = usePreferences();
 
   return (
     <View style={[styles.row, !isLast && styles.rowSpacing]}>
       <View style={styles.dotColumn}>
         {isNow ? (
-          <View style={styles.dotNow}>
+          <View style={[styles.dotNow, { backgroundColor: translate(Colors.light.tertiary) }]}>
             <IconSymbol name="play.fill" size={10} color={Colors.light.surface} />
           </View>
         ) : (
@@ -62,7 +64,7 @@ function TimelineEvent({ event, isLast, onDelete }: { event: AgendaEvent; isLast
           {event.time}
         </UmbrellaText>
 
-        <View style={isNow ? styles.nowCard : undefined}>
+        <View style={isNow ? [styles.nowCard, { backgroundColor: translate(Colors.light.tertiaryLight) }] : undefined}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <View style={{ flex: 1, marginRight: Spacing.sm }}>
               <UmbrellaText

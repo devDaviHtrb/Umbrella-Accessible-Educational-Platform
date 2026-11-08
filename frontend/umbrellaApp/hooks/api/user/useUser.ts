@@ -1,4 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import umbrellaApi from '@/services/umbrellaApi';
 import { useUmbrellaApi } from '../core/useUmbrellaApi';
 
 export interface UserProfile {
@@ -22,13 +25,11 @@ export function useUser() {
       setLoading(true);
       const data = await get<UserProfile>('public/users/me');
       if (data) {
-        setProfile(data);
         if (data.avatarUrl) {
-          await (await import('@react-native-async-storage/async-storage')).default.setItem(
-            '@user_avatar_url',
-            data.avatarUrl
-          );
+          await AsyncStorage.setItem('@user_avatar_url', data.avatarUrl);
         }
+        const savedAvatar = await AsyncStorage.getItem('@user_avatar_url');
+        setProfile({ ...data, avatarUrl: data.avatarUrl ?? savedAvatar });
       }
       setError(null);
     } catch (err: any) {
@@ -39,92 +40,70 @@ export function useUser() {
     }
   }, [get]);
 
-  const updateNeurodivergence = useCallback(async (text: string): Promise<boolean> => {
-    try {
-      setSaving(true);
-      // Backend expects a raw string body (not JSON object)
-      const token = await (await import('@react-native-async-storage/async-storage')).default.getItem('@user_token');
-      const headers: Record<string, string> = { 'Content-Type': 'text/plain' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      const umbrellaApi = (await import('@/services/umbrellaApi')).default;
-      const response = await umbrellaApi.patch<UserProfile>('public/users/me/neurodivergence', text, { headers });
-      setProfile(response.data);
-      return true;
-    } catch (err: any) {
-      console.log('[useUser] Failed to update neurodivergence', err.response?.data || err.message);
-      return false;
-    } finally {
-      setSaving(false);
-    }
-  }, []);
+  const updateNeurodivergence = useCallback(
+    async (text: string): Promise<boolean> => {
+      try {
+        setSaving(true);
+        const updated = await patch<UserProfile>('public/users/me/neurodivergence', text, {
+          'Content-Type': 'text/plain',
+        });
+        setProfile(updated);
+        return true;
+      } catch (err: any) {
+        console.log('[useUser] Failed to update neurodivergence', err.response?.data || err.message);
+        return false;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [patch],
+  );
 
   const uploadAvatar = useCallback(async (imageAssetOrUri: any): Promise<string | null> => {
     try {
       setUploadingAvatar(true);
-      const token = await (await import('@react-native-async-storage/async-storage')).default.getItem('@user_token');
-      
-      const uri = typeof imageAssetOrUri === 'string' ? imageAssetOrUri : imageAssetOrUri?.uri;
-      const originalFileName = typeof imageAssetOrUri === 'object' && imageAssetOrUri?.fileName ? imageAssetOrUri.fileName : (uri?.split('/').pop() || 'avatar.jpg');
+      const token = await AsyncStorage.getItem('@user_token');
+
+      const asset = typeof imageAssetOrUri === 'string' ? { uri: imageAssetOrUri } : imageAssetOrUri;
+      const uri: string = asset?.uri;
+      const originalFileName: string = asset?.fileName || uri?.split('/').pop() || 'avatar.jpg';
       const filename = originalFileName.includes('.') ? originalFileName : `${originalFileName}.jpg`;
-      const match = /\.(\w+)$/.exec(filename);
-      const mimeType = (typeof imageAssetOrUri === 'object' && imageAssetOrUri?.mimeType) 
-        ? imageAssetOrUri.mimeType 
-        : (match ? `image/${match[1] === 'jpg' ? 'jpeg' : match[1]}` : 'image/jpeg');
+      const extension = /\.(\w+)$/.exec(filename)?.[1];
+      const mimeType: string = asset?.mimeType || (extension ? `image/${extension === 'jpg' ? 'jpeg' : extension}` : 'image/jpeg');
 
       const formData = new FormData();
-
-      // Check if running on web platform with blob or file
-      if (typeof window !== 'undefined' && uri && (uri.startsWith('blob:') || uri.startsWith('data:'))) {
-        const response = await fetch(uri);
-        const blob = await response.blob();
+      if (uri && (uri.startsWith('blob:') || uri.startsWith('data:'))) {
+        const blob = await (await fetch(uri)).blob();
         formData.append('file', blob, filename);
       } else {
-        // Native React Native FormData format
-        formData.append('file', {
-          uri: uri,
-          name: filename,
-          type: mimeType,
-        } as any);
+        formData.append('file', { uri, name: filename, type: mimeType } as any);
       }
-
       formData.append('resourceType', 'image');
       formData.append('fileName', filename);
       formData.append('alternativeText', 'Foto de perfil');
 
-      const headers: Record<string, string> = {};
-      if (token) headers['Authorization'] = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+      const config = {
+        headers: {
+          ...(token ? { Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}` } : {}),
+          'Content-Type': 'multipart/form-data',
+        },
+        transformRequest: (data: any) => data,
+      };
 
-      const umbrellaApi = (await import('@/services/umbrellaApi')).default;
-      let uploadRes: any;
+      let uploadRes;
       try {
-        uploadRes = await umbrellaApi.post('storage/upload', formData, {
-          headers: {
-            ...headers,
-            'Content-Type': 'multipart/form-data',
-          },
-          transformRequest: (data) => data, // Ensure Axios does not serialize FormData to string
-        });
-      } catch (e1: any) {
-        console.log('[useUser] Retrying at public/storage/upload...', e1.response?.data || e1.message);
-        uploadRes = await umbrellaApi.post('public/storage/upload', formData, {
-          headers: {
-            ...headers,
-            'Content-Type': 'multipart/form-data',
-          },
-          transformRequest: (data) => data,
-        });
+        uploadRes = await umbrellaApi.post('storage/upload', formData, config);
+      } catch (firstError: any) {
+        console.log('[useUser] Retrying at public/storage/upload...', firstError.response?.data || firstError.message);
+        uploadRes = await umbrellaApi.post('public/storage/upload', formData, config);
       }
 
-      const uploadedUrl = uploadRes?.data?.url || uploadRes?.url;
-      if (uploadedUrl) {
-        setProfile((prev) => (prev ? { ...prev, avatarUrl: uploadedUrl } : null));
-        await (await import('@react-native-async-storage/async-storage')).default.setItem(
-          '@user_avatar_url',
-          uploadedUrl
-        );
-        return uploadedUrl;
-      }
-      return null;
+      const uploadedUrl: string | undefined = uploadRes.data?.url;
+      if (!uploadedUrl) return null;
+
+      setProfile((prev) => (prev ? { ...prev, avatarUrl: uploadedUrl } : null));
+      await AsyncStorage.setItem('@user_avatar_url', uploadedUrl);
+      return uploadedUrl;
     } catch (err: any) {
       console.log('[useUser] Failed to upload avatar', err.response?.data || err.message);
       return null;
@@ -135,14 +114,6 @@ export function useUser() {
 
   useEffect(() => {
     fetchProfile();
-    // Also load cached avatar if present
-    import('@react-native-async-storage/async-storage').then(({ default: AsyncStorage }) => {
-      AsyncStorage.getItem('@user_avatar_url').then((savedAvatar) => {
-        if (savedAvatar) {
-          setProfile((prev) => (prev ? { ...prev, avatarUrl: savedAvatar } : prev));
-        }
-      });
-    });
   }, [fetchProfile]);
 
   return { profile, loading, saving, uploadingAvatar, error, fetchProfile, updateNeurodivergence, uploadAvatar };

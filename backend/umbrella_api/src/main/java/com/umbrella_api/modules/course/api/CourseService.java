@@ -48,6 +48,8 @@ public interface CourseService {
 
     public List<Courses> getEnrolledCoursesByUser(CustomUserDetails userDetails);
 
+    public List<UserModel> getEnrolledStudents(Long courseId);
+
     // Subject crud
     public Subjects createSubject(String subjectName);
 

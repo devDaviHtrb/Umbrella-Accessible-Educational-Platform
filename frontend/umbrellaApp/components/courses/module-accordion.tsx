@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
-import { useModuleActivities, useActivity } from '@/hooks/api/activities/useActivity';
+import { useActivity, useModuleActivities } from '@/hooks/api/activities/useActivity';
 import { useModuleMaterials } from '@/hooks/api/storage/useModuleMaterials';
 import type { CourseModule, CourseLesson } from '@/types/courses';
 import type { ActivityDto } from '@/types/activities';
@@ -15,7 +15,7 @@ import type { ModuleMaterial } from '@/types/materials';
 
 export type ModuleAccordionProps = {
   module: CourseModule;
-  courseId: string; // needed to fetch activity scores
+  courseId: string;
   defaultExpanded?: boolean;
   isEnrolled?: boolean;
   onLessonPress?: (lesson: CourseLesson) => void;

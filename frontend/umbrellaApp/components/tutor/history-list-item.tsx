@@ -26,7 +26,6 @@ export function HistoryListItem({ conversation, onPress, onDelete, isActive }: H
 
   return (
     <View style={[styles.row, isActive && styles.activeRow]}>
-      {/* Área principal para clicar e abrir a conversa */}
       <Pressable onPress={onPress} style={styles.mainTouchable}>
         <View style={styles.textColumn}>
           <UmbrellaText variant="bodyMedium" numberOfLines={1}>
@@ -44,7 +43,6 @@ export function HistoryListItem({ conversation, onPress, onDelete, isActive }: H
         </UmbrellaText>
       </Pressable>
 
-      {/* Botão da lixeira visível antes da seta */}
       {onDelete ? (
         <Pressable
           accessibilityRole="button"

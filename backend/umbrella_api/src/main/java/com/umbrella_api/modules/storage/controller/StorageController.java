@@ -91,4 +91,21 @@ public class StorageController {
         return ResponseEntity.ok(response);
 
     }
+
+    /**
+     * Deletes a module material by its FileMetaData id (the id the materials
+     * listing exposes), removing the file from the DB and Cloudinary.
+     */
+    @DeleteMapping("/material/{metaId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<GenericResponse> deleteMaterial(@PathVariable Long metaId) {
+        Long moduleId = storageService.deleteFileByMetaId(metaId);
+
+        if (moduleId == null) {
+            return ResponseEntity.status(404)
+                    .body(new GenericResponse("Error", "Material not found", 404));
+        }
+
+        return ResponseEntity.ok(new GenericResponse("ok", "Success on delete material", 200));
+    }
 }

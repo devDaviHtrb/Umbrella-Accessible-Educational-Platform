@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Spacing } from '@/constants/theme';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
 import type { AgendaEvent } from '@/types/agenda';
 
 export type AgendaEventCardProps = {
@@ -13,6 +14,7 @@ export type AgendaEventCardProps = {
 };
 
 export function AgendaEventCard({ event, onPress, onDelete }: AgendaEventCardProps) {
+  const { translate } = usePreferences();
   return (
     <Pressable style={styles.row} onPress={onPress}>
       <UmbrellaText variant="label" color={Colors.light.textSecondary} style={styles.time}>
@@ -47,12 +49,12 @@ export function AgendaEventCard({ event, onPress, onDelete }: AgendaEventCardPro
 
         {event.participantCount ? (
           <View style={styles.avatarRow}>
-            <View style={[styles.avatar, { backgroundColor: Colors.light.secondaryFixed }]}>
+            <View style={[styles.avatar, { backgroundColor: translate(Colors.light.secondaryFixed) }]}>
               <UmbrellaText variant="caption" color={Colors.light.primary}>
                 U
               </UmbrellaText>
             </View>
-            <View style={[styles.avatar, styles.avatarOverlap, { backgroundColor: Colors.light.tertiaryLight }]}>
+            <View style={[styles.avatar, styles.avatarOverlap, { backgroundColor: translate(Colors.light.tertiaryLight) }]}>
               <UmbrellaText variant="caption" color={Colors.light.tertiary}>
                 U
               </UmbrellaText>

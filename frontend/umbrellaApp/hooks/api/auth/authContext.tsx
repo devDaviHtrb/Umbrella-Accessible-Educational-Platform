@@ -1,6 +1,8 @@
-import React, { createContext, useState, useEffect, useContext, ReactNode } from 'react';
+import { createContext, useState, useEffect, useContext, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth as useAuthApi, LoginData, RegisterData, AuthResponse } from '@/hooks/api/auth/useAuth';
+import { setSessionExpiredHandler } from '@/services/sessionEvents';
+import { isJwtExpired } from '@/utils/jwt';
 
 export interface UserData {
     id: string;
@@ -25,13 +27,21 @@ export interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
+function readStoredUser(storedUser: string | null, storedName: string | null): UserData | null {
+    if (storedUser) {
+        try {
+            return JSON.parse(storedUser);
+        } catch {}
+    }
+    return storedName ? { id: '', name: storedName, email: '', roles: [] } : null;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const { login: apiLogin, register: apiRegister, logout: apiLogout } = useAuthApi();
+    const { login: apiLogin, register: apiRegister } = useAuthApi();
 
     const [userToken, setUserToken] = useState<string | null>(null);
     const [user, setUser] = useState<UserData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-
 
     useEffect(() => {
         async function loadStorageData() {
@@ -42,20 +52,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     AsyncStorage.getItem('@user_name'),
                 ]);
 
-                if (token) {
+                if (token && isJwtExpired(token)) {
+                    await AsyncStorage.multiRemove(['@user_token', '@user_name', '@user_data', '@user_avatar_url']);
+                } else if (token) {
                     setUserToken(token);
-                    if (storedUser) {
-                        try {
-                            const parsed = JSON.parse(storedUser);
-                            setUser(parsed);
-                        } catch {
-                            if (storedName) {
-                                setUser({ id: '', name: storedName, email: '', roles: [] });
-                            }
-                        }
-                    } else if (storedName) {
-                        setUser({ id: '', name: storedName, email: '', roles: [] });
-                    }
+                    setUser(readStoredUser(storedUser, storedName));
                 }
             } catch (error) {
                 console.log("[AuthContext] Erro ao carregar dados do Storage:", error);
@@ -67,52 +68,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loadStorageData();
     }, []);
 
-    // 2. Função de Login integrada ao Contexto
+    const saveSession = async (response: AuthResponse) => {
+        if (!response?.accessToken) return;
+
+        const userData: UserData = {
+            id: String(response.userId),
+            name: response.name,
+            email: response.email,
+            roles: response.roles || [],
+        };
+        setUserToken(response.accessToken);
+        setUser(userData);
+        await Promise.all([
+            AsyncStorage.setItem('@user_token', response.accessToken),
+            AsyncStorage.setItem('@user_data', JSON.stringify(userData)),
+            AsyncStorage.setItem('@user_name', response.name),
+        ]);
+    };
+
     const login = async (data: LoginData): Promise<AuthResponse> => {
         const response = await apiLogin(data);
-        if (response && response.accessToken) {
-            const userData: UserData = {
-                id: response.userId,
-                name: response.name,
-                email: response.email,
-                roles: response.roles || [],
-            };
-            setUserToken(response.accessToken);
-            setUser(userData);
-            await Promise.all([
-                AsyncStorage.setItem('@user_token', response.accessToken),
-                AsyncStorage.setItem('@user_data', JSON.stringify(userData)),
-                AsyncStorage.setItem('@user_name', response.name),
-            ]);
-        }
+        await saveSession(response);
         return response;
     };
 
-    // 3. Função de Cadastro integrada ao Contexto
     const register = async (data: RegisterData): Promise<AuthResponse> => {
         const response = await apiRegister(data);
-        if (response && response.accessToken) {
-            const userData: UserData = {
-                id: response.userId,
-                name: response.name,
-                email: response.email,
-                roles: response.roles || [],
-            };
-            setUserToken(response.accessToken);
-            setUser(userData);
-            await Promise.all([
-                AsyncStorage.setItem('@user_token', response.accessToken),
-                AsyncStorage.setItem('@user_data', JSON.stringify(userData)),
-                AsyncStorage.setItem('@user_name', response.name),
-            ]);
-        }
+        await saveSession(response);
         return response;
     };
 
-    // 4. Função de Logout integrada ao Contexto
     const logout = async () => {
         try {
-            await apiLogout();
             await AsyncStorage.multiRemove(['@user_token', '@user_name', '@user_data', '@user_avatar_url']);
         } catch (error) {
             console.log("[AuthContext] Erro ao deslogar:", error);
@@ -121,6 +108,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(null);
         }
     };
+
+    useEffect(() => {
+        setSessionExpiredHandler(() => {
+            logout();
+        });
+        return () => setSessionExpiredHandler(null);
+    }, []);
 
     return (
         <AuthContext.Provider
@@ -143,7 +137,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 }
 
-// Hook customizado para facilitar o uso nas telas
 export function useAuthContext() {
     return useContext(AuthContext);
 }

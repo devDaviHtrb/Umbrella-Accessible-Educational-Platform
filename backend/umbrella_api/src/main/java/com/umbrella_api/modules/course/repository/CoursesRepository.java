@@ -20,4 +20,12 @@ public interface CoursesRepository extends JpaRepository<Courses, Long> {
            "(:subjectId IS NULL OR c.subject.id = :subjectId) AND " +
            "(:search IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(c.description) LIKE LOWER(CONCAT('%', :search, '%')))")
     List<Courses> searchCourses(@Param("search") String search, @Param("subjectId") Long subjectId);
+
+    /**
+     * Number of enrolled students (relations that are not the course creator)
+     * grouped by course id, for a batch of courses. Avoids N+1 counting.
+     */
+    @Query("SELECT r.course.id, COUNT(r) FROM CourseUserRelation r " +
+           "WHERE r.course.id IN :courseIds AND r.creator = false GROUP BY r.course.id")
+    List<Object[]> countStudentsByCourseIds(@Param("courseIds") List<Long> courseIds);
 }

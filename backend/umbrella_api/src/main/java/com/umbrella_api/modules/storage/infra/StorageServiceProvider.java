@@ -239,6 +239,38 @@ public class StorageServiceProvider {
         }
     }
 
+    /**
+     * Deletes a single material identified by its FileMetaData id, resolving the
+     * concrete file (Image/Video/RawFile) and removing it from the DB and
+     * Cloudinary. Returns the moduleId the material belonged to (for ownership
+     * checks), or null if not found.
+     */
+    @Transactional
+    public Long deleteFileByMetaId(Long metaId) {
+        FileMetaData meta = fileRepository.findById(metaId).orElse(null);
+        if (meta == null) {
+            return null;
+        }
+
+        Long moduleId = meta.getModule() != null ? meta.getModule().getId() : null;
+
+        StorageFileEntity realFile = null;
+        if (meta.getImage() != null)
+            realFile = meta.getImage();
+        else if (meta.getVideo() != null)
+            realFile = meta.getVideo();
+        else if (meta.getRawFile() != null)
+            realFile = meta.getRawFile();
+
+        if (realFile != null) {
+            this.delete(realFile);
+        } else {
+            fileRepository.delete(meta);
+        }
+
+        return moduleId;
+    }
+
     @Transactional(readOnly = true)
     public List<FileMetaData> getFilesByModuleId(Long moduleId) {
         return fileRepository.findByModuleId(moduleId);

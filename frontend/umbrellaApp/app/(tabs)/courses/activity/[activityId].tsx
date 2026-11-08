@@ -15,13 +15,15 @@ import { ScreenContainer } from '@/components/layout/screen-container';
 import { Card } from '@/components/ui/card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { PrimaryButton } from '@/components/ui/primary-button';
-import { SpeechReaderButton } from '@/components/ui/speech-reader-button';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
 import { useActivityDetail } from '@/hooks/api/activities/useActivity';
 import type { StudentAnswerCorrectionDto } from '@/types/activities';
+import { notify } from '@/utils/confirm';
 
 export default function ActivityQuizScreen() {
+  const { translate } = usePreferences();
   const { courseId, moduleId, activityId } = useLocalSearchParams<{
     courseId: string;
     moduleId: string;
@@ -43,10 +45,11 @@ export default function ActivityQuizScreen() {
   >({});
   const [submitting, setSubmitting] = useState(false);
 
-  const questions = activity?.questions || [];
+  const questions = [...(activity?.questions || [])].sort(
+    (a, b) => (a.number ?? 0) - (b.number ?? 0) || a.id - b.id
+  );
   const currentQuestion = questions[currentIndex];
 
-  // Pre-fill answers if user has already submitted
   useEffect(() => {
     if (latestSubmission && latestSubmission.answers) {
       const initialMap: Record<
@@ -76,7 +79,6 @@ export default function ActivityQuizScreen() {
 
   const handleEssayChange = (questionId: number, text: string) => {
     if (hasSubmitted) return;
-    // Find the question to enforce maxLetters limit (handles paste scenarios)
     const q = questions.find((q) => q.id === questionId);
     const max = q?.essay?.maxLetters;
     const clipped = max && text.length > max ? text.slice(0, max) : text;
@@ -92,7 +94,6 @@ export default function ActivityQuizScreen() {
   const handleSubmit = async () => {
     if (!activity) return;
 
-    // Build payload for all questions
     const formattedAnswers: StudentAnswerCorrectionDto[] = questions.map((q) => {
       const userAns = answersMap[q.id];
       return {
@@ -102,7 +103,6 @@ export default function ActivityQuizScreen() {
       };
     });
 
-    // Check if any question is un-answered
     const unansweredCount = questions.filter((q) => {
       const ans = answersMap[q.id];
       if (q.alternatives && q.alternatives.length > 0) {
@@ -111,7 +111,6 @@ export default function ActivityQuizScreen() {
       return !ans?.essayAnswer || ans.essayAnswer.trim().length === 0;
     }).length;
 
-    // Check if any essay is below the minimum characters
     const belowMinCount = questions.filter((q) => {
       if (!q.essay?.minLetters) return false;
       const len = answersMap[q.id]?.essayAnswer?.length ?? 0;
@@ -119,12 +118,10 @@ export default function ActivityQuizScreen() {
     }).length;
 
     if (belowMinCount > 0) {
-      const msg = `${belowMinCount} resposta(s) discursiva(s) está(ão) abaixo do mínimo de caracteres exigido.`;
-      if (Platform.OS === 'web') {
-        window.alert(msg);
-      } else {
-        Alert.alert('Resposta muito curta', msg);
-      }
+      notify(
+        'Resposta muito curta',
+        `${belowMinCount} resposta(s) discursiva(s) está(ão) abaixo do mínimo de caracteres exigido.`,
+      );
       return;
     }
 
@@ -133,48 +130,29 @@ export default function ActivityQuizScreen() {
       try {
         const result = await submit(formattedAnswers);
         if (result) {
-          const successMsg = `Atividade Concluída!\nSua nota foi: ${result.score} de ${activity.maxScore} pontos.`;
-          if (Platform.OS === 'web') {
-            window.alert(successMsg);
-          } else {
-            Alert.alert('Atividade Concluída!', `Sua nota foi: ${result.score} de ${activity.maxScore} pontos.`);
-          }
+          notify('Atividade Concluída!', `Sua nota foi: ${result.score} de ${activity.maxScore} pontos.`);
         }
       } catch (err: any) {
-        const errorMsg = err?.response?.data?.message || err?.message || 'Erro ao enviar submissão.';
-        if (Platform.OS === 'web') {
-          window.alert(`Erro: ${errorMsg}`);
-        } else {
-          Alert.alert('Erro', errorMsg);
-        }
+        notify('Erro', err?.response?.data?.message || err?.message || 'Erro ao enviar submissão.');
       } finally {
         setSubmitting(false);
       }
     };
 
-    if (Platform.OS === 'web') {
-      const promptMsg = unansweredCount > 0
+    const promptMsg =
+      unansweredCount > 0
         ? `Você possui ${unansweredCount} questão(ões) sem resposta. Deseja enviar assim mesmo?`
         : 'Deseja finalizar e enviar a atividade?';
+
+    if (Platform.OS === 'web') {
       if (window.confirm(promptMsg)) {
         await performSubmission();
       }
     } else {
-      if (unansweredCount > 0) {
-        Alert.alert(
-          'Atenção',
-          `Você possui ${unansweredCount} questão(ões) sem resposta. Deseja enviar assim mesmo?`,
-          [
-            { text: 'Cancelar', style: 'cancel' },
-            { text: 'Enviar', onPress: performSubmission },
-          ]
-        );
-      } else {
-        Alert.alert('Confirmar Envio', 'Deseja finalizar e enviar a atividade?', [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Sim, enviar', onPress: performSubmission },
-        ]);
-      }
+      Alert.alert(unansweredCount > 0 ? 'Atenção' : 'Confirmar Envio', promptMsg, [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Enviar', onPress: performSubmission },
+      ]);
     }
   };
 
@@ -200,11 +178,6 @@ export default function ActivityQuizScreen() {
     );
   }
 
-  // Find submitted answer for current question (if submitted)
-  const submittedAnswerObj = latestSubmission?.answers?.find(
-    (a) => a.questionId === currentQuestion.id
-  );
-
   const handleReturnToCourse = () => {
     if (courseId) {
       router.replace({
@@ -218,7 +191,6 @@ export default function ActivityQuizScreen() {
 
   return (
     <ScreenContainer disableTopInset style={styles.container}>
-      {/* Header Info Card */}
       <Card tone="muted" style={styles.headerCard}>
         <View style={styles.headerRow}>
           <View style={{ flex: 1 }}>
@@ -228,7 +200,7 @@ export default function ActivityQuizScreen() {
             <UmbrellaText variant="headline">{activity.title}</UmbrellaText>
           </View>
           {hasSubmitted ? (
-            <View style={styles.scoreBadge}>
+            <View style={[styles.scoreBadge, { backgroundColor: translate(Colors.light.success) }]}>
               <UmbrellaText variant="caption" color={Colors.light.surface} style={{ fontWeight: '700' }}>
                 Nota: {latestSubmission?.score ?? 0} / {activity.maxScore}
               </UmbrellaText>
@@ -243,7 +215,6 @@ export default function ActivityQuizScreen() {
         </View>
       </Card>
 
-      {/* Stepper / Pagination Chips */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.stepperRow}>
         {questions.map((q, idx) => {
           const isCurrent = idx === currentIndex;
@@ -278,32 +249,21 @@ export default function ActivityQuizScreen() {
         })}
       </ScrollView>
 
-      {/* Main Question Card (One question per page) */}
       <Card style={styles.questionCard}>
         <View style={styles.questionHeader}>
-          <View style={{ flex: 1, marginRight: Spacing.sm }}>
-            <UmbrellaText variant="title" color={Colors.light.primary}>
-              Questão {currentIndex + 1} de {questions.length}
-            </UmbrellaText>
-            <UmbrellaText variant="caption" color={Colors.light.textSecondary}>
-              Valha: {currentQuestion.points} {currentQuestion.points === 1 ? 'ponto' : 'pontos'}
-            </UmbrellaText>
-          </View>
+          <UmbrellaText variant="title" color={Colors.light.primary}>
+            Questão {currentIndex + 1} de {questions.length}
+          </UmbrellaText>
 
-          <SpeechReaderButton
-            text={`Questão ${currentIndex + 1}. ${currentQuestion.statement}. ${
-              currentQuestion.alternatives?.map((a) => `Alternativa ${a.letter}: ${a.text}`).join('. ') || ''
-            }`}
-            variant="pill"
-            label="Ouvir"
-          />
+          <UmbrellaText variant="caption" color={Colors.light.textSecondary}>
+            Vale: {currentQuestion.points} {currentQuestion.points === 1 ? 'ponto' : 'pontos'}
+          </UmbrellaText>
         </View>
 
         <UmbrellaText variant="bodyMedium" style={styles.statementText}>
           {currentQuestion.statement}
         </UmbrellaText>
 
-        {/* Multiple Choice Alternatives */}
         {Array.isArray(currentQuestion.alternatives) && currentQuestion.alternatives.length > 0 ? (
           <View style={styles.alternativesList}>
             {currentQuestion.alternatives.map((alt) => {
@@ -313,9 +273,9 @@ export default function ActivityQuizScreen() {
               let itemStyle = styles.alternativeItem;
               if (hasSubmitted) {
                 if (isCorrectAlt) {
-                  itemStyle = { ...styles.alternativeItem, ...styles.altCorrect };
+                  itemStyle = { ...styles.alternativeItem, ...styles.altCorrect, borderColor: translate(Colors.light.success) };
                 } else if (isChosen && !isCorrectAlt) {
-                  itemStyle = { ...styles.alternativeItem, ...styles.altIncorrect };
+                  itemStyle = { ...styles.alternativeItem, ...styles.altIncorrect, borderColor: translate(Colors.light.error) };
                 }
               } else if (isChosen) {
                 itemStyle = { ...styles.alternativeItem, ...styles.altSelected };
@@ -333,6 +293,7 @@ export default function ActivityQuizScreen() {
                       styles.letterBadge,
                       isChosen && !hasSubmitted && styles.letterBadgeSelected,
                       hasSubmitted && isCorrectAlt && styles.letterBadgeCorrect,
+                      hasSubmitted && isCorrectAlt && { backgroundColor: translate(Colors.light.success) },
                     ]}>
                     <UmbrellaText
                       variant="label"
@@ -359,7 +320,6 @@ export default function ActivityQuizScreen() {
             })}
           </View>
         ) : (
-          /* Essay / Discursiva Question Input & Feedback */
           <View style={styles.essayContainer}>
             <UmbrellaText variant="label" color={Colors.light.textSecondary}>
               Sua Resposta:
@@ -375,7 +335,6 @@ export default function ActivityQuizScreen() {
               style={styles.essayInput}
             />
 
-            {/* Character counter */}
             {(currentQuestion.essay?.maxLetters || currentQuestion.essay?.minLetters) && !hasSubmitted ? (
               <View style={styles.charCounterRow}>
                 {currentQuestion.essay?.minLetters ? (
@@ -403,7 +362,6 @@ export default function ActivityQuizScreen() {
               </View>
             ) : null}
 
-            {/* Expected Answer Feedback (Shown ONLY after submission) */}
             {hasSubmitted && currentQuestion.essay?.expectedAnswer ? (
               <Card tone="muted" style={styles.expectedAnswerCard}>
                 <View style={styles.expectedHeaderRow}>
@@ -421,7 +379,6 @@ export default function ActivityQuizScreen() {
         )}
       </Card>
 
-      {/* Navigation Controls */}
       <View style={styles.navigationRow}>
         <Pressable
           accessibilityRole="button"
@@ -453,7 +410,6 @@ export default function ActivityQuizScreen() {
         ) : null}
       </View>
 
-      {/* Submit / Finish Action */}
       {!hasSubmitted ? (
         <PrimaryButton
           label={submitting ? 'Enviando...' : 'Finalizar e Enviar Atividade'}

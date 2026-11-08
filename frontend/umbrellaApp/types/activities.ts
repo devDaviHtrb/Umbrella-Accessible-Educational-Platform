@@ -41,11 +41,6 @@ export interface StudentAnswerCorrectionDto {
   essayAnswer?: string | null;
 }
 
-export interface SubmitActivityRequestDto {
-  activityId: number;
-  answers: StudentAnswerCorrectionDto[];
-}
-
 export interface StudentAnswerResponseDto {
   id: number;
   submissionId: number;
@@ -53,6 +48,7 @@ export interface StudentAnswerResponseDto {
   chosenAlternativeId?: number | null;
   essayAnswer?: string | null;
   isCorrect?: boolean | null;
+  score?: number | null;
 }
 
 export interface ActivitySubmissionResponseDto {
@@ -61,6 +57,8 @@ export interface ActivitySubmissionResponseDto {
   status: string;
   submittedAt: string;
   userId: number;
+  userName?: string | null;
+  userEmail?: string | null;
   activityId: number;
   answers: StudentAnswerResponseDto[];
 }

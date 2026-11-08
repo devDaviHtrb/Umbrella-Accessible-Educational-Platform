@@ -11,6 +11,7 @@ import {
   import { IconSymbol } from '@/components/ui/icon-symbol';
   import { UmbrellaText } from '@/components/ui/umbrella-text';
   import { Colors, Radius, Spacing } from '@/constants/theme';
+  import { usePreferences } from '@/hooks/preferences/preferencesContext';
   
   export type ModalSheetProps = {
     visible: boolean;
@@ -21,6 +22,7 @@ import {
   
   export function ModalSheet({ visible, onClose, title, children }: ModalSheetProps) {
     const insets = useSafeAreaInsets();
+    const { translate } = usePreferences();
   
     return (
       <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -29,7 +31,14 @@ import {
           style={styles.overlay}>
           <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Fechar" />
   
-          <View style={[styles.sheet, { paddingBottom: insets.bottom + Spacing.lg }]}>
+          <View
+            style={[
+              styles.sheet,
+              {
+                backgroundColor: translate(Colors.light.surface),
+                paddingBottom: insets.bottom + Spacing.lg,
+              },
+            ]}>
             <View style={styles.header}>
               <UmbrellaText variant="headline">{title}</UmbrellaText>
               <Pressable accessibilityRole="button" onPress={onClose} hitSlop={8}>

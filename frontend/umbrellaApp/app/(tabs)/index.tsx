@@ -11,17 +11,21 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Spacing } from '@/constants/theme';
 import { useAuthContext } from '@/hooks/api/auth/authContext';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
 import { useSchedule } from '@/hooks/api/schedule/useSchedule';
+import { useActivity } from '@/hooks/api/activities/useActivity';
 import { useCourses } from '@/hooks/api/courses/useCourse';
 import { useUmbrellaApi } from '@/hooks/api/core/useUmbrellaApi';
 import type { AgendaEvent, ActiveModule } from '@/types/painel';
 
 export default function PainelScreen() {
   const { userName, userId } = useAuthContext();
+  const { preferences } = usePreferences();
   const { getAllEvents, deleteEvent } = useSchedule();
-  const { enrollmentedCourses, refetchEnrolledCourses } = useCourses();
+  const { refetchEnrolledCourses } = useCourses();
+  const { getActivitiesByModuleId, getSubmissionsByUserId } = useActivity();
   const { get } = useUmbrellaApi();
-  
+
   const [todayAgenda, setTodayAgenda] = useState<AgendaEvent[]>([]);
   const [isEventsExpanded, setIsEventsExpanded] = useState(true);
   const [isAtivosExpanded, setIsAtivosExpanded] = useState(true);
@@ -29,111 +33,95 @@ export default function PainelScreen() {
   const [activeModules, setActiveModules] = useState<ActiveModule[]>([]);
   const [isLoadingModules, setIsLoadingModules] = useState(false);
 
-  const emAndamentoModules = activeModules.filter(m => m.progress < 100);
-  const concluidosModules = activeModules.filter(m => m.progress === 100);
+  // A course is only "concluded" when it has activities and all of them were
+  // submitted. Courses without activities, or with pending work, stay active —
+  // so a freshly enrolled course always shows up under "Cursos Ativos".
+  const concluidosModules = activeModules.filter((m) => m.hasActivities && m.progress === 100);
+  const emAndamentoModules = activeModules.filter((m) => !(m.hasActivities && m.progress === 100));
 
   useFocusEffect(
     useCallback(() => {
       if (!userId) return;
 
       async function loadTodayAgenda() {
-        const data = await getAllEvents();
+        let data: Awaited<ReturnType<typeof getAllEvents>>;
+        try {
+          data = await getAllEvents();
+        } catch {
+          return;
+        }
+
         const now = new Date();
-        const todayStr = now.toDateString();
+        const todayEvents = data
+          .filter((e) => {
+            const eventDate = new Date(e.startTime);
+            return eventDate.toDateString() === now.toDateString() && eventDate.getTime() + 60000 >= now.getTime();
+          })
+          .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 
-        const todayEvents = data.filter(e => {
-          const eventDate = new Date(e.startTime);
-          const isTodayOrFuture = eventDate.getTime() + 60000 >= now.getTime();
-          return eventDate.toDateString() === todayStr && isTodayOrFuture;
-        });
+        setTodayAgenda(
+          todayEvents.map((e): AgendaEvent => {
+            const start = new Date(e.startTime);
+            const diffMins = (start.getTime() - now.getTime()) / 60000;
 
-        todayEvents.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+            return {
+              id: String(e.id),
+              time: start.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+              title: e.title,
+              location: e.description || e.type,
+              state: diffMins < -60 ? 'past' : diffMins <= 60 ? 'now' : 'upcoming',
+            };
+          }),
+        );
+      }
 
-        const mappedEvents: AgendaEvent[] = todayEvents.map(e => {
-          const d = new Date(e.startTime);
-          
-          let state: 'past' | 'now' | 'upcoming' = 'upcoming';
-          const diffMs = d.getTime() - now.getTime();
-          const diffMins = diffMs / 60000;
+      async function calculateProgress(courseId: string): Promise<{ progress: number; totalActivities: number }> {
+        let totalActivities = 0;
+        let submittedCount = 0;
 
-          if (diffMins < -60) {
-             state = 'past';
-          } else if (diffMins >= -60 && diffMins <= 60) {
-             state = 'now';
-          } else {
-             state = 'upcoming';
+        try {
+          const modules = await get<any[]>(`public/courses/${courseId}/modules`);
+          for (const mod of Array.isArray(modules) ? modules : []) {
+            const activities = await getActivitiesByModuleId(mod.id);
+            const submissions = await Promise.all(
+              activities.map((activity) => getSubmissionsByUserId(courseId, mod.id, activity.id)),
+            );
+            totalActivities += activities.length;
+            submittedCount += submissions.filter((items) => items.length > 0).length;
           }
+        } catch (e) {
+          console.log(`Erro ao carregar módulos do curso ${courseId}`, e);
+        }
 
-          return {
-            id: String(e.id),
-            time: d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-            title: e.title,
-            location: e.description || e.type,
-            state,
-          };
-        });
-
-        setTodayAgenda(mappedEvents);
+        const progress = totalActivities > 0 ? Math.round((submittedCount / totalActivities) * 100) : 0;
+        return { progress, totalActivities };
       }
 
       async function loadProgress() {
         try {
           setIsLoadingModules(true);
-          // 1. Ensure enrolled courses are up-to-date
-          await refetchEnrolledCourses();
+          const enrolledCourses = await refetchEnrolledCourses();
 
-          // 2. Load all submissions for this user
-          let submissions: any[] = [];
-          try {
-             // Fake IDs for course/module/activity since backend ignores them for this endpoint
-             submissions = await get<any[]>(`public/courses/1/modules/1/activities/1/submissions/users/${userId}`) || [];
-          } catch (e) {
-             console.log("Erro ao carregar submissoes do usuario", e);
-          }
-          
-          const submittedActivityIds = new Set((Array.isArray(submissions) ? submissions : []).map(s => String(s.activityId)));
+          const modules = await Promise.all(
+            enrolledCourses.map(async (course): Promise<ActiveModule> => {
+              const { progress, totalActivities } = await calculateProgress(course.id);
+              const hasActivities = totalActivities > 0;
+              const concluded = hasActivities && progress === 100;
 
-          // 3. For each course, find total activities and how many are in submittedActivityIds
-          const newActiveModules = await Promise.all(enrollmentedCourses.map(async (course) => {
-            let totalActivities = 0;
-            let submittedCount = 0;
+              return {
+                id: course.id,
+                icon: 'book.fill',
+                statusLabel: concluded ? 'Concluído' : progress > 0 ? 'Em andamento' : 'Iniciante',
+                status: progress > 0 ? 'em-andamento' : 'nova-tarefa',
+                title: course.title,
+                description: course.description || 'Continue seu aprendizado.',
+                progress,
+                hasActivities,
+              };
+            }),
+          );
 
-            try {
-              const modules = await get<any[]>(`public/courses/${course.id}/modules`);
-              const modulesArray = Array.isArray(modules) ? modules : [];
-
-              for (const mod of modulesArray) {
-                try {
-                  const activities = await get<any[]>(`public/courses/modules/${mod.id}/activities`);
-                  const activitiesArray = Array.isArray(activities) ? activities : [];
-                  totalActivities += activitiesArray.length;
-                  for (const act of activitiesArray) {
-                    if (submittedActivityIds.has(String(act.id))) {
-                      submittedCount++;
-                    }
-                  }
-                } catch (e) {
-                  console.log(`Erro ao carregar atividades do módulo ${mod.id}`, e);
-                }
-              }
-            } catch (e) {
-               console.log(`Erro ao carregar módulos do curso ${course.id}`, e);
-            }
-
-            const progress = totalActivities > 0 ? Math.round((submittedCount / totalActivities) * 100) : 0;
-
-            return {
-              id: course.id,
-              icon: 'book.fill',
-              statusLabel: progress === 100 ? 'Concluído' : (progress > 0 ? 'Em andamento' : 'Iniciante'),
-              status: progress > 0 ? 'em-andamento' : 'nova-tarefa',
-              title: course.title,
-              description: course.description || 'Continue seu aprendizado.',
-              progress: progress,
-            } as ActiveModule;
-          }));
-
-          setActiveModules(newActiveModules);
+          setActiveModules(modules);
         } catch (err) {
           console.error('Erro ao calcular progresso:', err);
         } finally {
@@ -143,8 +131,26 @@ export default function PainelScreen() {
 
       loadTodayAgenda();
       loadProgress();
-    }, [userId, getAllEvents, get, enrollmentedCourses.length])
+    }, [userId, getAllEvents, get, refetchEnrolledCourses, getActivitiesByModuleId, getSubmissionsByUserId]),
   );
+
+  function renderModules(modules: ActiveModule[], emptyMessage: string) {
+    if (isLoadingModules && modules.length === 0) {
+      return <ActivityIndicator color={Colors.light.primary} style={styles.loader} />;
+    }
+    if (modules.length === 0) {
+      return (
+        <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.emptyText}>
+          {emptyMessage}
+        </UmbrellaText>
+      );
+    }
+    return modules.map((module) => (
+      <Pressable key={module.id} style={styles.moduleCardWrapper} onPress={() => router.push(`/courses/${module.id}`)}>
+        <ModuleCard module={module} />
+      </Pressable>
+    ));
+  }
 
   return (
     <ScreenContainer header={<AppHeader />}>
@@ -156,14 +162,9 @@ export default function PainelScreen() {
       </View>
 
       <View style={styles.section}>
-        <Pressable 
-          style={styles.sectionHeaderPressable}
-          onPress={() => setIsAtivosExpanded(!isAtivosExpanded)}
-        >
-          <UmbrellaText variant="headline" style={{ marginBottom: 0 }}>
-            Cursos Ativos ({emAndamentoModules.length})
-          </UmbrellaText>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+        <Pressable style={styles.sectionHeader} onPress={() => setIsAtivosExpanded(!isAtivosExpanded)}>
+          <UmbrellaText variant="headline">Cursos Ativos ({emAndamentoModules.length})</UmbrellaText>
+          <View style={styles.headerActions}>
             <Pressable onPress={() => router.push('/courses')}>
               <UmbrellaText variant="label" color={Colors.light.primary}>
                 Ver Currículo
@@ -173,87 +174,44 @@ export default function PainelScreen() {
           </View>
         </Pressable>
         {isAtivosExpanded && (
-          <View style={styles.moduleList}>
-            {isLoadingModules && emAndamentoModules.length === 0 ? (
-              <ActivityIndicator color={Colors.light.primary} style={{ width: '100%', marginVertical: Spacing.xl }} />
-            ) : emAndamentoModules.length > 0 ? (
-              emAndamentoModules.map((module) => (
-                <Pressable 
-                  key={module.id} 
-                  style={styles.moduleCardWrapper}
-                  onPress={() => router.push(`/courses/${module.id}`)}
-                >
-                  <ModuleCard module={module} />
-                </Pressable>
-              ))
-            ) : (
-              <UmbrellaText variant="body" color={Colors.light.textSecondary} style={{ width: '100%', textAlign: 'center', marginTop: Spacing.md }}>
-                Você ainda não tem cursos em andamento.
-              </UmbrellaText>
-            )}
-          </View>
+          <View style={styles.moduleList}>{renderModules(emAndamentoModules, 'Você ainda não tem cursos em andamento.')}</View>
         )}
       </View>
 
-      <View style={styles.section}>
-        <Pressable 
-          style={styles.sectionHeaderPressable}
-          onPress={() => setIsConcluidosExpanded(!isConcluidosExpanded)}
-        >
-          <UmbrellaText variant="headline" style={{ marginBottom: 0 }}>
-            Cursos Concluídos ({concluidosModules.length})
-          </UmbrellaText>
-          <IconSymbol name={isConcluidosExpanded ? 'chevron.up' : 'chevron.down'} size={20} color={Colors.light.textSecondary} />
-        </Pressable>
-        {isConcluidosExpanded && (
-          <View style={styles.moduleList}>
-            {isLoadingModules && concluidosModules.length === 0 ? (
-              <ActivityIndicator color={Colors.light.primary} style={{ width: '100%', marginVertical: Spacing.xl }} />
-            ) : concluidosModules.length > 0 ? (
-              concluidosModules.map((module) => (
-                <Pressable 
-                  key={module.id} 
-                  style={styles.moduleCardWrapper}
-                  onPress={() => router.push(`/courses/${module.id}`)}
-                >
-                  <ModuleCard module={module} />
-                </Pressable>
-              ))
-            ) : (
-              <UmbrellaText variant="body" color={Colors.light.textSecondary} style={{ width: '100%', textAlign: 'center', marginTop: Spacing.md }}>
-                Nenhum curso concluído ainda.
-              </UmbrellaText>
-            )}
-          </View>
-        )}
-      </View>
+      {!preferences.focusMode && (
+        <View style={styles.section}>
+          <Pressable style={styles.sectionHeader} onPress={() => setIsConcluidosExpanded(!isConcluidosExpanded)}>
+            <UmbrellaText variant="headline">Cursos Concluídos ({concluidosModules.length})</UmbrellaText>
+            <IconSymbol name={isConcluidosExpanded ? 'chevron.up' : 'chevron.down'} size={20} color={Colors.light.textSecondary} />
+          </Pressable>
+          {isConcluidosExpanded && (
+            <View style={styles.moduleList}>{renderModules(concluidosModules, 'Nenhum curso concluído ainda.')}</View>
+          )}
+        </View>
+      )}
 
-      <Card>
-        <Pressable 
-          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: Spacing.lg }}
-          onPress={() => setIsEventsExpanded(!isEventsExpanded)}
-        >
-          <UmbrellaText variant="headline" style={{ marginBottom: 0 }}>
-            Agenda de Hoje
-          </UmbrellaText>
-          <IconSymbol name={isEventsExpanded ? 'chevron.up' : 'chevron.down'} size={20} color={Colors.light.textSecondary} />
-        </Pressable>
-        {isEventsExpanded && (
-          todayAgenda.length > 0 ? (
-            <AgendaTimeline 
-              events={todayAgenda} 
-              onDeleteEvent={async (id) => {
-                await deleteEvent(id);
-                setTodayAgenda(prev => prev.filter(e => e.id !== id));
-              }}
-            />
-          ) : (
-            <UmbrellaText variant="body" color={Colors.light.textSecondary}>
-              Nenhum evento agendado para hoje.
-            </UmbrellaText>
-          )
-        )}
-      </Card>
+      {!preferences.focusMode && (
+        <Card>
+          <Pressable style={[styles.sectionHeader, styles.agendaHeader]} onPress={() => setIsEventsExpanded(!isEventsExpanded)}>
+            <UmbrellaText variant="headline">Agenda de Hoje</UmbrellaText>
+            <IconSymbol name={isEventsExpanded ? 'chevron.up' : 'chevron.down'} size={20} color={Colors.light.textSecondary} />
+          </Pressable>
+          {isEventsExpanded &&
+            (todayAgenda.length > 0 ? (
+              <AgendaTimeline
+                events={todayAgenda}
+                onDeleteEvent={async (id) => {
+                  await deleteEvent(id);
+                  setTodayAgenda((prev) => prev.filter((e) => e.id !== id));
+                }}
+              />
+            ) : (
+              <UmbrellaText variant="body" color={Colors.light.textSecondary}>
+                Nenhum evento agendado para hoje.
+              </UmbrellaText>
+            ))}
+        </Card>
+      )}
     </ScreenContainer>
   );
 }
@@ -265,10 +223,18 @@ const styles = StyleSheet.create({
   section: {
     gap: Spacing.md,
   },
-  sectionHeaderPressable: {
-    flexDirection: 'row', 
-    alignItems: 'center', 
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  agendaHeader: {
+    marginBottom: Spacing.lg,
   },
   moduleList: {
     flexDirection: 'row',
@@ -277,9 +243,15 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   moduleCardWrapper: {
-    width: '48%', // Approximates 2 columns
+    width: '48%',
   },
-  agendaTitle: {
-    marginBottom: Spacing.lg,
+  loader: {
+    width: '100%',
+    marginVertical: Spacing.xl,
+  },
+  emptyText: {
+    width: '100%',
+    textAlign: 'center',
+    marginTop: Spacing.md,
   },
 });

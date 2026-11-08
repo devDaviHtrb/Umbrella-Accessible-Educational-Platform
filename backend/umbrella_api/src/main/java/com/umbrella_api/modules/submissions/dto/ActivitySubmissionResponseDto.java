@@ -10,6 +10,8 @@ public record ActivitySubmissionResponseDto(
         String status,
         LocalDateTime submittedAt,
         Long userId,
+        String userName,
+        String userEmail,
         Long activityId,
         List<StudentAnswerResponseDto> answers) {
     public static ActivitySubmissionResponseDto fromEntity(ActivitySubmissions entity) {
@@ -19,6 +21,8 @@ public record ActivitySubmissionResponseDto(
                 entity.getStatus(),
                 entity.getSubmittedAt(),
                 entity.getUser() != null ? entity.getUser().getId() : null,
+                entity.getUser() != null ? entity.getUser().getName() : null,
+                entity.getUser() != null ? entity.getUser().getEmail() : null,
                 entity.getActivity() != null ? entity.getActivity().getId() : null,
                 entity.getAnswers() != null
                         ? entity.getAnswers().stream().map(StudentAnswerResponseDto::fromEntity).toList()
