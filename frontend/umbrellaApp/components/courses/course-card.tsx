@@ -1,4 +1,5 @@
 import { Link } from 'expo-router';
+import { Image } from 'expo-image';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
@@ -20,6 +21,15 @@ export function CourseCard({ course, isEnrolled }: CourseCardProps) {
       <Pressable accessibilityRole="button">
         <Card padded={false}>
           <View style={[styles.image, { backgroundColor: course.imageTone }]}>
+            {course.imageUrl ? (
+              <Image
+                source={{ uri: course.imageUrl }}
+                style={StyleSheet.absoluteFill}
+                contentFit="cover"
+                transition={150}
+                accessibilityLabel={`Capa do curso ${course.title}`}
+              />
+            ) : null}
             <View style={styles.badgeRow}>
               <View style={styles.badge}>
                 <UmbrellaText variant="caption" color={Colors.light.surface} style={styles.badgeText}>

@@ -10,6 +10,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { difficultyLabel } from '@/constants/professor-options';
 import { usePreferences } from '@/hooks/preferences/preferencesContext';
 import { useCourseDetails, useCourses } from '@/hooks/api/courses/useCourse';
 import type { CourseLesson } from '@/types/courses';
@@ -98,7 +99,11 @@ export default function CourseDetailsScreen() {
 
   return (
     <ScreenContainer disableTopInset>
-      <CourseHero title={courseDetails.name} badgeLabel={courseDetails.subject?.name ?? 'Geral'} />
+      <CourseHero
+        title={courseDetails.name}
+        badgeLabel={courseDetails.subject?.name ?? 'Geral'}
+        imageUrl={courseDetails.imageUrl ?? undefined}
+      />
 
       <Card>
         <View style={styles.instructorRow}>
@@ -116,7 +121,7 @@ export default function CourseDetailsScreen() {
         </View>
 
         <View style={styles.infoList}>
-          <InfoRow label="Nível" value={`Nível ${courseDetails.difficulty_level ?? 'Iniciante'}`} />
+          <InfoRow label="Nível" value={difficultyLabel(courseDetails.difficulty_level)} />
           <InfoRow label="Certificação" value="Disponível ao concluir" emphasis />
         </View>
 

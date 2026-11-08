@@ -7,6 +7,7 @@ export type ActiveModule = {
   status: ModuleStatus;
   statusLabel: string;
   progress: number;
+  hasActivities: boolean;
   icon: 'atom' | 'scalemass.fill' | 'book.fill';
 };
 

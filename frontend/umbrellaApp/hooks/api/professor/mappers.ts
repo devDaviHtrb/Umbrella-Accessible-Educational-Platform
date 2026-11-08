@@ -2,6 +2,7 @@ import { professorActivityTypeOptions, professorMaterialKindOptions, SUBMISSION_
 import type { ActivityDto, ActivitySubmissionResponseDto, QuestionDto } from '@/types/activities';
 import type { ModuleMaterial } from '@/types/materials';
 import type {
+  CourseDifficulty,
   MaterialKind,
   ProfessorActivity,
   ProfessorActivityDetail,
@@ -21,6 +22,10 @@ export function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : [];
 }
 
+function toDifficulty(value: number | null | undefined): CourseDifficulty {
+  return value === 2 || value === 3 ? value : 1;
+}
+
 export function mapCourse(dto: CourseApiDto): ProfessorCourse {
   return {
     id: String(dto.id),
@@ -31,6 +36,9 @@ export function mapCourse(dto: CourseApiDto): ProfessorCourse {
     status: 'publicado',
     statusLabel: PUBLISHED_LABEL,
     modulesCount: dto.moduleAmount ?? 0,
+    difficultyLevel: toDifficulty(dto.difficultyLevel),
+    imageUrl: dto.imageUrl ?? undefined,
+    studentsCount: dto.studentsCount ?? 0,
   };
 }
 
@@ -44,6 +52,8 @@ export function mapCourseDetail(dto: CourseDetailApiDto): ProfessorCourse {
     status: 'publicado',
     statusLabel: PUBLISHED_LABEL,
     modulesCount: dto.module_amount ?? 0,
+    difficultyLevel: toDifficulty(dto.difficulty_level),
+    imageUrl: dto.imageUrl ?? undefined,
   };
 }
 
@@ -214,7 +224,7 @@ export function mapSubmission(
     courseId,
     moduleId: module.id,
     studentId: String(dto.userId),
-    studentName: `Aluno #${dto.userId}`,
+    studentName: dto.userName?.trim() || `Aluno #${dto.userId}`,
     activityId: String(activity.id),
     activityTitle: activity.title ?? '',
     moduleTitle: module.title,
@@ -223,5 +233,15 @@ export function mapSubmission(
     statusLabel: SUBMISSION_STATUS_LABEL[status],
     submittedAtLabel: formatSubmittedAt(dto.submittedAt),
     grade: status === 'corrigido' ? dto.score : undefined,
+    suggestedGrade: typeof dto.score === 'number' ? dto.score : undefined,
+    answers: (dto.answers ?? []).map((answer) => ({
+      id: String(answer.id),
+      questionId: String(answer.questionId),
+      chosenAlternativeId:
+        answer.chosenAlternativeId != null ? String(answer.chosenAlternativeId) : undefined,
+      essayAnswer: answer.essayAnswer ?? undefined,
+      isCorrect: answer.isCorrect ?? undefined,
+      score: typeof answer.score === 'number' ? answer.score : undefined,
+    })),
   };
 }

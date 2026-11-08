@@ -67,10 +67,12 @@ public class Courses {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "image_id", nullable = true)
+    @JsonIgnore
     private Image image;
 
     @Builder.Default
     @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Events> events = new ArrayList<>();
 
 }

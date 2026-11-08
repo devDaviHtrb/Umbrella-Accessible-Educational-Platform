@@ -26,6 +26,7 @@ import type {
   ProfessorModuleInput,
   ProfessorQuestion,
   ProfessorQuestionInput,
+  ProfessorStudent,
   StudentSubmission,
 } from '@/types/professor';
 import type {
@@ -34,9 +35,11 @@ import type {
   ActivityUpdateRequest,
   AlternativeCreateRequest,
   AlternativeUpdateRequest,
+  AnswerScoreRequest,
   CourseApiDto,
   CourseCreateRequest,
   CourseDetailApiDto,
+  EnrolledStudentApiDto,
   EssayCreateRequest,
   EssayUpdateRequest,
   ModuleApiDto,
@@ -184,10 +187,13 @@ export function useProfessorCourses() {
 
     const all = asArray<CourseApiDto>(await get('public/courses/list'));
     const owned = await Promise.all(
-      all.map(async (course) => {
+      all.map(async (course): Promise<ProfessorCourse | null> => {
         try {
           const detail = await get<CourseDetailApiDto>(`public/courses/${course.id}`);
-          return String(detail?.userDto?.id) === userId ? mapCourse(course) : null;
+          if (String(detail?.userDto?.id) !== userId) return null;
+
+          // studentsCount already comes from the list endpoint.
+          return mapCourse(course);
         } catch {
           return null;
         }
@@ -198,6 +204,13 @@ export function useProfessorCourses() {
       .filter((course): course is ProfessorCourse => course !== null)
       .sort((a, b) => Number(b.id) - Number(a.id));
   }, [get, userId]);
+
+  const deleteCourse = useCallback(
+    async (courseId: string): Promise<void> => {
+      await del(`public/courses/${courseId}`);
+    },
+    [del],
+  );
 
   const getCourse = useCallback(
     async (courseId: string): Promise<ProfessorCourse | undefined> => {
@@ -241,18 +254,56 @@ export function useProfessorCourses() {
     [fetchOwnedCourse],
   );
 
+  const uploadCourseImage = useCallback(
+    async (input: ProfessorCourseInput): Promise<{ url: string; publicId?: string } | undefined> => {
+      // An already-hosted image (e.g. kept during edit) is sent as-is.
+      if (!input.imageLocalUri) {
+        return input.imageUrl ? { url: input.imageUrl } : undefined;
+      }
+
+      const token = await AsyncStorage.getItem('@user_token');
+      const headers: Record<string, string> = {};
+      if (token) headers.Authorization = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+
+      const name = input.imageFileName ?? 'capa';
+      const mimeType = input.imageMimeType || 'image/jpeg';
+
+      const formData = new FormData();
+      if (input.imageLocalUri.startsWith('blob:') || input.imageLocalUri.startsWith('data:')) {
+        const blob = await (await fetch(input.imageLocalUri)).blob();
+        formData.append('file', blob, name);
+      } else {
+        formData.append('file', { uri: input.imageLocalUri, name, type: mimeType } as any);
+      }
+      formData.append('resourceType', 'image');
+      formData.append('fileName', input.title || name);
+      formData.append('alternativeText', `Capa do curso ${input.title}`.trim());
+
+      const response = await umbrellaApi.post<{ url: string; publicId?: string }>('storage/upload', formData, {
+        headers: { ...headers, 'Content-Type': 'multipart/form-data' },
+        transformRequest: (data) => data,
+      });
+      return { url: response.data.url, publicId: response.data.publicId };
+    },
+    [],
+  );
+
   const createCourse = useCallback(
     async (input: ProfessorCourseInput): Promise<string | undefined> => {
+      const image = await uploadCourseImage(input);
+
       const body: CourseCreateRequest = {
         name: input.title,
         description: input.description,
-        difficulty_level: DEFAULT_COURSE_DIFFICULTY,
+        difficulty_level: input.difficultyLevel ?? DEFAULT_COURSE_DIFFICULTY,
         subjectId: Number(input.categoryId),
+        imageUrl: image?.url,
+        imagePublicId: image?.publicId,
       };
       const created = await post<{ id?: number | string } | null>('public/courses/register', body);
       return created?.id != null ? String(created.id) : undefined;
     },
-    [post],
+    [post, uploadCourseImage],
   );
 
   const getModules = useCallback(
@@ -515,8 +566,32 @@ export function useProfessorCourses() {
     [fetchModuleBundles, fetchSubmissions],
   );
 
+  const getStudents = useCallback(
+    async (courseId: string): Promise<ProfessorStudent[]> => {
+      const students = asArray<EnrolledStudentApiDto>(
+        await get(`public/courses/${courseId}/students`).catch(() => []),
+      );
+      return students
+        .map((student) => ({
+          id: String(student.id),
+          name: student.name?.trim() || `Aluno #${student.id}`,
+          email: student.email ?? '',
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+    },
+    [get],
+  );
+
   const gradeSubmission = useCallback(
     async (courseId: string, submission: StudentSubmission, input: GradeSubmissionInput): Promise<void> => {
+      // Persist the per-question grades first; the backend recomputes the
+      // submission total from these answers.
+      for (const questionGrade of input.questionGrades) {
+        const answerBody: AnswerScoreRequest = { score: questionGrade.score };
+        await put(`public/courses/student-answers/${questionGrade.answerId}`, answerBody);
+      }
+
+      // Mark the submission as graded (and send the total as a safeguard).
       const body: SubmissionGradeRequest = {
         score: input.grade,
         status: SUBMISSION_STATUS.graded,
@@ -542,6 +617,13 @@ export function useProfessorCourses() {
       return groups.flat();
     },
     [get, fetchModuleDtos],
+  );
+
+  const deleteMaterial = useCallback(
+    async (materialId: string): Promise<void> => {
+      await del(`public/storage/material/${materialId}`);
+    },
+    [del],
   );
 
   const createMaterial = useCallback(async (input: ProfessorMaterialInput): Promise<void> => {
@@ -586,6 +668,7 @@ export function useProfessorCourses() {
     getCourse,
     getCourseBasics,
     createCourse,
+    deleteCourse,
     getModules,
     getModule,
     createModule,
@@ -600,8 +683,10 @@ export function useProfessorCourses() {
     updateQuestion,
     deleteQuestion,
     getSubmissions,
+    getStudents,
     gradeSubmission,
     getMaterials,
     createMaterial,
+    deleteMaterial,
   };
 }

@@ -62,7 +62,7 @@ export default function ProfessorCourseOverviewScreen() {
 
   return (
     <ScreenContainer disableTopInset contentContainerStyle={styles.content}>
-      <CourseHero title={course.title} badgeLabel={course.eyebrow} />
+      <CourseHero title={course.title} badgeLabel={course.eyebrow} imageUrl={course.imageUrl} />
 
       <Card style={styles.summary}>
         <View style={styles.summaryHeader}>

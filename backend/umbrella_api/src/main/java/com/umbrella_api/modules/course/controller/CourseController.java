@@ -12,6 +12,7 @@ import com.umbrella_api.common.security.CustomUserDetails;
 import com.umbrella_api.modules.course.api.CourseService;
 import com.umbrella_api.modules.course.dto.*;
 import com.umbrella_api.modules.course.model.*;
+import com.umbrella_api.modules.user.dto.UserResponseDto;
 import com.umbrella_api.modules.user.model.UserModel;
 
 import jakarta.validation.Valid;
@@ -43,6 +44,12 @@ public class CourseController {
         Courses course = courseService.getCourseById(id);
         UserModel creator = courseService.getCourseCreatorById(id);
         return ResponseEntity.ok(CourseResponseDto.fromEntity(course, creator));
+    }
+
+    @PreAuthorize("@securityEvaluator.isCourseOwner(#id, principal)")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<GenericResponse> deleteCourse(@PathVariable Long id) {
+        return ResponseEntity.ok(courseService.deleteCourse(id));
     }
 
     @GetMapping("/list")
@@ -138,6 +145,15 @@ public class CourseController {
         }
         List<Courses> courses = courseService.getEnrolledCoursesByUser(loggedUser);
         return ResponseEntity.ok(CourseGetResponseDto.fromEntityList(courses));
+    }
+
+    @PreAuthorize("@securityEvaluator.isCourseOwner(#id, principal)")
+    @GetMapping("/{id}/students")
+    public ResponseEntity<List<UserResponseDto>> getEnrolledStudents(@PathVariable Long id) {
+        List<UserResponseDto> students = courseService.getEnrolledStudents(id).stream()
+                .map(UserResponseDto::fromEntity)
+                .toList();
+        return ResponseEntity.ok(students);
     }
 
     @PostMapping("/subjects/register")

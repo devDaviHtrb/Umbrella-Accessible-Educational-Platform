@@ -33,8 +33,11 @@ export default function PainelScreen() {
   const [activeModules, setActiveModules] = useState<ActiveModule[]>([]);
   const [isLoadingModules, setIsLoadingModules] = useState(false);
 
-  const emAndamentoModules = activeModules.filter((m) => m.progress < 100);
-  const concluidosModules = activeModules.filter((m) => m.progress === 100);
+  // A course is only "concluded" when it has activities and all of them were
+  // submitted. Courses without activities, or with pending work, stay active —
+  // so a freshly enrolled course always shows up under "Cursos Ativos".
+  const concluidosModules = activeModules.filter((m) => m.hasActivities && m.progress === 100);
+  const emAndamentoModules = activeModules.filter((m) => !(m.hasActivities && m.progress === 100));
 
   useFocusEffect(
     useCallback(() => {
@@ -72,7 +75,7 @@ export default function PainelScreen() {
         );
       }
 
-      async function calculateProgress(courseId: string) {
+      async function calculateProgress(courseId: string): Promise<{ progress: number; totalActivities: number }> {
         let totalActivities = 0;
         let submittedCount = 0;
 
@@ -90,7 +93,8 @@ export default function PainelScreen() {
           console.log(`Erro ao carregar módulos do curso ${courseId}`, e);
         }
 
-        return totalActivities > 0 ? Math.round((submittedCount / totalActivities) * 100) : 0;
+        const progress = totalActivities > 0 ? Math.round((submittedCount / totalActivities) * 100) : 0;
+        return { progress, totalActivities };
       }
 
       async function loadProgress() {
@@ -100,16 +104,19 @@ export default function PainelScreen() {
 
           const modules = await Promise.all(
             enrolledCourses.map(async (course): Promise<ActiveModule> => {
-              const progress = await calculateProgress(course.id);
+              const { progress, totalActivities } = await calculateProgress(course.id);
+              const hasActivities = totalActivities > 0;
+              const concluded = hasActivities && progress === 100;
 
               return {
                 id: course.id,
                 icon: 'book.fill',
-                statusLabel: progress === 100 ? 'Concluído' : progress > 0 ? 'Em andamento' : 'Iniciante',
+                statusLabel: concluded ? 'Concluído' : progress > 0 ? 'Em andamento' : 'Iniciante',
                 status: progress > 0 ? 'em-andamento' : 'nova-tarefa',
                 title: course.title,
                 description: course.description || 'Continue seu aprendizado.',
                 progress,
+                hasActivities,
               };
             }),
           );

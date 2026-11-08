@@ -13,17 +13,33 @@ import { Colors, Spacing } from '@/constants/theme';
 import { useProfessorCourses } from '@/hooks/api/professor/useProfessorCourses';
 import { useFocusData } from '@/hooks/use-focus-data';
 import type { ProfessorMaterial } from '@/types/professor';
+import { confirmDestructive, notify } from '@/utils/confirm';
 
 export default function ProfessorMaterialsScreen() {
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
-  const { getMaterials } = useProfessorCourses();
-  const { data: materials, loading, error, retry } = useFocusData(() => getMaterials(courseId));
+  const { getMaterials, deleteMaterial } = useProfessorCourses();
+  const { data: materials, loading, error, retry, reload } = useFocusData(() => getMaterials(courseId));
 
   async function handleOpen(material: ProfessorMaterial) {
     try {
       await WebBrowser.openBrowserAsync(material.url);
     } catch {
     }
+  }
+
+  function handleDelete(material: ProfessorMaterial) {
+    confirmDestructive({
+      title: 'Excluir material',
+      message: `"${material.title}" será removido deste módulo e do armazenamento. Essa ação não pode ser desfeita.`,
+      onConfirm: async () => {
+        try {
+          await deleteMaterial(material.id);
+          await reload();
+        } catch {
+          notify('Não foi possível excluir', 'Tente novamente em instantes.');
+        }
+      },
+    });
   }
 
   return (
@@ -52,6 +68,7 @@ export default function ProfessorMaterialsScreen() {
               key={material.id}
               material={material}
               onOpenPress={() => handleOpen(material)}
+              onDeletePress={() => handleDelete(material)}
             />
           ))
         ) : (

@@ -2,6 +2,7 @@ package com.umbrella_api.modules.course.dto;
 
 import com.umbrella_api.modules.course.model.Courses;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public record CourseGetResponseDto(
@@ -12,9 +13,14 @@ public record CourseGetResponseDto(
         int moduleAmount,
         Long subjectId,
         String subjectName,
-        String imageUrl) {
+        String imageUrl,
+        Long studentsCount) {
 
     public static CourseGetResponseDto fromEntity(Courses course) {
+        return fromEntity(course, null);
+    }
+
+    public static CourseGetResponseDto fromEntity(Courses course, Long studentsCount) {
         if (course == null)
             return null;
 
@@ -30,15 +36,20 @@ public record CourseGetResponseDto(
                 course.getModule_amount(),
                 sId,
                 sName,
-                imgUrl);
+                imgUrl,
+                studentsCount != null ? studentsCount : 0L);
     }
 
     public static List<CourseGetResponseDto> fromEntityList(List<Courses> courses) {
+        return fromEntityList(courses, Map.of());
+    }
+
+    public static List<CourseGetResponseDto> fromEntityList(List<Courses> courses, Map<Long, Long> studentsByCourse) {
         if (courses == null || courses.isEmpty()) {
             return List.of();
         }
         return courses.stream()
-                .map(CourseGetResponseDto::fromEntity)
+                .map(course -> fromEntity(course, studentsByCourse.getOrDefault(course.getId(), 0L)))
                 .collect(Collectors.toList());
     }
 }

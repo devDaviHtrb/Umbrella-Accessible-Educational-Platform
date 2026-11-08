@@ -61,7 +61,13 @@ export default function EditCourseScreen() {
       <CourseForm
         key={course.id}
         categories={categories}
-        initialValues={{ title: course.title, description: course.description, categoryId: course.categoryId }}
+        initialValues={{
+          title: course.title,
+          description: course.description,
+          categoryId: course.categoryId,
+          difficultyLevel: course.difficultyLevel,
+          imageUrl: course.imageUrl,
+        }}
         readOnlyNotice={READ_ONLY_NOTICE}
       />
     </ScreenContainer>

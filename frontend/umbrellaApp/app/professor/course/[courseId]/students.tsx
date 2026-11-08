@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { GradeSubmissionForm } from '@/components/professor/grade-submission-form';
 import { SegmentedTabs } from '@/components/professor/segmented-tabs';
@@ -13,7 +13,7 @@ import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Spacing } from '@/constants/theme';
 import { useProfessorCourses } from '@/hooks/api/professor/useProfessorCourses';
 import { useFocusData } from '@/hooks/use-focus-data';
-import type { GradeSubmissionInput, StudentSubmission } from '@/types/professor';
+import type { GradeSubmissionInput, ProfessorActivityDetail, StudentSubmission } from '@/types/professor';
 
 type StudentsTab = 'students' | 'submissions';
 
@@ -24,7 +24,7 @@ const tabOptions: { id: StudentsTab; label: string }[] = [
 
 export default function ProfessorStudentsScreen() {
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
-  const { getSubmissions, gradeSubmission } = useProfessorCourses();
+  const { getSubmissions, getStudents, gradeSubmission } = useProfessorCourses();
   const {
     data: submissions,
     loading: loadingSubmissions,
@@ -32,11 +32,49 @@ export default function ProfessorStudentsScreen() {
     reload: reloadSubmissions,
     retry: retrySubmissions,
   } = useFocusData(() => getSubmissions(courseId));
+  const {
+    data: students,
+    loading: loadingStudents,
+    error: studentsError,
+    retry: retryStudents,
+  } = useFocusData(() => getStudents(courseId));
+
+  const { getActivity } = useProfessorCourses();
+  const { height } = useWindowDimensions();
 
   const [tab, setTab] = useState<StudentsTab>('students');
   const [gradingTarget, setGradingTarget] = useState<StudentSubmission | null>(null);
   const [saving, setSaving] = useState(false);
   const [gradeError, setGradeError] = useState<string | undefined>();
+
+  const [reviewActivity, setReviewActivity] = useState<ProfessorActivityDetail | null>(null);
+  const [loadingReview, setLoadingReview] = useState(false);
+
+  useEffect(() => {
+    if (!gradingTarget) {
+      setReviewActivity(null);
+      setLoadingReview(false);
+      return;
+    }
+
+    let active = true;
+    setLoadingReview(true);
+    setReviewActivity(null);
+    getActivity(courseId, gradingTarget.activityId)
+      .then((activity) => {
+        if (active) setReviewActivity(activity ?? null);
+      })
+      .catch(() => {
+        if (active) setReviewActivity(null);
+      })
+      .finally(() => {
+        if (active) setLoadingReview(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [gradingTarget, courseId, getActivity]);
 
   async function handleGrade(input: GradeSubmissionInput) {
     if (!gradingTarget) return;
@@ -59,11 +97,32 @@ export default function ProfessorStudentsScreen() {
 
       {tab === 'students' ? (
         <View style={styles.list}>
-          <Card tone="muted">
+          {loadingStudents ? (
             <UmbrellaText variant="body" color={Colors.light.textSecondary}>
-              A lista de alunos matriculados ainda não está disponível. Acompanhe quem entregou na aba Entregas.
+              Carregando alunos...
             </UmbrellaText>
-          </Card>
+          ) : studentsError && !students ? (
+            <LoadError message="Não foi possível carregar os alunos." onRetry={retryStudents} />
+          ) : students && students.length > 0 ? (
+            students.map((student) => (
+              <Card key={student.id} style={styles.studentCard}>
+                <UmbrellaText variant="bodyMedium" numberOfLines={1}>
+                  {student.name}
+                </UmbrellaText>
+                {student.email ? (
+                  <UmbrellaText variant="caption" color={Colors.light.textSecondary} numberOfLines={1}>
+                    {student.email}
+                  </UmbrellaText>
+                ) : null}
+              </Card>
+            ))
+          ) : (
+            <Card tone="muted">
+              <UmbrellaText variant="body" color={Colors.light.textSecondary}>
+                Nenhum aluno matriculado neste curso ainda.
+              </UmbrellaText>
+            </Card>
+          )}
         </View>
       ) : (
         <View style={styles.list}>
@@ -99,19 +158,38 @@ export default function ProfessorStudentsScreen() {
         }}
         title="Corrigir Entrega">
         {gradingTarget ? (
-          <>
-            <GradeSubmissionForm
-              key={gradingTarget.id}
-              submission={gradingTarget}
-              submitting={saving}
-              onSubmit={handleGrade}
-            />
+          <ScrollView
+            style={{ maxHeight: height * 0.7 }}
+            contentContainerStyle={styles.modalContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
+            {loadingReview ? (
+              <View style={styles.reviewLoading}>
+                <ActivityIndicator color={Colors.light.primary} />
+                <UmbrellaText variant="caption" color={Colors.light.textSecondary}>
+                  Carregando respostas...
+                </UmbrellaText>
+              </View>
+            ) : reviewActivity ? (
+              <GradeSubmissionForm
+                key={gradingTarget.id}
+                submission={gradingTarget}
+                activity={reviewActivity}
+                submitting={saving}
+                onSubmit={handleGrade}
+              />
+            ) : (
+              <UmbrellaText variant="caption" color={Colors.light.textSecondary}>
+                Não foi possível carregar as respostas desta entrega. Tente fechar e abrir novamente.
+              </UmbrellaText>
+            )}
+
             {gradeError ? (
               <UmbrellaText variant="caption" color={Colors.light.error}>
                 {gradeError}
               </UmbrellaText>
             ) : null}
-          </>
+          </ScrollView>
         ) : null}
       </ModalSheet>
     </ScreenContainer>
@@ -124,5 +202,16 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: Spacing.md,
+  },
+  studentCard: {
+    gap: Spacing.xs,
+  },
+  modalContent: {
+    gap: Spacing.lg,
+  },
+  reviewLoading: {
+    gap: Spacing.sm,
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
   },
 });

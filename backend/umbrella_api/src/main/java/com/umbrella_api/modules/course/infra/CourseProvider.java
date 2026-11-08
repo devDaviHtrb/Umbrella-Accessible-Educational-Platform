@@ -21,6 +21,8 @@ import com.umbrella_api.modules.course.repository.CoursesRepository;
 import com.umbrella_api.modules.course.repository.ModulesRepository;
 import com.umbrella_api.modules.course.repository.SubjectsRepository;
 import com.umbrella_api.modules.storage.api.StorageService;
+import com.umbrella_api.modules.storage.model.Image;
+import com.umbrella_api.modules.storage.repository.ImageRepository;
 import com.umbrella_api.modules.user.model.UserModel;
 import com.umbrella_api.modules.user.repository.UserRepository;
 
@@ -35,25 +37,48 @@ public class CourseProvider {
     private final CourseUserRelationRepository courseUserRelationRepository;
     private final StorageService storageService;
     private final UserRepository userRepository;
+    private final ImageRepository imageRepository;
 
     public CourseProvider(CoursesRepository coursesRepository, ModulesRepository modulesRepository,
             SubjectsRepository subjectsRepository, CourseUserRelationRepository courseUserRelationRepository,
-            StorageService storageService, UserRepository userRepository) {
+            StorageService storageService, UserRepository userRepository, ImageRepository imageRepository) {
         this.coursesRepository = coursesRepository;
         this.modulesRepository = modulesRepository;
         this.subjectsRepository = subjectsRepository;
         this.courseUserRelationRepository = courseUserRelationRepository;
         this.storageService = storageService;
         this.userRepository = userRepository;
+        this.imageRepository = imageRepository;
+    }
+
+    /**
+     * Builds and persists an {@link Image} from an already-uploaded Cloudinary
+     * resource (url + public id), to be linked to a course. Returns null when no
+     * image url was provided.
+     */
+    private Image resolveCourseImage(String imageUrl, String imagePublicId) {
+        if (imageUrl == null || imageUrl.isBlank()) {
+            return null;
+        }
+
+        Image image = Image.builder()
+                .url(imageUrl)
+                .fileDbId(imagePublicId != null && !imagePublicId.isBlank() ? imagePublicId : imageUrl)
+                .alternativeText("Capa do curso")
+                .build();
+
+        return imageRepository.save(image);
     }
 
     @Transactional
     public Courses createCourse(CourseDto courseData, CustomUserDetails loggedUser) {
         Subjects subject = this.getSubjectbyId(courseData.subjectId());
 
+        Image image = resolveCourseImage(courseData.imageUrl(), courseData.imagePublicId());
+
         Courses course = Courses.builder().name(courseData.name()).description(courseData.description())
                 .difficulty_level(courseData.difficulty_level())
-                .module_amount(0).subject(subject).build();
+                .module_amount(0).subject(subject).image(image).build();
         UserModel user = userRepository.getReferenceById(loggedUser.getUserModel().getId());
         coursesRepository.save(course);
 
@@ -97,12 +122,28 @@ public class CourseProvider {
         return courseUserRelationRepository.findCoursesByUserIdAndNotCreator(user.getId());
     }
 
+    public List<UserModel> getEnrolledStudents(Long courseId) {
+        return courseUserRelationRepository.findStudentsByCourseId(courseId);
+    }
+
     @Transactional
     public GenericResponse deleteCourse(long id) {
 
+        Courses course = this.getCourseByid(id);
+        Image courseImage = course.getImage();
+
         this.deleteAllModulesByCourseId(id);
         this.deleteUserRelationsByCourseId(id);
+
+        // Detach the image before deleting the course so the FK doesn't block it,
+        // then remove the image from storage (DB + Cloudinary).
+        course.setImage(null);
+        coursesRepository.save(course);
         coursesRepository.deleteById(id);
+
+        if (courseImage != null) {
+            storageService.delete(courseImage);
+        }
 
         return new GenericResponse("ok", "Success on delete a course ", 200);
     }
@@ -185,6 +226,10 @@ public class CourseProvider {
         course.setDescription(courseData.description());
         course.setDifficulty_level(courseData.difficulty_level());
 
+        if (courseData.imageUrl() != null && !courseData.imageUrl().isBlank()) {
+            course.setImage(resolveCourseImage(courseData.imageUrl(), courseData.imagePublicId()));
+        }
+
         coursesRepository.save(course);
 
         return course;
@@ -238,15 +283,29 @@ public class CourseProvider {
 
     public List<CourseGetResponseDto> getCoursesBySubject(Long subjectId) {
         List<Courses> courses = coursesRepository.findBySubjectId(subjectId);
-        return CourseGetResponseDto.fromEntityList(courses);
+        return CourseGetResponseDto.fromEntityList(courses, countStudents(courses));
     }
 
     // Search courses with optional text and subject filter
-    public java.util.List<com.umbrella_api.modules.course.dto.CourseGetResponseDto> searchCourses(String search,
-            Long subjectId) {
-        java.util.List<com.umbrella_api.modules.course.model.Courses> courses = coursesRepository.searchCourses(search,
-                subjectId);
-        return com.umbrella_api.modules.course.dto.CourseGetResponseDto.fromEntityList(courses);
+    public List<CourseGetResponseDto> searchCourses(String search, Long subjectId) {
+        List<Courses> courses = coursesRepository.searchCourses(search, subjectId);
+        return CourseGetResponseDto.fromEntityList(courses, countStudents(courses));
+    }
+
+    /**
+     * Builds a courseId -> enrolled students count map for a batch of courses
+     * with a single grouped query (no N+1).
+     */
+    private java.util.Map<Long, Long> countStudents(List<Courses> courses) {
+        if (courses == null || courses.isEmpty()) {
+            return java.util.Map.of();
+        }
+        List<Long> ids = courses.stream().map(Courses::getId).toList();
+        java.util.Map<Long, Long> counts = new java.util.HashMap<>();
+        for (Object[] row : coursesRepository.countStudentsByCourseIds(ids)) {
+            counts.put((Long) row[0], (Long) row[1]);
+        }
+        return counts;
     }
 
 }

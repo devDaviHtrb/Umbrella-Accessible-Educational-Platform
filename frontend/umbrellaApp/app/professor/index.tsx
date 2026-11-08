@@ -1,5 +1,5 @@
 import { Stack, router } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { LoadError } from '@/components/professor/load-error';
 import { ProfessorCourseCard } from '@/components/professor/professor-course-card';
@@ -14,15 +14,47 @@ import { Colors, Spacing } from '@/constants/theme';
 import { useAuthContext } from '@/hooks/api/auth/authContext';
 import { useProfessorCourses } from '@/hooks/api/professor/useProfessorCourses';
 import { useFocusData } from '@/hooks/use-focus-data';
+import { confirmDestructive, notify } from '@/utils/confirm';
+import type { ProfessorCourse } from '@/types/professor';
+
+const SCREEN_HORIZONTAL_PADDING = Spacing.lg * 2;
+const GRID_GAP = Spacing.md;
+const TARGET_CARD_WIDTH = 240;
+const MAX_COLUMNS = 5;
 
 export default function ProfessorCoursesScreen() {
-  const { getCourses } = useProfessorCourses();
+  const { getCourses, deleteCourse } = useProfessorCourses();
   const { logout } = useAuthContext();
-  const { data: courses, loading, error, retry } = useFocusData(getCourses);
+  const { data: courses, loading, error, retry, reload } = useFocusData(getCourses);
+
+  const { width } = useWindowDimensions();
+  const available = Math.max(width - SCREEN_HORIZONTAL_PADDING, 0);
+  // At least 2 columns (keeps cards compact on phones), more as the window grows.
+  const columns = Math.min(MAX_COLUMNS, Math.max(2, Math.floor(available / TARGET_CARD_WIDTH)));
+  const cardWidth = (available - GRID_GAP * (columns - 1)) / columns;
 
   async function handleSignOut() {
     await logout();
     router.replace(loginHref);
+  }
+
+  function handleDelete(course: ProfessorCourse) {
+    const students = course.studentsCount ?? 0;
+    confirmDestructive({
+      title: 'Excluir curso',
+      message:
+        `"${course.title}" será excluído permanentemente, junto com seus módulos, atividades e materiais` +
+        (students > 0 ? `, e os ${students} aluno(s) matriculados perderão o acesso` : '') +
+        '. Essa ação não pode ser desfeita.',
+      onConfirm: async () => {
+        try {
+          await deleteCourse(course.id);
+          await reload();
+        } catch {
+          notify('Não foi possível excluir', 'Tente novamente em instantes.');
+        }
+      },
+    });
   }
 
   return (
@@ -63,29 +95,31 @@ export default function ProfessorCoursesScreen() {
       <View style={styles.section}>
         <SectionHeader title="Meus Cursos" />
 
-        <View style={styles.list}>
-          {loading ? (
+        {loading ? (
+          <UmbrellaText variant="body" color={Colors.light.textSecondary}>
+            Carregando cursos...
+          </UmbrellaText>
+        ) : error && !courses ? (
+          <LoadError message="Não foi possível carregar os cursos." onRetry={retry} />
+        ) : courses && courses.length > 0 ? (
+          <View style={styles.grid}>
+            {courses.map((course) => (
+              <View key={course.id} style={{ width: cardWidth }}>
+                <ProfessorCourseCard
+                  course={course}
+                  onPress={() => router.push(professorRoutes.course(course.id))}
+                  onDeletePress={() => handleDelete(course)}
+                />
+              </View>
+            ))}
+          </View>
+        ) : (
+          <Card tone="muted">
             <UmbrellaText variant="body" color={Colors.light.textSecondary}>
-              Carregando cursos...
+              Você ainda não tem cursos. Toque em "Criar Curso" para começar.
             </UmbrellaText>
-          ) : error && !courses ? (
-            <LoadError message="Não foi possível carregar os cursos." onRetry={retry} />
-          ) : courses && courses.length > 0 ? (
-            courses.map((course) => (
-              <ProfessorCourseCard
-                key={course.id}
-                course={course}
-                onPress={() => router.push(professorRoutes.course(course.id))}
-              />
-            ))
-          ) : (
-            <Card tone="muted">
-              <UmbrellaText variant="body" color={Colors.light.textSecondary}>
-                Você ainda não tem cursos. Toque em "Criar Curso" para começar.
-              </UmbrellaText>
-            </Card>
-          )}
-        </View>
+          </Card>
+        )}
       </View>
     </ScreenContainer>
   );
@@ -101,7 +135,9 @@ const styles = StyleSheet.create({
   section: {
     gap: Spacing.lg,
   },
-  list: {
-    gap: Spacing.lg,
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: GRID_GAP,
   },
 });
