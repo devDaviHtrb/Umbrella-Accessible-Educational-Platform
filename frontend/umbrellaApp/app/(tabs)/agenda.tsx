@@ -1,10 +1,14 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useState, useCallback } from 'react';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, View } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import { useSchedule } from '@/hooks/api/schedule/useSchedule';
+import { useAuthContext } from '@/hooks/api/auth/authContext';
+import { useIaTutor } from '@/hooks/api/aiTutor/useIaTutor';
 
 import { AgendaEventCard } from '@/components/agenda/agenda-event-card';
 import { EventDetails } from '@/components/agenda/event-details';
-import { NewReminderForm } from '@/components/agenda/new-reminder-form';
-import { ReminderCard } from '@/components/agenda/reminder-card';
+import NewReminderForm from '@/components/agenda/new-reminder-form';
+
 import { WeekCalendarStrip } from '@/components/agenda/week-calendar-strip';
 import { AppHeader } from '@/components/layout/app-header';
 import { ScreenContainer } from '@/components/layout/screen-container';
@@ -14,49 +18,137 @@ import { ModalSheet } from '@/components/ui/modal-sheet';
 import { SecondaryButton } from '@/components/ui/secondary-button';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
-import {
-  mockActiveReminders,
-  mockCalendarDays,
-  mockDefaultSelectedDayIndex,
-  mockEventsByDay,
-  mockMonthLabel,
-  mockTutorTip,
-  mockWeekLabel,
-} from '@/constants/mock/agenda';
 import { Colors, Radius, Spacing } from '@/constants/theme';
-import type { ActiveReminder, AgendaEvent, NewReminderInput } from '@/types/agenda';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
+import type { AgendaEvent, NewReminderInput, CalendarDay } from '@/types/agenda';
+import { EventType, type ScheduleGetRequestDto } from '@/types/schedule';
 
 export default function AgendaScreen() {
-  const [selectedDayIndex, setSelectedDayIndex] = useState(mockDefaultSelectedDayIndex);
-  const [reminders, setReminders] = useState<ActiveReminder[]>(mockActiveReminders);
+  const { getAllEvents, createEvent, deleteEvent } = useSchedule();
+  const { userId } = useAuthContext();
+  const { translate } = usePreferences();
+  const { startNewConversation, sendMessage } = useIaTutor();
+
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [isEventsExpanded, setIsEventsExpanded] = useState(true);
+  const [tutorTip, setTutorTip] = useState<string | null>(null);
+  const [isTipLoading, setIsTipLoading] = useState(false);
+
   const [isReminderFormVisible, setReminderFormVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<AgendaEvent | null>(null);
+  const [events, setEvents] = useState<ScheduleGetRequestDto[]>([]);
 
-  const selectedDay = mockCalendarDays[selectedDayIndex];
-  const eventsForSelectedDay = mockEventsByDay[selectedDay.dayNumber] ?? [];
+  useFocusEffect(
+    useCallback(() => {
+      if (!userId) return;
+      (async () => {
+        try {
+          const data = await getAllEvents();
+          setEvents(data);
+        } catch {
+          Alert.alert('Erro', 'Não foi possível carregar sua agenda.');
+        }
+      })();
+    }, [userId, getAllEvents])
+  );
 
-  function handleCreateReminder(input: NewReminderInput) {
-    const newReminder: ActiveReminder = {
-      id: `reminder-${Date.now()}`,
-      icon: input.urgent ? 'exclamationmark.circle.fill' : 'book.fill',
-      iconTone: input.urgent ? 'error' : 'primary',
-      title: input.title,
-      dueLabel: input.dueLabel,
-      urgent: input.urgent,
+  const getMondayOfWeek = () => {
+    const today = new Date();
+    const day = today.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + diff + (weekOffset * 7));
+    return monday;
+  };
+
+  const currentMonday = getMondayOfWeek();
+  const monthLabel = currentMonday.toLocaleString('pt-BR', { month: 'long' });
+  const weekLabel = weekOffset === 0 
+    ? 'Semana Atual' 
+    : weekOffset < 0 
+      ? `${Math.abs(weekOffset)} semana(s) atrás` 
+      : `Daqui a ${weekOffset} semana(s)`;
+
+  const generateCalendarDays = (): CalendarDay[] => {
+    const monday = getMondayOfWeek();
+    const days: CalendarDay[] = [];
+    for (let i = 0; i < 7; i++) {
+      const cur = new Date(monday);
+      cur.setDate(monday.getDate() + i);
+      const dayNumber = cur.getDate();
+      const weekdayLabel = cur.toLocaleString('pt-BR', { weekday: 'short' });
+      const hasEvent = events.some(e => new Date(e.startTime).toDateString() === cur.toDateString());
+      days.push({ weekdayLabel, dayNumber, hasEvent });
+    }
+    return days;
+  };
+  
+  const calendarDays = generateCalendarDays();
+
+  const selectedDate = (() => {
+    const date = new Date(currentMonday);
+    date.setDate(currentMonday.getDate() + selectedDayIndex);
+    return date;
+  })();
+
+  const apiEventsForSelectedDay = events.filter(e => {
+    const eventDate = new Date(e.startTime);
+    const isTodayOrFuture = eventDate.getTime() + 60000 >= new Date().getTime();
+    return eventDate.toDateString() === selectedDate.toDateString() && isTodayOrFuture;
+  });
+
+  const eventsForSelectedDay: AgendaEvent[] = apiEventsForSelectedDay.map(e => {
+    const d = new Date(e.startTime);
+    return {
+      id: String(e.id),
+      time: d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      title: e.title,
+      subtitle: e.description || e.type,
+      trailing: 'bell',
+      accentColor: Colors.light.primary,
     };
-    setReminders((prev) => [newReminder, ...prev]);
+  });
+
+  async function handleCreateReminder(input: NewReminderInput) {
+    try {
+      await createEvent({
+        title: input.title,
+        description: input.description,
+        startTime: input.date,
+        type: input.type || EventType.PERSONAL,
+      });
+    } catch {
+      Alert.alert('Erro', 'Não foi possível criar o lembrete. Tente novamente.');
+      return;
+    }
     setReminderFormVisible(false);
+    try {
+      setEvents(await getAllEvents());
+    } catch {
+      Alert.alert('Atenção', 'O lembrete foi criado, mas não foi possível atualizar a agenda.');
+    }
   }
 
-  function handleCompleteReminder(id: string) {
-    setReminders((prev) =>
-      prev.map((reminder) => (reminder.id === id ? { ...reminder, completed: true } : reminder)),
-    );
-  }
+  const generateTip = async () => {
+    setIsTipLoading(true);
+    try {
+      const chat = await startNewConversation(`Dica de Agenda: ${selectedDate.toLocaleDateString()}`);
+      
+      const eventsText = eventsForSelectedDay.length > 0
+        ? eventsForSelectedDay.map(e => `${e.time} - ${e.title}`).join(', ')
+        : 'Nenhum evento agendado.';
 
-  function handleDeleteReminder(id: string) {
-    setReminders((prev) => prev.filter((reminder) => reminder.id !== id));
-  }
+      const prompt = `Minha agenda para o dia ${selectedDate.toLocaleDateString()} tem os seguintes eventos: ${eventsText}. Você pode me dar uma breve dica (máximo 2 frases) de como organizar meu tempo e meus estudos hoje?`;
+      
+      const reply = await sendMessage(chat.id, prompt);
+      setTutorTip(reply.text);
+    } catch {
+      setTutorTip('Não foi possível carregar a dica. Tente novamente.');
+    } finally {
+      setIsTipLoading(false);
+    }
+  };
 
   return (
     <ScreenContainer header={<AppHeader />}>
@@ -69,30 +161,66 @@ export default function AgendaScreen() {
 
       <Card>
         <WeekCalendarStrip
-          monthLabel={mockMonthLabel}
-          weekLabel={mockWeekLabel}
-          days={mockCalendarDays}
+          monthLabel={monthLabel}
+          weekLabel={weekLabel}
+          days={calendarDays}
           selectedIndex={selectedDayIndex}
-          onSelectDay={setSelectedDayIndex}
+          onSelectDay={(idx) => {
+            setSelectedDayIndex(idx);
+            setTutorTip(null);
+          }}
+          onPrevWeek={() => {
+            setWeekOffset(prev => prev - 1);
+            setTutorTip(null);
+          }}
+          onNextWeek={() => {
+            setWeekOffset(prev => prev + 1);
+            setTutorTip(null);
+          }}
         />
       </Card>
 
       <Card>
-        <View style={styles.sectionHeaderRow}>
-          <UmbrellaText variant="headline">Horários de Hoje</UmbrellaText>
-          <StatusBadge label={`${eventsForSelectedDay.length} EVENTOS`} tone="teal" />
-        </View>
-
-        {eventsForSelectedDay.length === 0 ? (
-          <UmbrellaText variant="body" color={Colors.light.textSecondary}>
-            Nenhum evento para este dia.
-          </UmbrellaText>
-        ) : (
-          <View style={styles.eventList}>
-            {eventsForSelectedDay.map((event) => (
-              <AgendaEventCard key={event.id} event={event} onPress={() => setSelectedEvent(event)} />
-            ))}
+        <Pressable 
+          style={styles.sectionHeaderRow} 
+          onPress={() => setIsEventsExpanded(!isEventsExpanded)}
+        >
+          <View style={styles.sectionTitle}>
+            <UmbrellaText variant="headline">Horários de Hoje</UmbrellaText>
+            <StatusBadge label={`${eventsForSelectedDay.length} EVENTOS`} tone="teal" />
           </View>
+          <IconSymbol name={isEventsExpanded ? 'chevron.up' : 'chevron.down'} size={20} color={Colors.light.textSecondary} />
+        </Pressable>
+
+        {isEventsExpanded && (
+          eventsForSelectedDay.length === 0 ? (
+            <UmbrellaText variant="body" color={Colors.light.textSecondary}>
+              Nenhum evento para este dia.
+            </UmbrellaText>
+          ) : (
+            <View style={styles.eventList}>
+              {eventsForSelectedDay.map((event: AgendaEvent) => (
+                <AgendaEventCard 
+                  key={event.id} 
+                  event={event} 
+                  onPress={() => setSelectedEvent(event)} 
+                  onDelete={async () => {
+                    try {
+                      await deleteEvent(event.id);
+                    } catch {
+                      Alert.alert('Erro', 'Não foi possível excluir o evento. Tente novamente.');
+                      return;
+                    }
+                    try {
+                      setEvents(await getAllEvents());
+                    } catch {
+                      Alert.alert('Atenção', 'O evento foi excluído, mas não foi possível atualizar a agenda.');
+                    }
+                  }}
+                />
+              ))}
+            </View>
+          )
         )}
       </Card>
 
@@ -114,62 +242,45 @@ export default function AgendaScreen() {
         />
       </View>
 
-      <Card tone="muted">
-        <View style={styles.remindersHeaderRow}>
-          <IconSymbol name="alarm.fill" size={18} color={Colors.light.text} />
-          <UmbrellaText variant="headline">Lembretes Ativos</UmbrellaText>
-        </View>
-
-        {reminders.length === 0 ? (
-          <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.noReminders}>
-            Nenhum lembrete ativo no momento.
-          </UmbrellaText>
-        ) : (
-          <View style={styles.reminderList}>
-            {reminders.map((reminder) => (
-              <ReminderCard
-                key={reminder.id}
-                reminder={reminder}
-                onComplete={() => handleCompleteReminder(reminder.id)}
-                onDelete={() => handleDeleteReminder(reminder.id)}
-              />
-            ))}
-          </View>
-        )}
-
-        <Pressable accessibilityRole="button" style={styles.viewAllButton}>
-          <UmbrellaText variant="label" color={Colors.light.primary}>
-            Ver todos os lembretes
-          </UmbrellaText>
-        </Pressable>
-      </Card>
-
-      <View style={styles.tutorTipCard}>
+      <View style={[styles.tutorTipCard, { backgroundColor: translate(Colors.light.tertiary) }]}>
         <View style={styles.tutorTipHeader}>
           <IconSymbol name="lightbulb.fill" size={18} color={Colors.light.surface} />
           <UmbrellaText variant="bodyMedium" color={Colors.light.surface}>
             Dica do Tutor IA
           </UmbrellaText>
         </View>
-        <UmbrellaText variant="body" color={Colors.light.surface} style={styles.tutorTipText}>
-          {mockTutorTip}
-        </UmbrellaText>
-        <Pressable accessibilityRole="button" style={styles.tutorTipAction}>
-          <IconSymbol name="calendar.badge.plus" size={18} color={Colors.light.surface} />
+        
+        {isTipLoading ? (
+          <ActivityIndicator color={Colors.light.surface} style={{ alignSelf: 'flex-start', marginVertical: Spacing.sm }} />
+        ) : (
+          <UmbrellaText variant="body" color={Colors.light.surface} style={styles.tutorTipText}>
+            {tutorTip || 'Clique no botão para receber uma dica de como organizar sua agenda do dia.'}
+          </UmbrellaText>
+        )}
+
+        <Pressable 
+          accessibilityRole="button" 
+          style={styles.tutorTipAction}
+          onPress={generateTip}
+          disabled={isTipLoading}
+        >
+          <IconSymbol name="sparkles" size={18} color={Colors.light.surface} />
         </Pressable>
       </View>
 
       <ModalSheet
         visible={isReminderFormVisible}
         onClose={() => setReminderFormVisible(false)}
-        title="Novo Lembrete">
+        title="Novo Lembrete"
+      >
         <NewReminderForm onSubmit={handleCreateReminder} />
       </ModalSheet>
 
       <ModalSheet
         visible={selectedEvent !== null}
         onClose={() => setSelectedEvent(null)}
-        title="Detalhes do Evento">
+        title="Detalhes do Evento"
+      >
         {selectedEvent ? <EventDetails event={selectedEvent} /> : null}
       </ModalSheet>
     </ScreenContainer>
@@ -185,6 +296,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: Spacing.lg,
+  },
+  sectionTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
   },
   eventList: {
     gap: Spacing.lg,
@@ -212,22 +328,6 @@ const styles = StyleSheet.create({
   },
   newReminderButton: {
     alignSelf: 'stretch',
-  },
-  remindersHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginBottom: Spacing.lg,
-  },
-  reminderList: {
-    gap: Spacing.md,
-    marginBottom: Spacing.lg,
-  },
-  noReminders: {
-    marginBottom: Spacing.lg,
-  },
-  viewAllButton: {
-    alignItems: 'center',
   },
   tutorTipCard: {
     backgroundColor: Colors.light.tertiary,

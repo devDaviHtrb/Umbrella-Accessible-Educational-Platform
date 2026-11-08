@@ -3,7 +3,6 @@ const path = require('path');
 
 const rootDir = path.resolve(__dirname, '..');
 
-// 1. Patch fbjs/lib/warning.js (required by react-native-web)
 try {
   const fbjsLibDir = path.join(rootDir, 'node_modules', 'fbjs', 'lib');
   const fbjsWarningFile = path.join(fbjsLibDir, 'warning.js');
@@ -42,7 +41,6 @@ module.exports = warning;
   console.warn('[postinstall] Could not patch fbjs:', err.message);
 }
 
-// 2. Patch MaterialIcons.ttf into @expo/vector-icons
 try {
   const sourceFont = path.join(rootDir, 'assets', 'fonts', 'MaterialIcons.ttf');
   const targetFontDir1 = path.join(

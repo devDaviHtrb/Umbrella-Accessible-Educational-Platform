@@ -3,12 +3,14 @@ import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'rea
 import { IconSymbol, type IconSymbolName } from '@/components/ui/icon-symbol';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, FontFamily, Radius, Spacing } from '@/constants/theme';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
 
 export type TextFieldProps = TextInputProps & {
   label: string;
   icon?: IconSymbolName;
   labelActionText?: string;
   onLabelActionPress?: () => void;
+  error?: string;
 };
 
 export function TextField({
@@ -16,9 +18,12 @@ export function TextField({
   icon,
   labelActionText,
   onLabelActionPress,
+  error,
   style,
   ...rest
 }: TextFieldProps) {
+  const { translate, fontScale, preferences } = usePreferences();
+
   return (
     <View style={styles.wrapper}>
       <View style={styles.labelRow}>
@@ -26,7 +31,7 @@ export function TextField({
           {label}
         </UmbrellaText>
         {labelActionText ? (
-          <Pressable onPress={onLabelActionPress} hitSlop={8}>
+          <Pressable accessibilityRole="button" onPress={onLabelActionPress} hitSlop={8}>
             <UmbrellaText variant="label" color={Colors.light.primary}>
               {labelActionText}
             </UmbrellaText>
@@ -36,14 +41,35 @@ export function TextField({
 
       <View style={styles.inputRow}>
         <TextInput
-          style={[styles.input, style]}
-          placeholderTextColor={Colors.light.textSecondary}
+          style={[
+            styles.input,
+            {
+              backgroundColor: translate(Colors.light.surfaceContainerLow),
+              color: translate(Colors.light.text),
+              fontSize: 15 * fontScale,
+            },
+            preferences.highContrast && { borderWidth: 1, borderColor: translate(Colors.light.outline) },
+            error ? { borderWidth: 1, borderColor: translate(Colors.light.error) } : null,
+            style,
+          ]}
+          placeholderTextColor={translate(Colors.light.textSecondary)}
           {...rest}
         />
         {icon ? (
-          <IconSymbol name={icon} size={20} color={Colors.light.textSecondary} style={styles.icon} />
+          <IconSymbol
+            name={icon}
+            size={20}
+            color={error ? Colors.light.error : Colors.light.textSecondary}
+            style={styles.icon}
+          />
         ) : null}
       </View>
+
+      {error ? (
+        <UmbrellaText variant="caption" color={Colors.light.error} style={styles.errorText}>
+          {error}
+        </UmbrellaText>
+      ) : null}
     </View>
   );
 }
@@ -78,5 +104,13 @@ const styles = StyleSheet.create({
   icon: {
     position: 'absolute',
     right: Spacing.lg,
+  },
+  inputError: {
+    borderWidth: 1,
+    borderColor: Colors.light.error,
+  },
+  errorText: {
+    fontSize: 12,
+    marginTop: -2,
   },
 });

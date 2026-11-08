@@ -13,7 +13,6 @@ export type ClassChatMessage = {
 export type ClassResource = {
   id: string;
   name: string;
-  /** ex: "2.1 MB • PDF" */
   meta: string;
   icon: IconSymbolName;
 };

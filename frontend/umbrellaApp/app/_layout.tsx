@@ -12,7 +12,10 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 
+import { AppearanceRoot } from '@/components/layout/appearance-root';
 import { Colors } from '@/constants/theme';
+import { AuthProvider } from '@/hooks/api/auth/authContext';
+import { PreferencesProvider } from '@/hooks/preferences/preferencesContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -52,11 +55,19 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={UmbrellaNavigationTheme}>
-      <Stack>
-        <Stack.Screen name="login" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Stack>
-      <StatusBar style="dark" />
+      <PreferencesProvider>
+        <AuthProvider>
+          <AppearanceRoot>
+            <Stack>
+              <Stack.Screen name="login" options={{ headerShown: false }} />
+              <Stack.Screen name="signUp" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="professor" options={{ headerShown: false }} />
+            </Stack>
+          </AppearanceRoot>
+          <StatusBar style="dark" />
+        </AuthProvider>
+      </PreferencesProvider>
     </ThemeProvider>
   );
 }

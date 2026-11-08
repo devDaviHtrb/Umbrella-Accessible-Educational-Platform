@@ -1,0 +1,573 @@
+```html
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Umbrella - Teste de Chat</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 760px;
+      margin: 35px auto;
+      padding: 16px;
+      background: #f4f5f7;
+      color: #222;
+    }
+
+    h1, h2 {
+      color: #0c2340;
+    }
+
+    section {
+      background: white;
+      padding: 20px;
+      margin-bottom: 18px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px #0000000d;
+    }
+
+    label {
+      display: block;
+      margin-top: 12px;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    input, select, textarea, button {
+      width: 100%;
+      padding: 11px;
+      margin-top: 6px;
+      border: 1px solid #ccd1d8;
+      border-radius: 5px;
+      font: inherit;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    button {
+      background: #0c2340;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    button.secondary {
+      background: #687386;
+    }
+
+    button:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
+
+    #status {
+      font-weight: bold;
+    }
+
+    .connected {
+      color: #168044;
+    }
+
+    .disconnected {
+      color: #c62828;
+    }
+
+    #messages {
+      height: 320px;
+      overflow-y: auto;
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 10px;
+    }
+
+    .event {
+      padding: 9px;
+      margin: 7px 0;
+      border-radius: 5px;
+      background: #edf0f4;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+      color: #222;
+    }
+
+    .event.received {
+      background: #e5f5e9;
+    }
+
+    .event.error {
+      background: #fdeaea;
+      color: #922;
+    }
+
+    .hint {
+      color: #666;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Umbrella — Teste de Chat</h1>
+
+  <section>
+    <h2>1. Conexão</h2>
+
+    <label for="url">Endpoint SockJS</label>
+    <input id="url" value="http://localhost:8080/ws">
+
+    <label for="token">Token JWT</label>
+    <input
+      id="token"
+      type="password"
+      placeholder="Cole o accessToken"
+      autocomplete="off"
+    >
+
+    <button id="connect">Conectar</button>
+    <button id="disconnect" class="secondary" disabled>
+      Desconectar
+    </button>
+
+    <p id="status" class="disconnected">Desconectado</p>
+
+    <p class="hint">
+      O JWT é enviado no cabeçalho Authorization da conexão STOMP.
+      O backend precisa validar o token durante a conexão.
+    </p>
+  </section>
+
+  <section>
+    <h2>2. Enviar mensagem</h2>
+
+    <label for="type">Tipo de mensagem</label>
+    <select id="type">
+      <option value="user">Mensagem pessoal</option>
+      <option value="course">Mensagem de curso</option>
+    </select>
+
+    <label for="recipient">ID do destinatário ou curso</label>
+    <input
+      id="recipient"
+      type="number"
+      min="1"
+      step="1"
+      placeholder="Ex.: 2"
+    >
+
+    <label for="content">Conteúdo</label>
+    <textarea
+      id="content"
+      placeholder="Escreva uma mensagem..."
+    ></textarea>
+
+    <label for="sendDestination">Destino STOMP</label>
+    <input id="sendDestination" value="/app/message/user" readonly>
+
+    <button id="send" disabled>Enviar mensagem</button>
+
+    <p class="hint">
+      O destino muda automaticamente conforme o tipo selecionado.
+    </p>
+  </section>
+
+  <section>
+    <h2>3. Receber mensagens</h2>
+
+    <label for="personalDestination">
+      Destino de mensagens pessoais
+    </label>
+    <input
+      id="personalDestination"
+      value="/user/queue/messages"
+    >
+
+    <label for="courseDestination">
+      Prefixo do destino de mensagens de curso
+    </label>
+    <input
+      id="courseDestination"
+      value="/topic/group/"
+    >
+
+    <p class="hint">
+      Os destinos de recebimento devem corresponder aos utilizados
+      pelo MessageService. Selecione o tipo e informe o ID antes
+      de se inscrever.
+    </p>
+
+    <button id="subscribe" disabled>
+      Inscrever para receber
+    </button>
+
+    <p id="subscriptionStatus">Ainda não inscrito.</p>
+  </section>
+
+  <section>
+    <h2>4. Eventos e mensagens</h2>
+
+    <div id="messages" aria-live="polite"></div>
+
+    <button id="clear" class="secondary">Limpar eventos</button>
+  </section>
+
+  <script>
+    const urlInput = document.getElementById("url");
+    const tokenInput = document.getElementById("token");
+    const typeInput = document.getElementById("type");
+    const recipientInput = document.getElementById("recipient");
+    const contentInput = document.getElementById("content");
+
+    const sendDestinationInput =
+      document.getElementById("sendDestination");
+
+    const personalDestinationInput =
+      document.getElementById("personalDestination");
+
+    const courseDestinationInput =
+      document.getElementById("courseDestination");
+
+    const statusElement = document.getElementById("status");
+    const subscriptionStatus =
+      document.getElementById("subscriptionStatus");
+
+    const messagesElement = document.getElementById("messages");
+
+    const connectButton = document.getElementById("connect");
+    const disconnectButton = document.getElementById("disconnect");
+    const sendButton = document.getElementById("send");
+    const subscribeButton = document.getElementById("subscribe");
+
+    let client = null;
+    let connecting = false;
+    let subscriptions = [];
+
+    function log(message, kind = "") {
+      const element = document.createElement("div");
+
+      element.className = `event ${kind}`;
+      element.textContent =
+        `[${new Date().toLocaleTimeString()}] ${message}`;
+
+      messagesElement.appendChild(element);
+      messagesElement.scrollTop = messagesElement.scrollHeight;
+    }
+
+    function updateStatus() {
+      const connected = Boolean(client && client.connected);
+
+      if (connecting) {
+        statusElement.textContent = "Conectando...";
+        statusElement.className = "";
+      } else if (connected) {
+        statusElement.textContent = "Conectado";
+        statusElement.className = "connected";
+      } else {
+        statusElement.textContent = "Desconectado";
+        statusElement.className = "disconnected";
+      }
+
+      connectButton.disabled = connecting || connected;
+      disconnectButton.disabled = !connecting && !connected;
+      sendButton.disabled = !connected;
+      subscribeButton.disabled = !connected;
+    }
+
+    function updateSendDestination() {
+      sendDestinationInput.value =
+        `/app/message/${typeInput.value}`;
+    }
+
+    function getRecipientId() {
+      const value = recipientInput.value.trim();
+      const id = Number(value);
+
+      if (
+        value === "" ||
+        !Number.isSafeInteger(id) ||
+        id <= 0
+      ) {
+        throw new Error("Informe um ID válido maior que zero.");
+      }
+
+      return id;
+    }
+
+    function formatBody(body) {
+      try {
+        return JSON.stringify(JSON.parse(body), null, 2);
+      } catch {
+        return body;
+      }
+    }
+
+    function receiveMessage(frame, label) {
+      log(`${label}\n${formatBody(frame.body)}`, "received");
+    }
+
+    function clearSubscriptions() {
+      for (const subscription of subscriptions) {
+        try {
+          subscription.unsubscribe();
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      subscriptions = [];
+      subscriptionStatus.textContent = "Ainda não inscrito.";
+    }
+
+    function subscribeToMessages() {
+      if (!client || !client.connected) {
+        log("Conecte-se antes de se inscrever.", "error");
+        return;
+      }
+
+      let destination;
+
+      try {
+        if (typeInput.value === "user") {
+          destination = personalDestinationInput.value.trim();
+        } else {
+          const courseId = getRecipientId();
+          const prefix = courseDestinationInput.value.trim();
+
+          if (!prefix) {
+            throw new Error("Informe o prefixo do curso.");
+          }
+
+          destination = `${prefix}${courseId}`;
+        }
+
+        if (!destination) {
+          throw new Error("O destino de recebimento está vazio.");
+        }
+      } catch (error) {
+        log(error.message, "error");
+        return;
+      }
+
+      clearSubscriptions();
+
+      try {
+        const subscription = client.subscribe(
+          destination,
+          (frame) => {
+            receiveMessage(
+              frame,
+              typeInput.value === "user"
+                ? "Mensagem pessoal recebida:"
+                : "Mensagem de curso recebida:"
+            );
+          },
+          {
+            id: `umbrella-${Date.now()}`
+          }
+        );
+
+        subscriptions.push(subscription);
+
+        subscriptionStatus.textContent =
+          `Inscrição solicitada: ${destination}`;
+
+        log(`Inscrição solicitada: ${destination}`);
+      } catch (error) {
+        log(`Erro ao se inscrever: ${error.message}`, "error");
+      }
+    }
+
+    function sendMessage() {
+      if (!client || !client.connected) {
+        log("Você precisa estar conectado.", "error");
+        return;
+      }
+
+      let recipientId;
+
+      try {
+        recipientId = getRecipientId();
+      } catch (error) {
+        log(error.message, "error");
+        return;
+      }
+
+      const content = contentInput.value.trim();
+
+      if (!content) {
+        log("A mensagem não pode estar vazia.", "error");
+        return;
+      }
+
+      const type = typeInput.value;
+      const destination = `/app/message/${type}`;
+
+      const payload = {
+        recipientId: recipientId,
+        content: content
+      };
+
+      try {
+        client.publish({
+          destination: destination,
+          headers: {
+            "content-type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        log(
+          `Publicação STOMP realizada para ${destination}.\n` +
+          "Aguardando processamento do servidor."
+        );
+
+        contentInput.value = "";
+        contentInput.focus();
+      } catch (error) {
+        log(`Erro ao publicar: ${error.message}`, "error");
+      }
+    }
+
+    function connect() {
+      const url = urlInput.value.trim();
+      const token = tokenInput.value.trim();
+
+      if (!url || !token) {
+        log("Informe o endpoint e o JWT.", "error");
+        return;
+      }
+
+      if (connecting || (client && client.connected)) {
+        return;
+      }
+
+      if (
+        typeof SockJS === "undefined" ||
+        typeof StompJs === "undefined"
+      ) {
+        log("Não foi possível carregar SockJS ou STOMP.", "error");
+        return;
+      }
+
+      connecting = true;
+      updateStatus();
+
+      const stompClient = new StompJs.Client({
+        webSocketFactory: () => new SockJS(url),
+
+        connectHeaders: {
+          Authorization: `Bearer ${token}`
+        },
+
+        reconnectDelay: 0,
+        connectionTimeout: 10000,
+        debug: () => {}
+      });
+
+      client = stompClient;
+
+      stompClient.onConnect = () => {
+        connecting = false;
+        updateStatus();
+        log("Conexão STOMP estabelecida.");
+      };
+
+      stompClient.onStompError = (frame) => {
+        log(
+          "Erro STOMP: " +
+          (frame.headers.message || frame.body || "desconhecido"),
+          "error"
+        );
+      };
+
+      stompClient.onWebSocketError = () => {
+        log(
+          "Erro WebSocket. Verifique o endpoint e os logs do backend.",
+          "error"
+        );
+      };
+
+      stompClient.onWebSocketClose = () => {
+        connecting = false;
+        subscriptions = [];
+        subscriptionStatus.textContent = "Conexão encerrada.";
+        updateStatus();
+        log("Conexão WebSocket fechada.");
+      };
+
+      stompClient.activate();
+      log("Tentando conectar...");
+    }
+
+    async function disconnect() {
+      if (!client) {
+        connecting = false;
+        updateStatus();
+        return;
+      }
+
+      const currentClient = client;
+
+      connecting = false;
+      clearSubscriptions();
+      updateStatus();
+
+      try {
+        await currentClient.deactivate();
+        log("Desconectado do servidor.");
+      } catch (error) {
+        log(`Erro ao desconectar: ${error.message}`, "error");
+      } finally {
+        if (client === currentClient) {
+          client = null;
+        }
+
+        connecting = false;
+        updateStatus();
+      }
+    }
+
+    connectButton.addEventListener("click", connect);
+    disconnectButton.addEventListener("click", disconnect);
+    sendButton.addEventListener("click", sendMessage);
+    subscribeButton.addEventListener("click", subscribeToMessages);
+
+    typeInput.addEventListener("change", () => {
+      updateSendDestination();
+      clearSubscriptions();
+    });
+
+    contentInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+
+        if (!sendButton.disabled) {
+          sendMessage();
+        }
+      }
+    });
+
+    document.getElementById("clear").addEventListener("click", () => {
+      messagesElement.replaceChildren();
+    });
+
+    updateSendDestination();
+    updateStatus();
+  </script>
+</body>
+</html>
+```

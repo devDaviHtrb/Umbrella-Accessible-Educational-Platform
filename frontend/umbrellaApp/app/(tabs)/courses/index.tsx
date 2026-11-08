@@ -1,6 +1,6 @@
-import { Link } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Link, useFocusEffect } from 'expo-router';
+import { useCallback, useRef } from 'react';
+import { Pressable, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
 
 import { AppHeader } from '@/components/layout/app-header';
 import { ScreenContainer } from '@/components/layout/screen-container';
@@ -11,28 +11,33 @@ import { CategoryChip } from '@/components/ui/category-chip';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { SearchInput } from '@/components/ui/search-input';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
-import { ALL_CATEGORY_ID, mockCourseCategories, mockCourses } from '@/constants/mock/courses';
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { useCourses } from '@/hooks/api/courses/useCourse';
 
 export default function CoursesScreen() {
-  const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORY_ID);
-  const [query, setQuery] = useState('');
+  const {
+    courses: filteredCourses,
+    categories,
+    loading,
+    error,
+    selectedCategory,
+    setSelectedCategory,
+    query,
+    setQuery,
+    isEnrolled,
+    refetchCourses,
+  } = useCourses();
+  const firstFocus = useRef(true);
 
-  const filteredCourses = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
-
-    return mockCourses.filter((course) => {
-      const matchesCategory =
-        selectedCategory === ALL_CATEGORY_ID || course.categoryId === selectedCategory;
-      const matchesQuery =
-        normalizedQuery.length === 0 ||
-        course.title.toLowerCase().includes(normalizedQuery) ||
-        course.description.toLowerCase().includes(normalizedQuery) ||
-        course.eyebrow.toLowerCase().includes(normalizedQuery);
-
-      return matchesCategory && matchesQuery;
-    });
-  }, [selectedCategory, query]);
+  useFocusEffect(
+    useCallback(() => {
+      if (firstFocus.current) {
+        firstFocus.current = false;
+        return;
+      }
+      refetchCourses();
+    }, [refetchCourses])
+  );
 
   return (
     <ScreenContainer header={<AppHeader />}>
@@ -51,13 +56,23 @@ export default function CoursesScreen() {
         onChangeText={setQuery}
       />
 
+      {loading && (
+        <ActivityIndicator size="large" color={Colors.light.primary} style={{ marginTop: Spacing.lg }} />
+      )}
+
+      {error && (
+        <UmbrellaText variant="body" color={Colors.light.error} style={{ marginTop: Spacing.lg }}>
+          {error}
+        </UmbrellaText>
+      )}
+
       <View style={styles.section}>
         <SectionHeader title="Categorias" actionLabel="Ver todas" />
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.chipRow}>
-          {mockCourseCategories.map((category) => (
+          {categories.map((category) => (
             <CategoryChip
               key={category.id}
               label={category.label}
@@ -86,12 +101,14 @@ export default function CoursesScreen() {
       </Link>
 
       <View style={styles.courseList}>
-        {filteredCourses.length === 0 ? (
+        {filteredCourses.length === 0 && !loading ? (
           <UmbrellaText variant="body" color={Colors.light.textSecondary}>
             Nenhum curso encontrado para essa busca.
           </UmbrellaText>
         ) : (
-          filteredCourses.map((course) => <CourseCard key={course.id} course={course} />)
+          filteredCourses.map((course) => (
+            <CourseCard key={course.id} course={course} isEnrolled={isEnrolled(course.id)} />
+          ))
         )}
       </View>
     </ScreenContainer>

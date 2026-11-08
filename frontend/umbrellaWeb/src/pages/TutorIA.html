@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Umbrella - Tutor IA</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-error": "#ffffff",
+                    "primary-container": "#1a56be",
+                    "tertiary": "#004d4a",
+                    "primary": "#003f98",
+                    "surface-container": "#eceef3",
+                    "on-secondary-container": "#355082",
+                    "on-secondary": "#ffffff",
+                    "tertiary-fixed": "#92f3ed",
+                    "surface-container-highest": "#e1e2e8",
+                    "outline-variant": "#c3c6d5",
+                    "inverse-primary": "#b1c5ff",
+                    "surface-tint": "#1f59c1",
+                    "surface-dim": "#d8dae0",
+                    "error": "#ba1a1a",
+                    "on-primary-container": "#c5d4ff",
+                    "on-background": "#191c20",
+                    "surface-variant": "#e1e2e8",
+                    "surface-bright": "#f8f9ff",
+                    "outline": "#737784",
+                    "on-surface": "#191c20",
+                    "secondary-container": "#a9c4fd",
+                    "on-tertiary-container": "#84e5df",
+                    "inverse-on-surface": "#eff0f6",
+                    "on-secondary-fixed-variant": "#2a4678",
+                    "on-tertiary-fixed": "#00201f",
+                    "on-primary-fixed": "#001946",
+                    "tertiary-fixed-dim": "#76d6d1",
+                    "on-secondary-fixed": "#001a40",
+                    "on-primary": "#ffffff",
+                    "on-tertiary-fixed-variant": "#00504d",
+                    "surface-container-high": "#e7e8ee",
+                    "surface-container-lowest": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "surface-container-low": "#f2f3f9",
+                    "on-primary-fixed-variant": "#00419d",
+                    "surface": "#f8f9ff",
+                    "secondary": "#435e91",
+                    "secondary-fixed": "#d7e2ff",
+                    "error-container": "#ffdad6",
+                    "primary-fixed": "#d9e2ff",
+                    "secondary-fixed-dim": "#acc7ff",
+                    "primary-fixed-dim": "#b1c5ff",
+                    "on-tertiary": "#ffffff",
+                    "background": "#f8f9ff",
+                    "on-surface-variant": "#434653",
+                    "inverse-surface": "#2e3135",
+                    "tertiary-container": "#006764"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "1.5rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Lexend"],
+                    "display": ["Lexend"],
+                    "body": ["Lexend"],
+                    "label": ["Lexend"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Lexend', sans-serif; background-color: #f8f9ff; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-header { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); }
+        .primary-gradient { background: linear-gradient(135deg, #003f98 0%, #1a56be 100%); }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e1e2e8; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #c3c6d5; }
+
+        .chat-container { height: calc(100vh - 180px); }
+    </style>
+</head>
+<body class="text-on-surface overflow-hidden">
+<!-- Desktop Side Navigation -->
+<aside class="fixed left-0 top-0 h-full w-72 bg-surface-container-low flex flex-col py-6 z-50">
+<div class="px-8 mb-10">
+<h1 class="text-headline-sm font-display font-black text-primary">Umbrella</h1>
+<p class="text-label-lg font-body text-on-surface-variant">Plataforma Educacional</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-4 text-on-surface-variant px-4 py-3 mx-4 hover:bg-surface-container-high transition-all rounded-xl duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body text-label-lg">Painel</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant px-4 py-3 mx-4 hover:bg-surface-container-high transition-all rounded-xl duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">school</span>
+<span class="font-body text-label-lg">Cursos</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant px-4 py-3 mx-4 hover:bg-surface-container-high transition-all rounded-xl duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">video_library</span>
+<span class="font-body text-label-lg">Aulas Gravadas</span>
+</a>
+<!-- Active Tab: Tutor IA -->
+<a class="flex items-center gap-4 bg-primary-container text-on-primary-container rounded-xl px-4 py-3 mx-4 transition-all duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">psychology</span>
+<span class="font-body text-label-lg font-bold">Tutor IA</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant px-4 py-3 mx-4 hover:bg-surface-container-high transition-all rounded-xl duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">calendar_today</span>
+<span class="font-body text-label-lg">Agenda</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant px-4 py-3 mx-4 hover:bg-surface-container-high transition-all rounded-xl duration-200 ease-in-out" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body text-label-lg">Ajustes</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-outline-variant/10">
+<a class="flex items-center gap-4 text-on-surface-variant px-4 py-3 mx-4 hover:bg-surface-container-high transition-all rounded-xl" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<span class="font-body text-label-lg">Suporte</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant px-4 py-3 mx-4 hover:bg-surface-container-high transition-all rounded-xl" href="#">
+<span class="material-symbols-outlined text-error">logout</span>
+<span class="font-body text-label-lg">Sair</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-72 min-h-screen flex flex-col relative">
+<!-- Header Status -->
+<header class="h-20 glass-header flex items-center justify-between px-10 sticky top-0 z-40 border-b border-outline-variant/10">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full primary-gradient flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[20px]">psychology</span>
+</div>
+<div>
+<h2 class="text-title-md font-bold text-primary">IA Umbrella</h2>
+<div class="flex items-center gap-2">
+<span class="flex h-2 w-2 rounded-full bg-tertiary animate-pulse"></span>
+<p class="text-body-sm text-on-surface-variant">Analisando dados de foco...</p>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">history</span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+<div class="w-10 h-10 rounded-xl overflow-hidden shadow-sm border border-outline-variant/20">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a student in a modern educational environment, soft daylight illumination, photography style, sharp focus, clean background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsKZaOK2cxbbfnjCo5MJ6nfPdDJQsnrnMHW0gl5PJu_1M4RrH_csxMM9EKWRECdjmJSDAHzAJNoaSp9W0D_aoeh0uSnfNjgh68ynW7jWHnIqlA4tdhw3IyKyslTZY46rSjE0GLqVaEMSgI748F2dOubgQ-Cnk_yeMPGPXmT5OpJCyFEnvNHJNeVJXLw6M5KBnEBH5noSpLySOQdRa_bXFVnBj3PkPB9dUKFJvkmHOvhusFxQoAZ7BUtQ"/>
+</div>
+</div>
+</header>
+<!-- Chat Area -->
+<section class="chat-container overflow-y-auto px-10 py-8 flex flex-col gap-8 scroll-smooth">
+<!-- IA Greeting -->
+<div class="flex gap-4 max-w-3xl">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex-shrink-0 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">bolt</span>
+</div>
+<div class="space-y-4">
+<div class="bg-surface-container-lowest p-5 rounded-2xl rounded-tl-none shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+<p class="text-body-lg text-on-surface">Olá! Eu sou a <b>Lumina</b>, sua tutora pessoal. Notei que você concluiu o módulo de Cálculo Avançado recentemente. Como posso otimizar seu roteiro de estudos hoje?</p>
+</div>
+</div>
+</div>
+<!-- User Message -->
+<div class="flex gap-4 max-w-2xl ml-auto flex-row-reverse">
+<div class="w-10 h-10 rounded-full bg-primary flex-shrink-0 flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[20px]">person</span>
+</div>
+<div class="bg-primary text-white p-5 rounded-2xl rounded-tr-none shadow-lg">
+<p class="text-body-lg">Preciso organizar minha semana. Tenho prova de Álgebra na sexta e quero revisar os tópicos mais complexos. O que você sugere?</p>
+</div>
+</div>
+<!-- IA Response with Structured Data -->
+<div class="flex gap-4 max-w-4xl">
+<div class="w-10 h-10 rounded-full bg-surface-container-highest flex-shrink-0 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">bolt</span>
+</div>
+<div class="space-y-6 flex-1">
+<div class="bg-surface-container-lowest p-5 rounded-2xl rounded-tl-none shadow-[0_4px_20px_rgba(0,0,0,0.04)]">
+<p class="text-body-lg text-on-surface">Com base no seu desempenho anterior, identifiquei que Espaços Vetoriais é o seu ponto de maior atenção. Montei um cronograma acelerado para você:</p>
+</div>
+<!-- Structured Content: Study Plan -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="bg-surface-container-low p-6 rounded-xl border-l-4 border-primary">
+<h4 class="text-title-sm font-bold text-primary mb-2">Terça &amp; Quarta</h4>
+<p class="text-body-md text-on-surface-variant mb-4">Foco em Transformações Lineares. Revisar exercícios da Aula 04.</p>
+<div class="flex items-center gap-2 text-tertiary text-label-md font-bold">
+<span class="material-symbols-outlined text-sm">timer</span> 45min / bloco
+                            </div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl border-l-4 border-secondary">
+<h4 class="text-title-sm font-bold text-secondary mb-2">Quinta-feira</h4>
+<p class="text-body-md text-on-surface-variant mb-4">Simulado cronometrado com 15 questões de provas anteriores.</p>
+<div class="flex items-center gap-2 text-tertiary text-label-md font-bold">
+<span class="material-symbols-outlined text-sm">verified</span> Nível: Difícil
+                            </div>
+</div>
+</div>
+<!-- Tip Card -->
+<div class="bg-tertiary-container text-white p-6 rounded-xl flex items-start gap-4">
+<span class="material-symbols-outlined text-tertiary-fixed text-[32px]">lightbulb</span>
+<div>
+<h4 class="text-title-md font-bold mb-1">Dica da Lumina</h4>
+<p class="text-body-md opacity-90">Tente explicar o conceito de Base e Dimensão para si mesmo em voz alta. Nossa análise de voz indica que isso fixa melhor seu aprendizado em 40%.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- More Lorem Ipsum Interaction -->
+<div class="flex gap-4 max-w-2xl ml-auto flex-row-reverse">
+<div class="w-10 h-10 rounded-full bg-primary flex-shrink-0 flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[20px]">person</span>
+</div>
+<div class="bg-primary text-white p-5 rounded-2xl rounded-tr-none shadow-lg">
+<p class="text-body-lg">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation.</p>
+</div>
+</div>
+</section>
+<!-- Input Area -->
+<footer class="absolute bottom-0 left-0 w-full p-8 glass-header">
+<div class="max-w-5xl mx-auto relative group">
+<div class="absolute left-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined">attach_file</span>
+</button>
+</div>
+<input class="w-full bg-surface-container-highest border-none rounded-xl py-5 pl-14 pr-28 text-body-lg focus:ring-2 focus:ring-primary focus:bg-surface-container-lowest transition-all placeholder:text-on-surface-variant/60" placeholder="Pergunte qualquer coisa para a IA Umbrella..." type="text"/>
+<div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+<button class="p-2 rounded-full text-on-surface-variant hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined">mic</span>
+</button>
+<button class="primary-gradient text-white w-12 h-12 rounded-xl flex items-center justify-center shadow-md active:scale-95 transition-transform">
+<span class="material-symbols-outlined">send</span>
+</button>
+</div>
+</div>
+<p class="text-center text-label-sm text-on-surface-variant/60 mt-4">Lumina pode cometer erros. Verifique informações importantes.</p>
+</footer>
+</main>
+<!-- Floating Action Background Decoration (Optional for atmosphere) -->
+<div class="fixed top-[-10%] right-[-5%] w-[400px] h-[400px] bg-primary/5 blur-[120px] rounded-full pointer-events-none -z-10"></div>
+<div class="fixed bottom-[-10%] left-[20%] w-[300px] h-[300px] bg-tertiary/5 blur-[100px] rounded-full pointer-events-none -z-10"></div>
+<script>
+        // Simple micro-interaction for the chat scroll
+        const chatContainer = document.querySelector('.chat-container');
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+
+        // Visual feedback for focus on input
+        const chatInput = document.querySelector('input');
+        chatInput.addEventListener('focus', () => {
+            document.querySelector('.group').classList.add('shadow-xl');
+        });
+        chatInput.addEventListener('blur', () => {
+            document.querySelector('.group').classList.remove('shadow-xl');
+        });
+    </script>
+</body></html>

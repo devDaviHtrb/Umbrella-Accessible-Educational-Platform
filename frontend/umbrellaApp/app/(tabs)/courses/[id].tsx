@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Alert, Linking } from 'react-native';
 
 import { CourseHero } from '@/components/courses/course-hero';
 import { ModuleAccordion } from '@/components/courses/module-accordion';
@@ -9,29 +10,100 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
-import { mockCourseDetails, mockCourses } from '@/constants/mock/courses';
+import { difficultyLabel } from '@/constants/professor-options';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
+import { useCourseDetails, useCourses } from '@/hooks/api/courses/useCourse';
 import type { CourseLesson } from '@/types/courses';
+import type { ActivityDto } from '@/types/activities';
+import type { ModuleMaterial } from '@/types/materials';
 
 export default function CourseDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const course = mockCourses.find((item) => item.id === id);
-  const details = mockCourseDetails;
+  const { isEnrolled, createEnrollment, deleteEnrollment } = useCourses();
+  const { courseDetails, modules, detailLoading, detailError } = useCourseDetails(id);
+  const [enrolling, setEnrolling] = useState(false);
+  const { translate } = usePreferences();
+
+  const enrolled = id ? isEnrolled(id) : false;
+
+  const handleEnrollmentToggle = async () => {
+    if (!id) return;
+    setEnrolling(true);
+    try {
+      const response = enrolled ? await deleteEnrollment(id) : await createEnrollment(id);
+      if ('code' in response && response.code >= 400) {
+        Alert.alert('Erro', response.message || (enrolled ? 'Erro ao cancelar matrícula.' : 'Erro ao realizar matrícula.'));
+      } else {
+        Alert.alert('Sucesso', enrolled ? 'Matrícula cancelada com sucesso!' : 'Matrícula realizada com sucesso!');
+      }
+    } catch {
+      Alert.alert('Erro', 'Ocorreu um erro ao processar a matrícula.');
+    } finally {
+      setEnrolling(false);
+    }
+  };
 
   function handleLessonPress(lesson: CourseLesson) {
     router.push(`/courses/class/${lesson.id}`);
   }
 
-  if (!course) {
+  function handleActivityPress(activity: ActivityDto) {
+    router.push({
+      pathname: '/courses/activity/[activityId]' as any,
+      params: {
+        courseId: id,
+        moduleId: activity.moduleId,
+        activityId: activity.id,
+      },
+    });
+  }
+
+  async function handleMaterialPress(material: ModuleMaterial) {
+    if (material.url) {
+      try {
+        const canOpen = await Linking.canOpenURL(material.url);
+        if (canOpen) {
+          await Linking.openURL(material.url);
+        } else {
+          Alert.alert('Material', `Arquivo: ${material.title}\nURL: ${material.url}`);
+        }
+      } catch {
+        Alert.alert('Erro', 'Não foi possível abrir o link do material.');
+      }
+    } else {
+      Alert.alert(
+        material.title,
+        material.description || 'Material disponível para acompanhamento do módulo.'
+      );
+    }
+  }
+
+  if (detailLoading) {
+    return (
+      <ScreenContainer disableTopInset>
+        <ActivityIndicator size="large" color={Colors.light.primary} style={{ marginTop: Spacing.xl }} />
+      </ScreenContainer>
+    );
+  }
+
+  if (detailError || !courseDetails) {
     return (
       <ScreenContainer disableTopInset>
         <UmbrellaText variant="title">Curso não encontrado</UmbrellaText>
+        <UmbrellaText variant="body" color={Colors.light.textSecondary} style={{ marginTop: Spacing.sm }}>
+          {detailError || 'Não foi possível carregar as informações deste curso.'}
+        </UmbrellaText>
       </ScreenContainer>
     );
   }
 
   return (
     <ScreenContainer disableTopInset>
-      <CourseHero title={course.title} badgeLabel={details.heroBadge} />
+      <CourseHero
+        title={courseDetails.name}
+        badgeLabel={courseDetails.subject?.name ?? 'Geral'}
+        imageUrl={courseDetails.imageUrl ?? undefined}
+      />
 
       <Card>
         <View style={styles.instructorRow}>
@@ -40,23 +112,27 @@ export default function CourseDetailsScreen() {
           </View>
           <View>
             <UmbrellaText variant="caption" color={Colors.light.textSecondary} style={styles.caps}>
-              {details.instructorLabel}
+              Instrutor
             </UmbrellaText>
             <UmbrellaText variant="bodyMedium" color={Colors.light.primary}>
-              {details.instructorName}
+              {courseDetails.userDto?.name ?? 'Instrutor Umbrella'}
             </UmbrellaText>
           </View>
         </View>
 
         <View style={styles.infoList}>
-          <InfoRow label="Duração" value={details.duration} />
-          <InfoRow label="Nível" value={details.level} />
-          <InfoRow label="Certificação" value={details.certification} emphasis />
+          <InfoRow label="Nível" value={difficultyLabel(courseDetails.difficulty_level)} />
+          <InfoRow label="Certificação" value="Disponível ao concluir" emphasis />
         </View>
 
-        <PrimaryButton label={details.ctaLabel} onPress={() => {}} style={styles.ctaButton} />
+        <PrimaryButton
+          label={enrolling ? 'Processando...' : enrolled ? 'Desfazer Matrícula' : 'Inscrever-se no Curso'}
+          onPress={handleEnrollmentToggle}
+          disabled={enrolling}
+          style={[styles.ctaButton, enrolled && { backgroundColor: translate(Colors.light.error) }]}
+        />
         <UmbrellaText variant="caption" color={Colors.light.textSecondary} style={styles.ctaCaption}>
-          {details.ctaCaption}
+          {enrolled ? 'Você está matriculado neste curso' : 'Acesso imediato e vitalício ao conteúdo'}
         </UmbrellaText>
       </Card>
 
@@ -65,38 +141,28 @@ export default function CourseDetailsScreen() {
           Visão Geral
         </UmbrellaText>
         <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.overviewText}>
-          {details.overviewText}
+          {courseDetails.description}
         </UmbrellaText>
-
-        <View style={styles.resourceList}>
-          {details.overviewResources.map((resource) => (
-            <View key={resource.id} style={styles.resourceRow}>
-              <IconSymbol name={resource.icon} size={18} color={Colors.light.primary} />
-              <View>
-                <UmbrellaText variant="bodyMedium">{resource.title}</UmbrellaText>
-                <UmbrellaText variant="caption" color={Colors.light.textSecondary}>
-                  {resource.subtitle}
-                </UmbrellaText>
-              </View>
-            </View>
-          ))}
-        </View>
       </Card>
 
       <View style={styles.contentHeader}>
         <UmbrellaText variant="title">Conteúdo do Curso</UmbrellaText>
         <UmbrellaText variant="body" color={Colors.light.textSecondary}>
-          {details.contentSubtitle}
+          {modules.length} {modules.length === 1 ? 'módulo disponível' : 'módulos disponíveis'}
         </UmbrellaText>
       </View>
 
       <View style={styles.moduleList}>
-        {details.modules.map((module, index) => (
+        {modules.map((module, index) => (
           <ModuleAccordion
             key={module.id}
             module={module}
-            defaultExpanded={index === 1}
+            courseId={id}
+            defaultExpanded={index === 0}
+            isEnrolled={enrolled}
             onLessonPress={handleLessonPress}
+            onActivityPress={handleActivityPress}
+            onMaterialPress={handleMaterialPress}
           />
         ))}
       </View>
@@ -167,17 +233,6 @@ const styles = StyleSheet.create({
   },
   overviewText: {
     marginBottom: Spacing.lg,
-  },
-  resourceList: {
-    gap: Spacing.md,
-  },
-  resourceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    backgroundColor: Colors.light.surface,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
   },
   contentHeader: {
     gap: Spacing.xs,

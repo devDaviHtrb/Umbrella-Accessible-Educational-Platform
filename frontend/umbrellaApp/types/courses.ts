@@ -1,5 +1,3 @@
-import type { IconSymbolName } from '@/components/ui/icon-symbol';
-
 export type CourseCategory = {
   id: string;
   label: string;
@@ -17,15 +15,9 @@ export type Course = {
   description: string;
   imageBadge: string;
   imageTone: string;
+  imageUrl?: string;
   showTrendingIcon?: boolean;
   footer: CourseFooter;
-};
-
-export type CourseResource = {
-  id: string;
-  icon: IconSymbolName;
-  title: string;
-  subtitle: string;
 };
 
 export type CourseLesson = {
@@ -41,19 +33,4 @@ export type CourseModule = {
   title: string;
   subtitle: string;
   lessons: CourseLesson[];
-};
-
-export type CourseDetails = {
-  heroBadge: string;
-  instructorLabel: string;
-  instructorName: string;
-  duration: string;
-  level: string;
-  certification: string;
-  ctaLabel: string;
-  ctaCaption: string;
-  overviewText: string;
-  overviewResources: CourseResource[];
-  contentSubtitle: string;
-  modules: CourseModule[];
 };

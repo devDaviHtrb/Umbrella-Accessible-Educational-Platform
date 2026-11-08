@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+
+<html class="light" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Aulas Gravadas - Umbrella</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-low": "#f2f3f9",
+                        "surface": "#f8f9ff",
+                        "secondary-fixed": "#d7e2ff",
+                        "secondary-container": "#a9c4fd",
+                        "on-secondary-container": "#355082",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-bright": "#f8f9ff",
+                        "on-tertiary-fixed-variant": "#00504d",
+                        "on-secondary-fixed": "#001a40",
+                        "error-container": "#ffdad6",
+                        "primary-fixed": "#d9e2ff",
+                        "tertiary": "#004d4a",
+                        "surface-variant": "#e1e2e8",
+                        "inverse-on-surface": "#eff0f6",
+                        "on-primary-fixed-variant": "#00419d",
+                        "primary": "#003f98",
+                        "on-surface": "#191c20",
+                        "on-primary": "#ffffff",
+                        "primary-container": "#1a56be",
+                        "primary-fixed-dim": "#b1c5ff",
+                        "on-tertiary-container": "#84e5df",
+                        "on-surface-variant": "#434653",
+                        "background": "#f8f9ff",
+                        "tertiary-container": "#006764",
+                        "tertiary-fixed-dim": "#76d6d1",
+                        "secondary": "#435e91",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "inverse-surface": "#2e3135",
+                        "surface-container-high": "#e7e8ee",
+                        "tertiary-fixed": "#92f3ed",
+                        "on-background": "#191c20",
+                        "on-secondary-fixed-variant": "#2a4678",
+                        "on-primary-fixed": "#001946",
+                        "on-tertiary-fixed": "#00201f",
+                        "on-primary-container": "#c5d4ff",
+                        "on-error-container": "#93000a",
+                        "inverse-primary": "#b1c5ff",
+                        "on-tertiary": "#ffffff",
+                        "outline": "#737784",
+                        "outline-variant": "#c3c6d5",
+                        "surface-container": "#eceef3",
+                        "secondary-fixed-dim": "#acc7ff",
+                        "surface-tint": "#1f59c1",
+                        "surface-dim": "#d8dae0",
+                        "surface-container-highest": "#e1e2e8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Lexend"],
+                        "display": ["Lexend"],
+                        "body": ["Lexend"],
+                        "label": ["Lexend"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .video-card-hover:hover .play-overlay {
+            opacity: 1;
+        }
+        .editorial-shadow {
+            box-shadow: 0 12px 32px rgba(25, 28, 32, 0.06);
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface">
+<!-- Sidebar Navigation Shell -->
+<aside class="h-screen w-72 flex flex-col fixed left-0 top-0 bg-[#f2f3f9] dark:bg-slate-900 bg-gradient-to-r from-[#f2f3f9] to-[#f8f9ff] dark:from-slate-900 dark:to-slate-950 z-50">
+<div class="flex flex-col gap-2 p-6 h-full">
+<!-- Brand Anchor -->
+<div class="mb-10 px-4">
+<h1 class="text-xl font-black text-[#1A56BE] dark:text-blue-400 font-lexend">Umbrella</h1>
+<p class="text-xs text-on-surface-variant/60 tracking-widest uppercase">Learning Portal</p>
+</div>
+<!-- Navigation Links -->
+<nav class="flex-1 flex flex-col gap-1">
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 ease-in-out text-[#191c20]/60 dark:text-slate-500 hover:text-[#1A56BE] hover:bg-white/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-lexend text-title-md">Painel</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 ease-in-out text-[#191c20]/60 dark:text-slate-500 hover:text-[#1A56BE] hover:bg-white/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+<span class="font-lexend text-title-md">Cursos</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 ease-in-out text-[#1A56BE] dark:text-blue-300 font-bold border-r-4 border-[#1A56BE] bg-[#ffffff] dark:bg-slate-800" href="#">
+<span class="material-symbols-outlined" data-icon="video_library" style="font-variation-settings: 'FILL' 1;">video_library</span>
+<span class="font-lexend text-title-md">Aulas Gravadas</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 ease-in-out text-[#191c20]/60 dark:text-slate-500 hover:text-[#1A56BE] hover:bg-white/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="smart_toy">smart_toy</span>
+<span class="font-lexend text-title-md">Tutor IA</span>
+</a>
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 ease-in-out text-[#191c20]/60 dark:text-slate-500 hover:text-[#1A56BE] hover:bg-white/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
+<span class="font-lexend text-title-md">Agenda</span>
+</a>
+</nav>
+<!-- Bottom Nav -->
+<div class="mt-auto">
+<a class="flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 ease-in-out text-[#191c20]/60 dark:text-slate-500 hover:text-[#1A56BE] hover:bg-white/50 dark:hover:bg-slate-800/50" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span class="font-lexend text-title-md">Ajustes</span>
+</a>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-72 min-h-screen pb-20">
+<!-- Top App Bar -->
+<header class="bg-[#f8f9ff]/80 dark:bg-slate-950/80 backdrop-blur-xl docked full-width top-0 sticky z-40 shadow-sm dark:shadow-none">
+<div class="flex justify-between items-center w-full px-8 py-4">
+<div class="flex items-center gap-6 flex-1 max-w-2xl">
+<div class="relative w-full group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline group-focus-within:text-primary transition-colors" data-icon="search">search</span>
+<input class="w-full pl-12 pr-4 py-3 bg-surface-container-highest border-none rounded-xl focus:ring-0 focus:bg-surface-container-lowest transition-all text-body-md placeholder:text-outline" placeholder="Buscar por aulas, temas ou professores..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-[#f2f3f9] dark:hover:bg-slate-800 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 rounded-full hover:bg-[#f2f3f9] dark:hover:bg-slate-800 transition-colors active:scale-95 duration-200">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="help_outline">help_outline</span>
+</button>
+<div class="h-10 w-10 rounded-full bg-secondary-fixed flex items-center justify-center border-2 border-surface-container-lowest">
+<span class="text-xs font-bold text-on-secondary-fixed">JD</span>
+</div>
+</div>
+</div>
+</header>
+<!-- Editorial Hero Section -->
+<section class="px-10 py-12">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-end gap-8">
+<div class="space-y-2">
+<span class="inline-block px-3 py-1 bg-tertiary/10 text-tertiary rounded-full text-xs font-bold tracking-widest uppercase mb-2">Acervo Acadêmico</span>
+<h2 class="text-display-sm md:text-display-md font-bold text-on-surface leading-tight tracking-tight">Suas Aulas <br/><span class="text-primary italic">Gravadas</span></h2>
+<p class="text-body-lg text-on-surface-variant max-w-xl">Acesse o registro histórico da sua jornada de conhecimento. Revise conceitos, aprofunde temas e estude no seu ritmo.</p>
+</div>
+<div class="flex gap-3">
+<button class="px-6 py-3 bg-surface-container-high text-on-surface font-bold rounded-xl flex items-center gap-2 hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined" data-icon="filter_list">filter_list</span>
+                        Filtros
+                    </button>
+<button class="px-6 py-3 bg-surface-container-high text-on-surface font-bold rounded-xl flex items-center gap-2 hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined" data-icon="sort">sort</span>
+                        Recentes
+                    </button>
+</div>
+</div>
+</section>
+<!-- Lessons Bento Grid -->
+<section class="px-10 max-w-7xl mx-auto">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Video Card 1 -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-[2rem] overflow-hidden editorial-shadow transition-all duration-300 hover:-translate-y-2">
+<div class="relative aspect-video overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="a clean high-tech lecture hall with blue atmospheric lighting and a professor presenting data on a large screen" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAC6zKl10sYyYIxbt84o9IXg6-mdIsZ_A7krmGpWraRWf-HXB64-GXk3EW8Nc_6OoGbMpj5i0osE8JVd-0YlcB5RujEuwD4TdEkAVILOp8NOA4TI0jWzR67YPVfglZM-ez3LOaqXx2bn6y3vIf-vDO5yqB8vkAI9i5nrg6V3f5MqsbdHB6e4NIV0MnbW3Ke4jpgPN6GU2Vmy_MZcMgknqwMdPjJIKk9vNnOxCRJH61PhzkQytmCERwcLajB6o4tU7XplfJ_9EmjYvYN"/>
+<div class="play-overlay opacity-0 group-hover:opacity-100 absolute inset-0 bg-primary/20 backdrop-blur-sm transition-opacity duration-300 flex items-center justify-center">
+<div class="w-16 h-16 bg-surface-container-lowest rounded-full flex items-center justify-center text-primary shadow-xl">
+<span class="material-symbols-outlined text-4xl" data-icon="play_arrow" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</div>
+</div>
+<div class="absolute bottom-4 right-4 px-2 py-1 bg-on-surface/80 backdrop-blur text-surface text-[10px] font-bold rounded tracking-wider">
+                            45:20
+                        </div>
+</div>
+<div class="p-8 flex flex-col flex-1">
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-bold text-tertiary bg-tertiary-fixed/30 px-3 py-1 rounded-full">CIÊNCIA DE DADOS</span>
+<span class="text-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="calendar_today">calendar_today</span>
+                                12 Out, 2023
+                            </span>
+</div>
+<h3 class="text-title-lg font-bold text-on-surface leading-snug mb-3">Introdução aos Algoritmos de Aprendizado Supervisionado</h3>
+<p class="text-body-md text-on-surface-variant line-clamp-2 mb-6">Uma exploração profunda sobre os fundamentos matemáticos e as aplicações práticas de modelos preditivos...</p>
+<div class="mt-auto pt-6 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container"></div>
+<span class="text-label-md font-semibold text-on-surface">Dr. Ricardo Silva</span>
+</div>
+<button class="px-5 py-2 bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-full font-bold text-sm hover:shadow-lg transition-shadow active:scale-95 duration-200">Assistir Agora</button>
+</div>
+</div>
+</div>
+<!-- Video Card 2 -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-[2rem] overflow-hidden editorial-shadow transition-all duration-300 hover:-translate-y-2">
+<div class="relative aspect-video overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="a group of focused university students working together in a modern bright library with books and laptops" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJLnAoZeKyRRQTT_MNyph_NhtNKeY0E5OMdy5lbpqGkOMmdXme6Rzro67QAcOJw-8nprIq1UBB1FdAw7zT08iEbSDyAB1Ql-HeXDmWLdPWYkm7g5-FMUY_-rYq6hTnl_SrHLhldjodBnFeDJUeMoT-mDFvg7oscaI5fHKmHEYJn5_dpqE5eiMMFCgcNw07lPynsHQtRqxHhTXJ9QcXkdFRbiVs0R6zjmiRsbuhrpTsXX5bzOvhx22WIgbjUdNI7HZwT1DvrjBtzDki"/>
+<div class="play-overlay opacity-0 group-hover:opacity-100 absolute inset-0 bg-primary/20 backdrop-blur-sm transition-opacity duration-300 flex items-center justify-center">
+<div class="w-16 h-16 bg-surface-container-lowest rounded-full flex items-center justify-center text-primary shadow-xl">
+<span class="material-symbols-outlined text-4xl" data-icon="play_arrow" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</div>
+</div>
+<div class="absolute bottom-4 right-4 px-2 py-1 bg-on-surface/80 backdrop-blur text-surface text-[10px] font-bold rounded tracking-wider">
+                            58:15
+                        </div>
+</div>
+<div class="p-8 flex flex-col flex-1">
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-bold text-primary bg-primary-fixed/30 px-3 py-1 rounded-full">DESIGN UX/UI</span>
+<span class="text-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="calendar_today">calendar_today</span>
+                                10 Out, 2023
+                            </span>
+</div>
+<h3 class="text-title-lg font-bold text-on-surface leading-snug mb-3">Heurísticas de Nielsen e a Psicologia do Usuário</h3>
+<p class="text-body-md text-on-surface-variant line-clamp-2 mb-6">Como os padrões mentais influenciam a interação digital e como projetar interfaces mais empáticas e eficazes.</p>
+<div class="mt-auto pt-6 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container"></div>
+<span class="text-label-md font-semibold text-on-surface">Profa. Ana Mendes</span>
+</div>
+<button class="px-5 py-2 bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-full font-bold text-sm hover:shadow-lg transition-shadow active:scale-95 duration-200">Assistir Agora</button>
+</div>
+</div>
+</div>
+<!-- Video Card 3 -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-[2rem] overflow-hidden editorial-shadow transition-all duration-300 hover:-translate-y-2">
+<div class="relative aspect-video overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="cybersecurity concept with digital binary code and blue glowing hardware circuits in a dark environment" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_JlK5nkhYlseBtv6AyWxyZHdc7dmWcO4wHdZMr39wUNsZNHh704NueMw5UvtWFrrThJqwSwAj8CmbY5IMxvpuvz6ZDISkIvJcvxZqGsW-qjoMMgkYEHCnhpIl5MJoERUjA7xY65O0h_sCfKFthmVAHyYKDL416DtxeeHAInV16kaskC3pYtiCZFKFa7W5H_hVHXh18WxOC7YYwPAC89d6QMWa9MQLEmi4vp5MBC0E627ToMB8PNU7oh5mc3WBG55hJ8KbO7fxTReI"/>
+<div class="play-overlay opacity-0 group-hover:opacity-100 absolute inset-0 bg-primary/20 backdrop-blur-sm transition-opacity duration-300 flex items-center justify-center">
+<div class="w-16 h-16 bg-surface-container-lowest rounded-full flex items-center justify-center text-primary shadow-xl">
+<span class="material-symbols-outlined text-4xl" data-icon="play_arrow" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</div>
+</div>
+<div class="absolute bottom-4 right-4 px-2 py-1 bg-on-surface/80 backdrop-blur text-surface text-[10px] font-bold rounded tracking-wider">
+                            32:45
+                        </div>
+</div>
+<div class="p-8 flex flex-col flex-1">
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-bold text-error bg-error-container px-3 py-1 rounded-full">SEGURANÇA</span>
+<span class="text-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="calendar_today">calendar_today</span>
+                                08 Out, 2023
+                            </span>
+</div>
+<h3 class="text-title-lg font-bold text-on-surface leading-snug mb-3">Protocolos de Segurança em Arquiteturas de Nuvem</h3>
+<p class="text-body-md text-on-surface-variant line-clamp-2 mb-6">Abordagem técnica sobre criptografia, firewalls de próxima geração e gestão de identidades em AWS e Azure.</p>
+<div class="mt-auto pt-6 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container"></div>
+<span class="text-label-md font-semibold text-on-surface">Eng. Marcos Paulo</span>
+</div>
+<button class="px-5 py-2 bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-full font-bold text-sm hover:shadow-lg transition-shadow active:scale-95 duration-200">Assistir Agora</button>
+</div>
+</div>
+</div>
+<!-- Video Card 4 -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-[2rem] overflow-hidden editorial-shadow transition-all duration-300 hover:-translate-y-2">
+<div class="relative aspect-video overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="modern office desk with multiple monitors displaying colorful data charts and analytics reports" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgE-IXMbe0N1dB5hUYStAxMHU3CpvoeKGJOi-O3kemP5TRyFCfyMLgImibMpWDI46hmAC0iQqq2qkoOoCs2PCNtI51l5deWTdp_kO4zGVu4JuFq-Yt1MtiACDIw1oRazUXrrCbr5rB2u7JoIbakpk_LADSmrjin0agwnoFAjXx3Yz5-kRmUY4nBrKdAaSlK4xDrg6TXNcavF7AMFZzElkVSey6EDTRtzZUd8sF2_jAmKuQNIw2AWdsrOxsIAtq5CiHnG8ESdvdQtKs"/>
+<div class="play-overlay opacity-0 group-hover:opacity-100 absolute inset-0 bg-primary/20 backdrop-blur-sm transition-opacity duration-300 flex items-center justify-center">
+<div class="w-16 h-16 bg-surface-container-lowest rounded-full flex items-center justify-center text-primary shadow-xl">
+<span class="material-symbols-outlined text-4xl" data-icon="play_arrow" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</div>
+</div>
+<div class="absolute bottom-4 right-4 px-2 py-1 bg-on-surface/80 backdrop-blur text-surface text-[10px] font-bold rounded tracking-wider">
+                            1:12:00
+                        </div>
+</div>
+<div class="p-8 flex flex-col flex-1">
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-bold text-on-tertiary-fixed-variant bg-tertiary-fixed px-3 py-1 rounded-full">MARKETING</span>
+<span class="text-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="calendar_today">calendar_today</span>
+                                05 Out, 2023
+                            </span>
+</div>
+<h3 class="text-title-lg font-bold text-on-surface leading-snug mb-3">Data-Driven Marketing: Transformando Dados em Vendas</h3>
+<p class="text-body-md text-on-surface-variant line-clamp-2 mb-6">Workshop prático sobre como interpretar métricas de funil para otimizar campanhas de alta performance.</p>
+<div class="mt-auto pt-6 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container"></div>
+<span class="text-label-md font-semibold text-on-surface">Dra. Clara Boas</span>
+</div>
+<button class="px-5 py-2 bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-full font-bold text-sm hover:shadow-lg transition-shadow active:scale-95 duration-200">Assistir Agora</button>
+</div>
+</div>
+</div>
+<!-- Video Card 5 -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-[2rem] overflow-hidden editorial-shadow transition-all duration-300 hover:-translate-y-2">
+<div class="relative aspect-video overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="a scientist looking into a microscope in a clean white laboratory with blue lighting accents" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsbtu9WCa5WlCeu8enAvT6l9jwMkjn6q-e3_-6BP88mr0cHz2c7sJDEhAR84WdVUUOuMNf7RJAVficWaNbCDkP4KgNnQFXH-7xFR4MiuhfDLQapjLU-c5um6mJLWca2QP4o9Y50jDb632T5Sw_oEBI5aacuNhafLJ_7f65rm_OA0Id354_b8aS7mA_NvFwg9gBq_rY_y1NiXAeHOAGfRooq0DxoIluskRPeLSdiGVp9EKWScOT3ry-XNG7FcROac9fA91HpIifinFA"/>
+<div class="play-overlay opacity-0 group-hover:opacity-100 absolute inset-0 bg-primary/20 backdrop-blur-sm transition-opacity duration-300 flex items-center justify-center">
+<div class="w-16 h-16 bg-surface-container-lowest rounded-full flex items-center justify-center text-primary shadow-xl">
+<span class="material-symbols-outlined text-4xl" data-icon="play_arrow" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</div>
+</div>
+<div class="absolute bottom-4 right-4 px-2 py-1 bg-on-surface/80 backdrop-blur text-surface text-[10px] font-bold rounded tracking-wider">
+                            50:00
+                        </div>
+</div>
+<div class="p-8 flex flex-col flex-1">
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-bold text-secondary bg-secondary-container px-3 py-1 rounded-full">BIOTECNOLOGIA</span>
+<span class="text-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="calendar_today">calendar_today</span>
+                                01 Out, 2023
+                            </span>
+</div>
+<h3 class="text-title-lg font-bold text-on-surface leading-snug mb-3">Engenharia Genética e o Futuro da Medicina</h3>
+<p class="text-body-md text-on-surface-variant line-clamp-2 mb-6">As implicações éticas e os avanços tecnológicos na edição de genes com a tecnologia CRISPR.</p>
+<div class="mt-auto pt-6 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container"></div>
+<span class="text-label-md font-semibold text-on-surface">Dr. Fábio Gouveia</span>
+</div>
+<button class="px-5 py-2 bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-full font-bold text-sm hover:shadow-lg transition-shadow active:scale-95 duration-200">Assistir Agora</button>
+</div>
+</div>
+</div>
+<!-- Video Card 6 -->
+<div class="group flex flex-col bg-surface-container-lowest rounded-[2rem] overflow-hidden editorial-shadow transition-all duration-300 hover:-translate-y-2">
+<div class="relative aspect-video overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="stack of legal books and a wooden gavel on a desk with warm natural light through a window" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbE73K7uphT_aDJ6v9KXNlFhaxXhVYPCIqFJFFZ0TAVtEbEtwg34YDPKC7oqJ44TGLVS6F_ondy-Psh4kJNDHAyOt_pSJAPZkxFhy0NHwQXVWODkJ0aVJxvfHt8WafURgrKhEMQvF2UnH4Kd9-gdA9-D9cYhDBgDECTlmSUjlNMh28Z-bwJxJn7Mlv2C-IddklzhQUx5oHGFltb8kkxz0C7MTzXRy9mJ0liLVfeKJ6VWmfKjbhQp6nO5LMpRd7QLemUn95q5mcFKwj"/>
+<div class="play-overlay opacity-0 group-hover:opacity-100 absolute inset-0 bg-primary/20 backdrop-blur-sm transition-opacity duration-300 flex items-center justify-center">
+<div class="w-16 h-16 bg-surface-container-lowest rounded-full flex items-center justify-center text-primary shadow-xl">
+<span class="material-symbols-outlined text-4xl" data-icon="play_arrow" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</div>
+</div>
+<div class="absolute bottom-4 right-4 px-2 py-1 bg-on-surface/80 backdrop-blur text-surface text-[10px] font-bold rounded tracking-wider">
+                            1:05:30
+                        </div>
+</div>
+<div class="p-8 flex flex-col flex-1">
+<div class="flex justify-between items-start mb-4">
+<span class="text-xs font-bold text-on-surface-variant bg-surface-variant px-3 py-1 rounded-full">DIREITO</span>
+<span class="text-xs text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" data-icon="calendar_today">calendar_today</span>
+                                28 Set, 2023
+                            </span>
+</div>
+<h3 class="text-title-lg font-bold text-on-surface leading-snug mb-3">Propriedade Intelectual na Era da Inteligência Artificial</h3>
+<p class="text-body-md text-on-surface-variant line-clamp-2 mb-6">Debate sobre quem detém os direitos de criações geradas por máquinas e o cenário jurídico global.</p>
+<div class="mt-auto pt-6 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-secondary-container"></div>
+<span class="text-label-md font-semibold text-on-surface">Dra. Beatriz Lima</span>
+</div>
+<button class="px-5 py-2 bg-gradient-to-br from-primary to-primary-container text-on-primary rounded-full font-bold text-sm hover:shadow-lg transition-shadow active:scale-95 duration-200">Assistir Agora</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Pagination / Load More -->
+<section class="py-16 text-center">
+<button class="group px-8 py-4 bg-surface-container-low text-primary font-bold rounded-2xl inline-flex items-center gap-3 hover:bg-primary hover:text-on-primary transition-all duration-300">
+                Carregar Mais Aulas
+                <span class="material-symbols-outlined group-hover:rotate-180 transition-transform duration-500" data-icon="expand_more">expand_more</span>
+</button>
+</section>
+</main>
+<!-- Contextual FAB (Only for Home/Dashboard as per instructions, suppressed here) -->
+</body></html>

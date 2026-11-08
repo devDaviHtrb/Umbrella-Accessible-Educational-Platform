@@ -1,148 +1,237 @@
-import { useState } from 'react';
-import { StyleSheet, View, Alert } from 'react-native';
 import { router } from 'expo-router';
+import { useState } from 'react';
+import { Alert, StyleSheet, View } from 'react-native';
 
 import { AppHeader } from '@/components/layout/app-header';
 import { ScreenContainer } from '@/components/layout/screen-container';
 import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { SecondaryButton } from '@/components/ui/secondary-button';
 import { TextField } from '@/components/ui/text-field';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
+import { homeHrefForRoles } from '@/constants/routes';
 import { Colors, Spacing } from '@/constants/theme';
-import { useAuth } from '@/hooks/api/auth/useAuth'; // Ajuste o caminho conforme sua estrutura
+import { useAuthContext } from '@/hooks/api/auth/authContext';
+import { useUmbrellaApi } from '@/hooks/api/core/useUmbrellaApi';
+import { buildRegisterPayload, validateSignUp, type SignUpErrors } from '@/utils/signup-validation';
+
+type SignUpFormErrors = SignUpErrors & { general?: string };
 
 export default function SignUpScreen() {
-    const { register } = useAuth();
+  const { register } = useAuthContext();
+  const { patch } = useUmbrellaApi();
 
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [hasNeurodivergence, setHasNeurodivergence] = useState(false);
+  const [neurodivergence, setNeurodivergence] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<SignUpFormErrors>({});
 
-    async function handleSignUp() {
-        if (!name || !email || !password) {
-            Alert.alert('Erro', 'Por favor, preencha todos os campos.');
-            return;
-        }
+  function clearError(field: keyof SignUpFormErrors) {
+    setErrors((current) => ({ ...current, [field]: undefined, general: undefined }));
+  }
 
-        setIsLoading(true);
-        try {
-            const response = await register({ name, email, password });
-
-            console.log('Conta criada com sucesso! Token:', response.accessToken);
-            Alert.alert('Sucesso', 'Sua conta Umbrella foi criada!', [
-                { text: 'Ir para o App', onPress: () => router.replace('/(tabs)') }
-            ]);
-        } catch (error: any) {
-            Alert.alert('Falha no Cadastro', 'Não foi possível criar sua conta. Verifique os dados ou tente outro e-mail.');
-        } finally {
-            setIsLoading(false);
-        }
+  async function saveNeurodivergence(text: string) {
+    try {
+      await patch('public/users/me/neurodivergence', text, { 'Content-Type': 'text/plain' });
+      return true;
+    } catch {
+      return false;
     }
+  }
 
-    return (
-        <ScreenContainer header={<AppHeader />}>
-            <View>
-                <UmbrellaText variant="display">
-                    Crie sua{'\n'}
-                    <UmbrellaText variant="display" color={Colors.light.primary}>
-                        Jornada.
-                    </UmbrellaText>
-                </UmbrellaText>
-                <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.subtitle}>
-                    Inicie sua imersão no ecossistema Umbrella. Um ambiente unificado para gerenciar seus módulos de aprendizado e progresso.
-                </UmbrellaText>
-            </View>
+  async function handleSignUp() {
+    const form = { name, email, password, hasNeurodivergence, neurodivergence };
+    const validation = validateSignUp(form);
+    setErrors(validation);
 
-            <Card style={styles.card}>
-                <View>
-                    <UmbrellaText variant="title">Criar Conta</UmbrellaText>
-                    <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.cardSubtitle}>
-                        Cadastre as credenciais do seu nó de acesso estudantil.
-                    </UmbrellaText>
-                </View>
+    if (Object.keys(validation).length > 0) return;
 
-                <TextField
-                    label="Nome Completo"
-                    icon="person.fill" // Se o seu pacote de ícones tiver person
-                    placeholder="Seu Nome Completo"
-                    autoCapitalize="words"
-                    value={name}
-                    onChangeText={setName}
-                    editable={!isLoading}
-                />
+    setIsLoading(true);
 
-                <TextField
-                    label="Endereço de E-mail"
-                    icon="envelope.fill"
-                    placeholder="estudante@umbrella.edu"
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    value={email}
-                    onChangeText={setEmail}
-                    editable={!isLoading}
-                />
+    try {
+      const payload = buildRegisterPayload(form);
+      const response = await register(payload);
+      const neurodivergenceSaved = payload.neurodivergence ? await saveNeurodivergence(payload.neurodivergence) : true;
+      const destination = homeHrefForRoles(response.roles);
 
-                <TextField
-                    label="Senha"
-                    icon="lock.fill"
-                    placeholder="Mínimo 6 caracteres"
-                    secureTextEntry
-                    value={password}
-                    onChangeText={setPassword}
-                    editable={!isLoading}
-                />
+      if (neurodivergenceSaved) {
+        router.replace(destination);
+      } else {
+        Alert.alert(
+          'Conta criada',
+          'Sua conta foi criada, mas não foi possível salvar a neurodivergência. Você pode informá-la depois em Ajustes.',
+          [{ text: 'Continuar', onPress: () => router.replace(destination) }],
+        );
+      }
+    } catch (error: any) {
+      if (error && error.fieldErrors) {
+        setErrors(error.fieldErrors);
+      } else {
+        setErrors({ general: error?.message || 'Não foi possível criar sua conta. Tente novamente.' });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
-                <PrimaryButton
-                    label={isLoading ? "Criando Conta..." : "Registrar Conta"}
-                    icon="checkmark"
-                    onPress={handleSignUp}
-                    disabled={isLoading}
-                />
+  return (
+    <ScreenContainer header={<AppHeader />} keyboardShouldPersistTaps="handled">
+      <View>
+        <UmbrellaText variant="display">
+          Crie sua{'\n'}
+          <UmbrellaText variant="display" color={Colors.light.primary}>
+            Jornada.
+          </UmbrellaText>
+        </UmbrellaText>
+        <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.subtitle}>
+          Inicie sua imersão no ecossistema Umbrella. Um ambiente unificado para gerenciar seus módulos de
+          aprendizado e progresso.
+        </UmbrellaText>
+      </View>
 
-                <View style={styles.divider} />
+      <Card style={styles.card}>
+        <View>
+          <UmbrellaText variant="title">Criar Conta</UmbrellaText>
+          <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.cardSubtitle}>
+            Cadastre as credenciais do seu nó de acesso estudantil.
+          </UmbrellaText>
+        </View>
 
-                <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.centered}>
-                    Já possui registro?
-                </UmbrellaText>
+        <TextField
+          label="Nome Completo"
+          icon="person.fill"
+          placeholder="Seu Nome Completo"
+          autoCapitalize="words"
+          value={name}
+          onChangeText={(text) => {
+            setName(text);
+            clearError('name');
+          }}
+          editable={!isLoading}
+          error={errors.name}
+        />
 
-                <SecondaryButton
-                    variant="filled"
-                    label="Voltar para o Login"
-                    onPress={() => router.back()}
-                    disabled={isLoading}
-                />
-            </Card>
+        <TextField
+          label="Endereço de E-mail"
+          icon="envelope.fill"
+          placeholder="estudante@umbrella.edu"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          value={email}
+          onChangeText={(text) => {
+            setEmail(text);
+            clearError('email');
+          }}
+          editable={!isLoading}
+          error={errors.email}
+        />
 
-            <View style={styles.footer}>
-                <UmbrellaText variant="caption" color={Colors.light.textSecondary} style={styles.centered}>
-                    Políticas Acadêmicas · Termos de Segurança
-                </UmbrellaText>
-            </View>
-        </ScreenContainer>
-    );
+        <TextField
+          label="Senha"
+          icon="lock.fill"
+          placeholder="Mínimo 6 caracteres"
+          secureTextEntry={!showPassword}
+          autoCapitalize="none"
+          autoCorrect={false}
+          labelActionText={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+          onLabelActionPress={() => setShowPassword((current) => !current)}
+          value={password}
+          onChangeText={(text) => {
+            setPassword(text);
+            clearError('password');
+          }}
+          editable={!isLoading}
+          error={errors.password}
+        />
+
+        <Checkbox
+          checked={hasNeurodivergence}
+          onChange={(checked) => {
+            setHasNeurodivergence(checked);
+            clearError('neurodivergence');
+          }}
+          label="Possuo alguma neurodivergência"
+        />
+
+        {hasNeurodivergence ? (
+          <TextField
+            label="Neurodivergência"
+            placeholder="Ex.: TDAH, TEA, Dislexia"
+            value={neurodivergence}
+            onChangeText={(text) => {
+              setNeurodivergence(text);
+              clearError('neurodivergence');
+            }}
+            editable={!isLoading}
+            error={errors.neurodivergence}
+          />
+        ) : null}
+
+        {errors.general ? (
+          <UmbrellaText variant="caption" color={Colors.light.error} style={styles.generalError}>
+            {errors.general}
+          </UmbrellaText>
+        ) : null}
+
+        <PrimaryButton
+          label={isLoading ? 'Criando Conta...' : 'Registrar Conta'}
+          icon="checkmark"
+          onPress={handleSignUp}
+          disabled={isLoading}
+        />
+
+        <View style={styles.divider} />
+
+        <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.centered}>
+          Já possui registro?
+        </UmbrellaText>
+
+        <SecondaryButton
+          variant="filled"
+          label="Voltar para o Login"
+          onPress={() => router.back()}
+          disabled={isLoading}
+        />
+      </Card>
+
+      <View style={styles.footer}>
+        <UmbrellaText variant="caption" color={Colors.light.textSecondary} style={styles.centered}>
+          Políticas Acadêmicas · Termos de Segurança
+        </UmbrellaText>
+      </View>
+    </ScreenContainer>
+  );
 }
 
 const styles = StyleSheet.create({
-    subtitle: {
-        marginTop: Spacing.md,
-    },
-    card: {
-        gap: Spacing.lg,
-    },
-    cardSubtitle: {
-        marginTop: Spacing.xs,
-    },
-    divider: {
-        height: 1,
-        backgroundColor: Colors.light.outline,
-    },
-    centered: {
-        textAlign: 'center',
-    },
-    footer: {
-        gap: Spacing.xs,
-        paddingBottom: Spacing.lg,
-    },
+  subtitle: {
+    marginTop: Spacing.md,
+  },
+  card: {
+    gap: Spacing.lg,
+  },
+  cardSubtitle: {
+    marginTop: Spacing.xs,
+  },
+  generalError: {
+    marginTop: -Spacing.xs,
+    fontSize: 12,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.light.outline,
+  },
+  centered: {
+    textAlign: 'center',
+  },
+  footer: {
+    gap: Spacing.xs,
+    paddingBottom: Spacing.lg,
+  },
 });

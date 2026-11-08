@@ -1,0 +1,111 @@
+package com.umbrella_api.modules.storage.controller;
+
+import java.util.List;
+
+import com.umbrella_api.common.dto.GenericResponse;
+import com.umbrella_api.common.security.CustomUserDetails;
+import com.umbrella_api.modules.FileDb.dto.FileUploadResponse;
+import com.umbrella_api.modules.storage.api.StorageService;
+import com.umbrella_api.modules.storage.common.StorageFileEntity;
+import com.umbrella_api.modules.storage.dto.FileMetaDataResponseDto;
+import com.umbrella_api.modules.storage.dto.ImageResponseDto;
+import com.umbrella_api.modules.storage.dto.RawFileResponseDto;
+import com.umbrella_api.modules.storage.dto.VideoResponseDto;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+@RestController
+@RequestMapping({"/api/public/storage", "/api/storage"})
+public class StorageController {
+
+    private final StorageService storageService;
+
+    StorageController(StorageService storageService) {
+        this.storageService = storageService;
+    }
+
+    @PostMapping("/upload")
+    public ResponseEntity<FileUploadResponse> uploadFile(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("resourceType") String resourceType,
+            @RequestParam(value = "alternativeText", required = false) String alternativeText,
+            @RequestParam("fileName") String fileName,
+            @RequestParam(value = "fileDescription", required = false) String fileDescription,
+            @RequestParam(value = "moduleId", required = false) Long moduleId,
+            @AuthenticationPrincipal CustomUserDetails loggedUser) {
+
+        FileUploadResponse response = storageService.upload(
+                file,
+                resourceType,
+                alternativeText,
+                fileName,
+                fileDescription,
+                moduleId,
+                loggedUser);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/image/{id}")
+    public ResponseEntity<ImageResponseDto> getImageById(@PathVariable long id) {
+        return ResponseEntity.ok(storageService.getImageById(id));
+
+    }
+
+    @GetMapping("/video/{id}")
+    public ResponseEntity<VideoResponseDto> getVideoById(@PathVariable long id) {
+        return ResponseEntity.ok(storageService.getVideoById(id));
+
+    }
+
+    @GetMapping("/raw/{id}")
+    public ResponseEntity<RawFileResponseDto> getRawById(@PathVariable long id) {
+        return ResponseEntity.ok(storageService.getRawFileById(id));
+    }
+
+    @GetMapping("/module/{moduleId}")
+    public ResponseEntity<List<FileMetaDataResponseDto>> getFilesByModule(@PathVariable Long moduleId) {
+        return ResponseEntity.ok(storageService.getFilesByModuleId(moduleId));
+    }
+
+    @DeleteMapping("/{resourceType}/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<GenericResponse> deleteFile(
+            @PathVariable String resourceType,
+            @PathVariable Long id) {
+
+        StorageFileEntity file = storageService.findEntityByTypeAndId(resourceType, id);
+
+        if (file == null) {
+            return ResponseEntity.status(404)
+                    .body(new GenericResponse("Error", "File not found", 404));
+        }
+
+        GenericResponse response = storageService.delete(file);
+
+        return ResponseEntity.ok(response);
+
+    }
+
+    /**
+     * Deletes a module material by its FileMetaData id (the id the materials
+     * listing exposes), removing the file from the DB and Cloudinary.
+     */
+    @DeleteMapping("/material/{metaId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<GenericResponse> deleteMaterial(@PathVariable Long metaId) {
+        Long moduleId = storageService.deleteFileByMetaId(metaId);
+
+        if (moduleId == null) {
+            return ResponseEntity.status(404)
+                    .body(new GenericResponse("Error", "Material not found", 404));
+        }
+
+        return ResponseEntity.ok(new GenericResponse("ok", "Success on delete material", 200));
+    }
+}

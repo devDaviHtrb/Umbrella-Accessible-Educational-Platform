@@ -1,17 +1,19 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Pressable } from 'react-native';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
 import type { AgendaEvent } from '@/types/painel';
 
 const DOT_COLUMN_WIDTH = 28;
 
 export type AgendaTimelineProps = {
   events: AgendaEvent[];
+  onDeleteEvent?: (id: string) => void;
 };
 
-export function AgendaTimeline({ events }: AgendaTimelineProps) {
+export function AgendaTimeline({ events, onDeleteEvent }: AgendaTimelineProps) {
   return (
     <View style={styles.wrapper}>
       <View
@@ -21,21 +23,27 @@ export function AgendaTimeline({ events }: AgendaTimelineProps) {
         ]}
       />
       {events.map((event, index) => (
-        <TimelineEvent key={event.id} event={event} isLast={index === events.length - 1} />
+        <TimelineEvent 
+          key={event.id} 
+          event={event} 
+          isLast={index === events.length - 1} 
+          onDelete={() => onDeleteEvent?.(event.id)}
+        />
       ))}
     </View>
   );
 }
 
-function TimelineEvent({ event, isLast }: { event: AgendaEvent; isLast: boolean }) {
+function TimelineEvent({ event, isLast, onDelete }: { event: AgendaEvent; isLast: boolean; onDelete: () => void }) {
   const isNow = event.state === 'now';
   const isUpcoming = event.state === 'upcoming';
+  const { translate } = usePreferences();
 
   return (
     <View style={[styles.row, !isLast && styles.rowSpacing]}>
       <View style={styles.dotColumn}>
         {isNow ? (
-          <View style={styles.dotNow}>
+          <View style={[styles.dotNow, { backgroundColor: translate(Colors.light.tertiary) }]}>
             <IconSymbol name="play.fill" size={10} color={Colors.light.surface} />
           </View>
         ) : (
@@ -56,15 +64,22 @@ function TimelineEvent({ event, isLast }: { event: AgendaEvent; isLast: boolean 
           {event.time}
         </UmbrellaText>
 
-        <View style={isNow ? styles.nowCard : undefined}>
-          <UmbrellaText
-            variant="bodyMedium"
-            color={isUpcoming ? Colors.light.textSecondary : Colors.light.text}>
-            {event.title}
-          </UmbrellaText>
-          <UmbrellaText variant="caption" color={Colors.light.textSecondary}>
-            {event.location}
-          </UmbrellaText>
+        <View style={isNow ? [styles.nowCard, { backgroundColor: translate(Colors.light.tertiaryLight) }] : undefined}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <View style={{ flex: 1, marginRight: Spacing.sm }}>
+              <UmbrellaText
+                variant="bodyMedium"
+                color={isUpcoming ? Colors.light.textSecondary : Colors.light.text}>
+                {event.title}
+              </UmbrellaText>
+              <UmbrellaText variant="caption" color={Colors.light.textSecondary}>
+                {event.location}
+              </UmbrellaText>
+            </View>
+            <Pressable accessibilityRole="button" onPress={onDelete} hitSlop={8}>
+              <IconSymbol name="trash.fill" size={16} color={Colors.light.error || '#FF3B30'} />
+            </Pressable>
+          </View>
         </View>
       </View>
     </View>

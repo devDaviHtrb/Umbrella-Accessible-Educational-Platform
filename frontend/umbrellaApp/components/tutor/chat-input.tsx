@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, FontFamily, Radius, Spacing } from '@/constants/theme';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
 
 export type ChatInputProps = {
   value: string;
@@ -18,6 +19,7 @@ export function ChatInput({
   showQuickActions = true,
 }: ChatInputProps) {
   const canSend = value.trim().length > 0;
+  const { translate, fontScale } = usePreferences();
 
   return (
     <View style={styles.row}>
@@ -26,9 +28,9 @@ export function ChatInput({
           <IconSymbol name="plus" size={18} color={Colors.light.textSecondary} />
         ) : null}
         <TextInput
-          style={styles.input}
+          style={[styles.input, { fontSize: 15 * fontScale, color: translate(Colors.light.text) }]}
           placeholder={placeholder}
-          placeholderTextColor={Colors.light.textSecondary}
+          placeholderTextColor={translate(Colors.light.textSecondary)}
           value={value}
           onChangeText={onChangeText}
           onSubmitEditing={onSend}

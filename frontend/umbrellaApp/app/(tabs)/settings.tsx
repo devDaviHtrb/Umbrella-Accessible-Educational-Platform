@@ -1,5 +1,5 @@
-import { ComingSoon } from '@/components/layout/coming-soon';
+import { SettingsScreen } from '@/components/settings/settings-screen';
 
-export default function SettingsScreen() {
-  return <ComingSoon title="Ajustes" />;
+export default function StudentSettingsScreen() {
+  return <SettingsScreen />;
 }

@@ -1,0 +1,36 @@
+# =========================
+# Stage 1 - Build
+# =========================
+FROM eclipse-temurin:21-jdk AS build
+
+WORKDIR /app
+
+# Copia configurações do wrapper e pom.xml
+COPY .mvn .mvn
+COPY mvnw .
+COPY pom.xml .
+
+RUN chmod +x mvnw
+RUN ./mvnw dependency:go-offline -B
+
+# Copia código-fonte e compila
+COPY src ./src
+RUN ./mvnw clean package -DskipTests
+
+# =========================
+# Stage 2 - Runtime
+# =========================
+FROM eclipse-temurin:21-jre
+
+WORKDIR /app
+
+RUN addgroup --system spring && adduser --system --ingroup spring spring
+USER spring:spring
+
+COPY --from=build /app/target/*.jar app.jar
+
+EXPOSE 8080
+
+ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]

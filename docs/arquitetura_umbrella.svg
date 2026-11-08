@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" width="100%" height="100%" style="background:#f8fafc; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;">
+  <defs>
+    <!-- Filtros de sombra -->
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.08"/>
+    </filter>
+    <!-- Marcador de setas -->
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b"/>
+    </marker>
+    <marker id="arrow-dash" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#0ea5e9"/>
+    </marker>
+  </defs>
+
+  <!-- TÍTULO PRINCIPAL -->
+  <text x="480" y="42" text-anchor="middle" font-size="20" font-weight="700" fill="#0f172a">ARQUITETURA DO SISTEMA - PLATAFORMA UMBRELLA</text>
+  <text x="480" y="65" text-anchor="middle" font-size="13" font-weight="500" fill="#64748b">Visão de Blocos Estruturais e Fluxo de Comunicação</text>
+
+  <!-- ================= 1. FRONTEND ================= -->
+  <g transform="translate(40, 95)">
+    <rect width="250" height="480" rx="12" fill="#eff6ff" stroke="#3b82f6" stroke-width="2" filter="url(#shadow)"/>
+    <rect width="250" height="42" rx="12" fill="#3b82f6"/>
+    <!-- Corrige cantos inferiores do header -->
+    <rect y="30" width="250" height="12" fill="#3b82f6"/>
+    <text x="125" y="26" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">1. INTERFACE DE USUÁRIO</text>
+
+    <!-- Sub-bloco UI -->
+    <rect x="20" y="70" width="210" height="95" rx="8" fill="#ffffff" stroke="#93c5fd" stroke-width="1.5"/>
+    <text x="125" y="105" text-anchor="middle" font-size="14" font-weight="700" fill="#1e3a8a">Componentes de UI</text>
+    <text x="125" y="128" text-anchor="middle" font-size="12" fill="#475569">Telas e Navegação</text>
+    <text x="125" y="146" text-anchor="middle" font-size="11" font-weight="600" fill="#2563eb">Foco em Acessibilidade</text>
+
+    <!-- Seta interna UI -> Hooks -->
+    <line x1="125" y1="165" x2="125" y2="215" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="135" y="195" font-size="11" fill="#64748b" font-weight="500">invoca</text>
+
+    <!-- Sub-bloco Hooks -->
+    <rect x="20" y="225" width="210" height="95" rx="8" fill="#ffffff" stroke="#93c5fd" stroke-width="1.5"/>
+    <text x="125" y="260" text-anchor="middle" font-size="14" font-weight="700" fill="#1e3a8a">Custom Hooks</text>
+    <text x="125" y="283" text-anchor="middle" font-size="12" fill="#475569">Gestão de Estado</text>
+    <text x="125" y="301" text-anchor="middle" font-size="11" font-weight="600" fill="#2563eb">Consumo Modular da API</text>
+
+    <rect x="20" y="380" width="210" height="70" rx="8" fill="#dbeafe" stroke="#bfdbfe" stroke-width="1"/>
+    <text x="125" y="408" text-anchor="middle" font-size="12" font-weight="600" fill="#1e40af">Camada Cliente</text>
+    <text x="125" y="428" text-anchor="middle" font-size="11" fill="#3b82f6">Isolamento visual da lógica</text>
+  </g>
+
+  <!-- SETA FRONTEND -> BACKEND -->
+  <g>
+    <line x1="290" y1="367" x2="350" y2="367" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <rect x="288" y="338" width="65" height="22" rx="4" fill="#ffffff" stroke="#93c5fd" stroke-width="1"/>
+    <text x="320" y="353" text-anchor="middle" font-size="10" font-weight="700" fill="#2563eb">REST/JSON</text>
+  </g>
+
+  <!-- ================= 2. BACKEND ================= -->
+  <g transform="translate(355, 95)">
+    <rect width="280" height="480" rx="12" fill="#f8fafc" stroke="#6366f1" stroke-width="2" filter="url(#shadow)"/>
+    <rect width="280" height="42" rx="12" fill="#6366f1"/>
+    <rect y="30" width="280" height="12" fill="#6366f1"/>
+    <text x="140" y="26" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">2. BACKEND (MONÓLITO MODULAR)</text>
+
+    <!-- Rotas / Controllers -->
+    <rect x="20" y="60" width="240" height="45" rx="6" fill="#ffffff" stroke="#c7d2fe" stroke-width="1.5"/>
+    <text x="140" y="88" text-anchor="middle" font-size="13" font-weight="700" fill="#3730a3">Rotas &amp; Controladores (API)</text>
+
+    <line x1="140" y1="105" x2="140" y2="128" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+    <!-- Contêiner dos Módulos -->
+    <rect x="15" y="130" width="250" height="205" rx="8" fill="#eef2ff" stroke="#a5b4fc" stroke-width="1.5"/>
+    <text x="140" y="152" text-anchor="middle" font-size="12" font-weight="700" fill="#4338ca">Módulos de Domínio</text>
+
+    <rect x="30" y="165" width="220" height="35" rx="5" fill="#ffffff" stroke="#c7d2fe"/>
+    <text x="140" y="187" text-anchor="middle" font-size="12" font-weight="600" fill="#312e81">Módulo de Usuários / Acesso</text>
+
+    <rect x="30" y="208" width="220" height="35" rx="5" fill="#ffffff" stroke="#c7d2fe"/>
+    <text x="140" y="230" text-anchor="middle" font-size="12" font-weight="600" fill="#312e81">Módulo de Aulas / Conteúdo</text>
+
+    <rect x="30" y="251" width="220" height="35" rx="5" fill="#ffffff" stroke="#c7d2fe"/>
+    <text x="140" y="273" text-anchor="middle" font-size="12" font-weight="600" fill="#312e81">Módulo de Acessibilidade</text>
+
+    <text x="140" y="315" text-anchor="middle" font-size="11" font-style="italic" fill="#6366f1">Desacoplados e independentes</text>
+
+    <!-- Interfaces e Contratos -->
+    <rect x="20" y="355" width="240" height="50" rx="6" fill="#ffffff" stroke="#818cf8" stroke-width="1.5" stroke-dasharray="4"/>
+    <text x="140" y="377" text-anchor="middle" font-size="12" font-weight="700" fill="#3730a3">Interfaces &amp; Contratos Internos</text>
+    <text x="140" y="394" text-anchor="middle" font-size="10" fill="#64748b">Comunicação intermodular segura</text>
+
+    <line x1="140" y1="335" x2="140" y2="353" stroke="#64748b" stroke-width="1.5"/>
+
+    <!-- Camada de Serviços / Integração -->
+    <rect x="20" y="420" width="240" height="42" rx="6" fill="#e0e7ff" stroke="#a5b4fc" stroke-width="1.5"/>
+    <text x="140" y="445" text-anchor="middle" font-size="12" font-weight="600" fill="#3730a3">Camada de Serviços / Regras</text>
+  </g>
+
+  <!-- ================= 3. ARMAZENAMENTO ================= -->
+  <g transform="translate(680, 95)">
+    <rect width="240" height="180" rx="12" fill="#fffbeb" stroke="#f59e0b" stroke-width="2" filter="url(#shadow)"/>
+    <rect width="240" height="42" rx="12" fill="#f59e0b"/>
+    <rect y="30" width="240" height="12" fill="#f59e0b"/>
+    <text x="120" y="26" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">3. ARMAZENAMENTO</text>
+
+    <!-- Cilindro BD -->
+    <g transform="translate(30, 65)">
+      <rect x="0" y="0" width="180" height="85" rx="8" fill="#ffffff" stroke="#fcd34d" stroke-width="1.5"/>
+      <ellipse cx="90" cy="20" rx="45" ry="12" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="90" y="52" text-anchor="middle" font-size="13" font-weight="700" fill="#92400e">Banco de Dados</text>
+      <text x="90" y="70" text-anchor="middle" font-size="11" fill="#78350f">Tabelas &amp; Dados da Aplicação</text>
+    </g>
+  </g>
+
+  <!-- ================= 4. SERVIÇOS EXTERNOS ================= -->
+  <g transform="translate(680, 315)">
+    <rect width="240" height="260" rx="12" fill="#f0fdf4" stroke="#10b981" stroke-width="2" stroke-dasharray="6" filter="url(#shadow)"/>
+    <rect width="240" height="42" rx="12" fill="#10b981"/>
+    <rect y="30" width="240" height="12" fill="#10b981"/>
+    <text x="120" y="26" text-anchor="middle" font-size="14" font-weight="700" fill="#ffffff">4. SERVIÇOS EXTERNOS</text>
+
+    <!-- API de IA -->
+    <rect x="20" y="60" width="200" height="75" rx="8" fill="#ffffff" stroke="#86efac" stroke-width="1.5"/>
+    <text x="120" y="90" text-anchor="middle" font-size="13" font-weight="700" fill="#065f46">API de IA</text>
+    <text x="120" y="110" text-anchor="middle" font-size="11" fill="#047857">Suporte à Acessibilidade</text>
+    <text x="120" y="125" text-anchor="middle" font-size="10" fill="#64748b">(Geração/Adaptação)</text>
+
+    <!-- Banco de Imagens -->
+    <rect x="20" y="150" width="200" height="85" rx="8" fill="#ffffff" stroke="#86efac" stroke-width="1.5"/>
+    <text x="120" y="180" text-anchor="middle" font-size="13" font-weight="700" fill="#065f46">Banco de Imagens</text>
+    <text x="120" y="200" text-anchor="middle" font-size="11" fill="#047857">Hospedagem &amp; Mídias</text>
+    <text x="120" y="218" text-anchor="middle" font-size="10" fill="#64748b">(Upload / CDN em Nuvem)</text>
+  </g>
+
+  <!-- LIGAÇÕES BACKEND -> ARMAZENAMENTO -->
+  <g>
+    <line x1="635" y1="185" x2="680" y2="185" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrow)"/>
+    <rect x="625" y="165" width="45" height="18" rx="3" fill="#ffffff" stroke="#fcd34d" stroke-width="1"/>
+    <text x="647" y="177" text-anchor="middle" font-size="9" font-weight="700" fill="#b45309">ORM/SQL</text>
+  </g>
+
+  <!-- LIGAÇÕES BACKEND -> SERVIÇOS EXTERNOS -->
+  <!-- Linha para API de IA -->
+  <g>
+    <path d="M 635 440 L 655 440 L 655 410 L 680 410" fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="4" marker-end="url(#arrow-dash)"/>
+    <text x="657" y="398" font-size="9" font-weight="700" fill="#047857">HTTP/IA</text>
+  </g>
+
+  <!-- Linha para Banco de Imagens -->
+  <g>
+    <path d="M 635 450 L 655 450 L 655 510 L 680 510" fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="4" marker-end="url(#arrow-dash)"/>
+    <text x="657" y="525" font-size="9" font-weight="700" fill="#047857">Upload</text>
+  </g>
+
+</svg>

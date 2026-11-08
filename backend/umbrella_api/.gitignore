@@ -3,6 +3,8 @@ target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+HelpTest.java
+
 
 ### STS ###
 .apt_generated
@@ -31,3 +33,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+.env
+.env.*
+!.env.example

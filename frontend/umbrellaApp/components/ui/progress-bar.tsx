@@ -1,6 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { Colors, Radius } from '@/constants/theme';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
 
 export type ProgressBarProps = {
   progress: number;
@@ -9,10 +10,15 @@ export type ProgressBarProps = {
 };
 
 export function ProgressBar({ progress, fillColor, height = 8 }: ProgressBarProps) {
+  const { translate } = usePreferences();
   const clamped = Math.max(0, Math.min(100, progress));
 
   return (
-    <View style={[styles.track, { height, borderRadius: height / 2 }]}>
+    <View
+      style={[
+        styles.track,
+        { height, borderRadius: height / 2, backgroundColor: translate(Colors.light.outline) },
+      ]}>
       <View
         style={[
           styles.fill,
@@ -20,7 +26,7 @@ export function ProgressBar({ progress, fillColor, height = 8 }: ProgressBarProp
             width: `${clamped}%`,
             height,
             borderRadius: height / 2,
-            backgroundColor: fillColor ?? Colors.light.primary,
+            backgroundColor: translate(fillColor ?? Colors.light.primary),
           },
         ]}
       />

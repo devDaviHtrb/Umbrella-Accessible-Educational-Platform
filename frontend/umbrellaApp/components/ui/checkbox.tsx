@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors } from '@/constants/theme';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
 
 export type CheckboxProps = {
   checked: boolean;
@@ -10,6 +11,8 @@ export type CheckboxProps = {
 };
 
 export function Checkbox({ checked, onChange, label }: CheckboxProps) {
+  const { translate } = usePreferences();
+
   return (
     <Pressable
       accessibilityRole="checkbox"
@@ -17,7 +20,15 @@ export function Checkbox({ checked, onChange, label }: CheckboxProps) {
       onPress={() => onChange(!checked)}
       style={styles.row}
       hitSlop={8}>
-      <View style={[styles.circle, checked && styles.circleChecked]}>
+      <View
+        style={[
+          styles.circle,
+          { borderColor: translate(Colors.light.outline) },
+          checked && {
+            backgroundColor: translate(Colors.light.primary),
+            borderColor: translate(Colors.light.primary),
+          },
+        ]}>
         {checked ? <IconSymbol name="checkmark" size={12} color={Colors.light.surface} /> : null}
       </View>
       {label ? (

@@ -1,27 +1,19 @@
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import * as Haptics from 'expo-haptics';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { IconSymbol, type IconSymbolName } from '@/components/ui/icon-symbol';
-import { UmbrellaText } from '@/components/ui/umbrella-text';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { StyleSheet, View } from 'react-native';
 
-const TAB_ICON: Record<string, IconSymbolName> = {
-  index: 'square.grid.2x2.fill',
-  courses: 'graduationcap.fill',
-  tutor: 'brain.head.profile',
-  agenda: 'calendar',
-  settings: 'gearshape.fill',
-};
+import { BottomBar } from '@/components/layout/bottom-bar';
+import { UmbrellaText } from '@/components/ui/umbrella-text';
+import { Colors, Spacing } from '@/constants/theme';
+import { buildTabItems } from '@/utils/tab-items';
 
 export function CustomTabBar(props: BottomTabBarProps) {
-  const insets = useSafeAreaInsets();
   const { state, descriptors, navigation } = props ?? {};
 
   if (!state || !Array.isArray(state.routes)) {
     if (__DEV__) {
       return (
-        <View style={[styles.wrapper, styles.debugWrapper]}>
+        <View style={styles.debugWrapper}>
           <UmbrellaText variant="caption" color={Colors.light.error}>
             CustomTabBar: state.routes ausente ou inválido (recebido: {JSON.stringify(state)}).
             Isso indica que o problema está em como o Tabs navigator está montado em
@@ -36,7 +28,7 @@ export function CustomTabBar(props: BottomTabBarProps) {
   if (state.routes.length === 0) {
     if (__DEV__) {
       return (
-        <View style={[styles.wrapper, styles.debugWrapper]}>
+        <View style={styles.debugWrapper}>
           <UmbrellaText variant="caption" color={Colors.light.error}>
             CustomTabBar: state.routes chegou como array vazio. As 5 Tabs.Screen
             declaradas em app/(tabs)/_layout.tsx não estão sendo reconhecidas pelo
@@ -48,94 +40,29 @@ export function CustomTabBar(props: BottomTabBarProps) {
     return null;
   }
 
-  return (
-    <View
-      style={[
-        styles.wrapper,
-        { paddingBottom: Math.max(insets.bottom, Spacing.md) },
-      ]}>
-      {state.routes.map((route: any, index: number) => {
-        const descriptor = descriptors?.[route.key];
-        const options = descriptor?.options ?? {};
+  const items = buildTabItems(state, descriptors, (route) => () => {
+    if (process.env.EXPO_OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
 
-        const label =
-          typeof options.tabBarLabel === 'string'
-            ? options.tabBarLabel
-            : (options.title ?? route.name ?? '');
-        const isFocused = state.index === index;
-        const iconName = TAB_ICON[route.name] ?? 'circle';
+    const event = navigation?.emit({
+      type: 'tabPress',
+      target: route.key,
+      canPreventDefault: true,
+    });
 
-        const onPress = () => {
-          if (process.env.EXPO_OS === 'ios') {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          }
-          const event = navigation?.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true,
-          });
-          if (!isFocused && !event?.defaultPrevented) {
-            navigation?.navigate(route.name);
-          }
-        };
+    if (!event?.defaultPrevented) {
+      navigation?.navigate(route.name, { screen: 'index' });
+    }
+  });
 
-        return (
-          <Pressable
-            key={route.key}
-            accessibilityRole="button"
-            accessibilityState={isFocused ? { selected: true } : {}}
-            accessibilityLabel={String(label)}
-            onPress={onPress}
-            style={styles.tabItem}>
-            <View style={[styles.pill, isFocused && styles.pillActive]}>
-              <IconSymbol
-                name={iconName}
-                size={22}
-                color={isFocused ? Colors.light.primary : Colors.light.tabIconDefault}
-              />
-              <UmbrellaText
-                variant="caption"
-                color={isFocused ? Colors.light.primary : Colors.light.tabIconDefault}
-                style={styles.label}
-                numberOfLines={1}>
-                {label}
-              </UmbrellaText>
-            </View>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
+  return <BottomBar items={items} />;
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    flexDirection: 'row',
-    backgroundColor: Colors.light.surface,
-    borderTopWidth: 1,
-    borderTopColor: Colors.light.outline,
-    paddingTop: Spacing.sm,
-    paddingHorizontal: Spacing.xs,
-  },
   debugWrapper: {
     padding: Spacing.md,
     minHeight: 56,
-  },
-  tabItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  pill: {
-    alignItems: 'center',
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: Radius.lg,
-    minWidth: 64,
-  },
-  pillActive: {
-    backgroundColor: Colors.light.secondaryFixed,
-  },
-  label: {
-    marginTop: 2,
+    backgroundColor: Colors.light.surface,
   },
 });

@@ -1,11 +1,15 @@
 import axios from "axios"
 
+const rawUrl = (process.env.EXPO_PUBLIC_UMBRELLA_PUBLIC_API_URL ?? "http://192.168.0.17:8080/api/");
+const cleanedUrl = rawUrl.replace(/^"|"$/g, "");
+const baseUrl = cleanedUrl.replace(/\/+$/, "");
+
 const umbrellaApi = axios.create({
-    baseURL: process.env.EXPO_PUBLIC_UMBRELA_PUBLIC_API_URL,
-    timeout: parseInt(process.env.EXPO_PUBLIC_REQUEST_TIME_OUT!),
-    headers: {
-        "Content-Type": "aplication/json"
-    }
+  baseURL: baseUrl,
+  timeout: 300000,
+  headers: {
+    "Content-Type": "application/json",
+  },
 })
 
 export default umbrellaApi;

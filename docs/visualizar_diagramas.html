@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Diagramas - Plataforma Umbrella</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      margin: 0;
+      padding: 30px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+      color: #38bdf8;
+    }
+
+    p {
+      color: #94a3b8;
+      font-size: 15px;
+    }
+
+    .card {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 40px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      border: 1px solid #334155;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 18px;
+      color: #f1f5f9;
+    }
+
+    .btn {
+      background: #0284c7;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .btn:hover {
+      background: #0369a1;
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .viewer {
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      overflow-x: auto;
+      border: 1px solid #475569;
+    }
+
+    img,
+    svg {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <h1>Documentação Visual - Plataforma Umbrella</h1>
+    <p>Visualize e baixe os diagramas oficiais diretamente em PNG de alta resolução para seu documento ou apresentação.
+    </p>
+  </div>
+
+  <!-- DIAGRAMA ER COMPLETO -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h2>1. Diagrama Entidade-Relacionamento Completo (Banco de Dados / MER)</h2>
+        <span style="font-size: 13px; color: #10b981; font-weight: 600;">Inclui as 6 novas tabelas do backend:
+          submissões, eventos e IA</span>
+      </div>
+      <button class="btn" onclick="exportToPng('img-er', 'diagrama_er_completo.png')">
+        💾 Baixar como Imagem PNG (Alta Resolução)
+      </button>
+    </div>
+    <div class="viewer">
+      <img id="img-er" src="diagrama_db.webp" alt="Diagrama ER Completo Umbrella">
+    </div>
+  </div>
+
+  <!-- DIAGRAMA DE ARQUITETURA -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <h2>2. Diagrama de Arquitetura do Sistema (4 Blocos Estruturais)</h2>
+        <span style="font-size: 13px; color: #38bdf8;">Frontend, Backend Monólito Modular, Armazenamento e Serviços
+          Externos</span>
+      </div>
+      <button class="btn" onclick="exportToPng('img-arq', 'arquitetura_umbrella.png')">
+        💾 Baixar como Imagem PNG (Alta Resolução)
+      </button>
+    </div>
+    <div class="viewer">
+      <img id="img-arq" src="arquitetura_umbrella.svg" alt="Diagrama de Arquitetura Umbrella">
+    </div>
+  </div>
+
+  <script>
+    function exportToPng(imgId, filename) {
+      const img = document.getElementById(imgId);
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      // Cria imagem temporária para ler dimensões naturais do SVG
+      const tempImg = new Image();
+      tempImg.crossOrigin = 'anonymous';
+      tempImg.src = img.src;
+
+      tempImg.onload = function () {
+        // Escala 2x para garantir resolução nítida no Word/PDF
+        const scale = 2;
+        canvas.width = (tempImg.naturalWidth || 1600) * scale;
+        canvas.height = (tempImg.naturalHeight || 1150) * scale;
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(tempImg, 0, 0, canvas.width, canvas.height);
+
+        const a = document.createElement('a');
+        a.download = filename;
+        a.href = canvas.toDataURL('image/png');
+        a.click();
+      };
+    }
+  </script>
+</body>
+
+</html>

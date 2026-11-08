@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Pressable,
   ScrollView,
   StyleSheet,
+  TextInput,
   View,
 } from 'react-native';
 
@@ -17,16 +19,21 @@ import { ScreenContainer } from '@/components/layout/screen-container';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ModalSheet } from '@/components/ui/modal-sheet';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
-import { Colors, Spacing } from '@/constants/theme';
-import { getHistory, sendMessage, startNewConversation } from '@/services/tutorApi';
+import { PrimaryButton } from '@/components/ui/primary-button';
+import { Colors, Spacing, Radius } from '@/constants/theme';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
+import { useIaTutor } from '@/hooks/api/aiTutor/useIaTutor';
 import type { Conversation, Message } from '@/types/tutor';
 
 const AI_STATUS_LABEL = 'ANALISANDO DADOS DE FOCO';
 const AI_PROVIDER_BADGE = 'Gemini';
 
 export default function TutorScreen() {
+  const { translate } = usePreferences();
+  const { getHistory, startNewConversation, sendMessage, deleteConversation } = useIaTutor();
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [isLoadingConversation, setLoadingConversation] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [isSending, setSending] = useState(false);
 
   const [draft, setDraft] = useState('');
@@ -35,42 +42,84 @@ export default function TutorScreen() {
   const [historyConversations, setHistoryConversations] = useState<Conversation[]>([]);
   const [isHistoryLoading, setHistoryLoading] = useState(false);
 
+  const [isAddChatVisible, setAddChatVisible] = useState(false);
+  const [newChatTitle, setNewChatTitle] = useState('');
+
   const scrollRef = useRef<ScrollView>(null);
 
-  useEffect(() => {
-    async function loadInitialConversation() {
-      setLoadingConversation(true);
+  const loadInitialConversation = useCallback(async () => {
+    setLoadingConversation(true);
+    setLoadFailed(false);
+    try {
       const history = await getHistory();
-      const mostRecent = history[0] ?? (await startNewConversation());
+      const mostRecent = history[0] ?? (await startNewConversation('Nova Conversa'));
       setActiveConversation(mostRecent);
+    } catch {
+      setLoadFailed(true);
+    } finally {
       setLoadingConversation(false);
     }
-    loadInitialConversation();
   }, []);
+
+  useEffect(() => {
+    loadInitialConversation();
+  }, [loadInitialConversation]);
 
   useEffect(() => {
     scrollRef.current?.scrollToEnd({ animated: true });
   }, [activeConversation?.messages.length]);
 
-  const handleNewConversation = useCallback(async () => {
-    const conversation = await startNewConversation();
-    setActiveConversation(conversation);
-    setDraft('');
+  const handleOpenNewChatModal = useCallback(() => {
     setHistoryVisible(false);
+    setNewChatTitle('');
+    setAddChatVisible(true);
   }, []);
+
+  const handleConfirmNewConversation = async () => {
+    const titleToUse = newChatTitle.trim() || 'Nova conversa';
+    setAddChatVisible(false);
+    try {
+      const conversation = await startNewConversation(titleToUse);
+      setActiveConversation(conversation);
+      setDraft('');
+    } catch {
+      Alert.alert('Erro', 'Não foi possível criar a conversa. Tente novamente.');
+    }
+  };
 
   const handleOpenHistory = useCallback(async () => {
     setHistoryVisible(true);
     setHistoryLoading(true);
-    const history = await getHistory();
-    setHistoryConversations(history);
-    setHistoryLoading(false);
+    try {
+      const history = await getHistory();
+      setHistoryConversations(history);
+    } catch {
+      setHistoryConversations([]);
+      Alert.alert('Erro', 'Não foi possível carregar o histórico de conversas.');
+    } finally {
+      setHistoryLoading(false);
+    }
   }, []);
 
   function handleSelectConversation(conversation: Conversation) {
     setActiveConversation(conversation);
     setHistoryVisible(false);
   }
+
+  const handleDeleteChat = async (conversationId: string) => {
+    try {
+      await deleteConversation(conversationId);
+
+      const updatedHistory = historyConversations.filter((c) => c.id !== conversationId);
+      setHistoryConversations(updatedHistory);
+
+      if (activeConversation?.id === conversationId) {
+        setActiveConversation(updatedHistory[0] ?? (await startNewConversation('Nova Conversa')));
+      }
+    } catch {
+      Alert.alert('Erro', 'Não foi possível excluir a conversa. Tente novamente.');
+    }
+  };
 
   async function handleSend() {
     const trimmed = draft.trim();
@@ -93,6 +142,8 @@ export default function TutorScreen() {
     try {
       const aiReply = await sendMessage(activeConversation.id, trimmed);
       setActiveConversation((prev) => (prev ? { ...prev, messages: [...prev.messages, aiReply] } : prev));
+    } catch {
+      Alert.alert('Erro', 'Não foi possível enviar a mensagem. Tente novamente.');
     } finally {
       setSending(false);
     }
@@ -113,8 +164,8 @@ export default function TutorScreen() {
               <Pressable
                 accessibilityRole="button"
                 accessibilityLabel="Nova conversa"
-                onPress={handleNewConversation}
-                style={styles.fab}>
+                onPress={handleOpenNewChatModal}
+                style={[styles.fab, { backgroundColor: translate(Colors.light.success) }]}>
                 <IconSymbol name="plus" size={22} color={Colors.light.surface} />
               </Pressable>
               <ChatInput value={draft} onChangeText={setDraft} onSend={handleSend} />
@@ -123,9 +174,16 @@ export default function TutorScreen() {
         }>
         <AITutorHeader statusLabel={AI_STATUS_LABEL} providerBadge={AI_PROVIDER_BADGE} onMenuPress={handleOpenHistory} />
 
-        {isLoadingConversation || !activeConversation ? (
+        {isLoadingConversation ? (
           <View style={styles.loadingWrapper}>
             <ActivityIndicator color={Colors.light.primary} />
+          </View>
+        ) : loadFailed || !activeConversation ? (
+          <View style={styles.loadingWrapper}>
+            <UmbrellaText variant="body" color={Colors.light.textSecondary}>
+              Não foi possível carregar o Tutor IA.
+            </UmbrellaText>
+            <PrimaryButton label="Tentar de novo" onPress={loadInitialConversation} />
           </View>
         ) : (
           <View style={styles.messageList}>
@@ -149,8 +207,27 @@ export default function TutorScreen() {
           conversations={historyConversations}
           isLoading={isHistoryLoading}
           onSelect={handleSelectConversation}
-          onNewConversation={handleNewConversation}
+          onDeleteConversation={handleDeleteChat}
+          onNewConversation={handleOpenNewChatModal}
+          activeConversationId={activeConversation?.id}
         />
+      </ModalSheet>
+
+      <ModalSheet visible={isAddChatVisible} onClose={() => setAddChatVisible(false)} title="Criar Nova Conversa">
+        <View style={styles.modalContent}>
+          <UmbrellaText variant="body" color={Colors.light.textSecondary}>
+            Dê um título para a sua nova conversa com a IA:
+          </UmbrellaText>
+          <TextInput
+            style={styles.modalInput}
+            placeholder="Ex: Dúvidas sobre Matemática"
+            placeholderTextColor={Colors.light.textSecondary}
+            value={newChatTitle}
+            onChangeText={setNewChatTitle}
+            autoFocus
+          />
+          <PrimaryButton label="Criar Conversa" onPress={handleConfirmNewConversation} />
+        </View>
       </ModalSheet>
     </KeyboardAvoidingView>
   );
@@ -194,5 +271,19 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 3,
+  },
+  modalContent: {
+    gap: Spacing.md,
+    paddingVertical: Spacing.sm,
+  },
+  modalInput: {
+    backgroundColor: Colors.light.surfaceContainerLow,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    fontSize: 16,
+    color: Colors.light.text,
+    borderWidth: 1,
+    borderColor: Colors.light.outline,
   },
 });
