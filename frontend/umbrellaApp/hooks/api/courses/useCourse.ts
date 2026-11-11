@@ -74,21 +74,11 @@ export function useCourseDetails(id: string) {
 
                 const modulesArray: any[] = Array.isArray(modulesRes) ? modulesRes : [];
                 setModules(
-                    modulesArray.map((m, index): CourseModule => {
-                        const lessons: any[] = m.lessons ?? [];
-                        return {
-                            id: String(m.id),
-                            number: String(index + 1),
-                            title: m.name ?? m.title ?? '',
-                            subtitle: `${lessons.length} aulas`,
-                            lessons: lessons.map((l) => ({
-                                id: String(l.id),
-                                type: 'video',
-                                title: l.title ?? '',
-                                meta: l.duration ?? '10m',
-                            })),
-                        };
-                    }),
+                    modulesArray.map((m, index): CourseModule => ({
+                        id: String(m.id),
+                        number: String(index + 1),
+                        title: m.name ?? m.title ?? '',
+                    })),
                 );
                 setDetailError(null);
             } catch (err) {

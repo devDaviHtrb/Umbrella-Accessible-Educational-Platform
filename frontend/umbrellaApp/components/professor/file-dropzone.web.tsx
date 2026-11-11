@@ -13,7 +13,8 @@ function hasFiles(event: DragEvent<HTMLDivElement>): boolean {
   return Array.from(event.dataTransfer?.types ?? []).includes('Files');
 }
 
-export function FileDropzone({ kind, files, onChange, disabled = false }: FileDropzoneProps) {
+export function FileDropzone({ kind, files, onChange, disabled = false, maxFiles }: FileDropzoneProps) {
+  const single = maxFiles === 1;
   const rule = materialFileRules[kind];
   const inputRef = useRef<HTMLInputElement>(null);
   const dragDepth = useRef(0);
@@ -32,11 +33,11 @@ export function FileDropzone({ kind, files, onChange, disabled = false }: FileDr
     const { accepted, errors: rejected } = acceptMaterialFiles(
       incoming.map((file) => ({ name: file.name, size: file.size, type: file.type, blob: file })),
       kind,
-      files,
+      single ? [] : files,
     );
 
     setErrors(rejected);
-    if (accepted.length > 0) onChange([...files, ...accepted]);
+    if (accepted.length > 0) onChange(single ? accepted.slice(0, 1) : [...files, ...accepted]);
   }
 
   function removeFile(id: string) {
@@ -103,7 +104,7 @@ export function FileDropzone({ kind, files, onChange, disabled = false }: FileDr
       <input
         ref={inputRef}
         type="file"
-        multiple
+        multiple={!single}
         accept={accept}
         style={{ display: 'none' }}
         onChange={handleInputChange}

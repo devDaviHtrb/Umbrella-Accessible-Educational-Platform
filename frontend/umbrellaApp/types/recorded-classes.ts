@@ -9,7 +9,7 @@ export type RecordedLesson = {
   category: string;
   title: string;
   description: string;
-  durationLabel: string;
-  dateLabel: string;
-  imageTone: string;
+  moduleTitle: string;
+  sizeLabel: string;
+  url: string;
 };

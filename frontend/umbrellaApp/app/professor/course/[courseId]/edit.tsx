@@ -1,16 +1,15 @@
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { StyleSheet } from 'react-native';
 
-import { CourseForm } from '@/components/professor/course-form';
+import { CourseForm, type CourseFormSubmit } from '@/components/professor/course-form';
 import { LoadError } from '@/components/professor/load-error';
 import { ScreenContainer } from '@/components/layout/screen-container';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
+import { professorRoutes } from '@/constants/routes';
 import { Colors, Spacing } from '@/constants/theme';
 import { useProfessorCourses } from '@/hooks/api/professor/useProfessorCourses';
 import { useFocusData } from '@/hooks/use-focus-data';
-
-const READ_ONLY_NOTICE =
-  'Estes são os dados atuais do curso. O servidor ainda não permite alterá-los, por isso não é possível salvar edições por aqui.';
+import { useSubmit } from '@/hooks/use-submit';
 
 async function loadCourseForm(
   courseId: string,
@@ -23,9 +22,31 @@ async function loadCourseForm(
 
 export default function EditCourseScreen() {
   const { courseId } = useLocalSearchParams<{ courseId: string }>();
-  const { getCourseBasics, getCategories } = useProfessorCourses();
+  const { getCourseBasics, getCategories, updateCourse, uploadCourseImage } = useProfessorCourses();
   const { data, loading, error, retry } = useFocusData(() =>
     loadCourseForm(courseId, getCourseBasics, getCategories),
+  );
+
+  const { submit, submitting, error: submitError } = useSubmit(
+    async (input: CourseFormSubmit) => {
+      let imageUrl: string | undefined;
+      let imagePublicId: string | undefined;
+      if (input.pickedImage) {
+        const uploaded = await uploadCourseImage(input.pickedImage);
+        imageUrl = uploaded.url;
+        imagePublicId = uploaded.publicId;
+      }
+
+      await updateCourse(courseId, {
+        title: input.title,
+        description: input.description,
+        categoryId: input.categoryId,
+        imageUrl,
+        imagePublicId,
+      });
+      router.replace(professorRoutes.course(courseId));
+    },
+    { errorMessage: 'Não foi possível salvar as alterações. Tente novamente.' },
   );
 
   if (loading) {
@@ -57,18 +78,16 @@ export default function EditCourseScreen() {
   const { course, categories } = data;
 
   return (
-    <ScreenContainer disableTopInset contentContainerStyle={styles.content}>
+    <ScreenContainer disableTopInset contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       <CourseForm
         key={course.id}
         categories={categories}
-        initialValues={{
-          title: course.title,
-          description: course.description,
-          categoryId: course.categoryId,
-          difficultyLevel: course.difficultyLevel,
-          imageUrl: course.imageUrl,
-        }}
-        readOnlyNotice={READ_ONLY_NOTICE}
+        initialValues={{ title: course.title, description: course.description, categoryId: course.categoryId }}
+        initialImageUrl={course.imageUrl}
+        submitLabel="Salvar Alterações"
+        submitting={submitting}
+        submitError={submitError}
+        onSubmit={submit}
       />
     </ScreenContainer>
   );

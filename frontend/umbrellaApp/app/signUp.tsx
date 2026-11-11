@@ -80,15 +80,15 @@ export default function SignUpScreen() {
   }
 
   return (
-    <ScreenContainer header={<AppHeader />} keyboardShouldPersistTaps="handled">
-      <View>
-        <UmbrellaText variant="display">
-          Crie sua{'\n'}
+    <ScreenContainer header={<AppHeader centered />} keyboardShouldPersistTaps="handled">
+      <View style={styles.headerContainer}>
+        <UmbrellaText variant="display" style={styles.centeredText}>
+          Crie sua{' '}
           <UmbrellaText variant="display" color={Colors.light.primary}>
             Jornada.
           </UmbrellaText>
         </UmbrellaText>
-        <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.subtitle}>
+        <UmbrellaText variant="body" color={Colors.light.textSecondary} style={[styles.subtitle, styles.centeredText]}>
           Inicie sua imersão no ecossistema Umbrella. Um ambiente unificado para gerenciar seus módulos de
           aprendizado e progresso.
         </UmbrellaText>
@@ -98,7 +98,7 @@ export default function SignUpScreen() {
         <View>
           <UmbrellaText variant="title">Criar Conta</UmbrellaText>
           <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.cardSubtitle}>
-            Cadastre as credenciais do seu nó de acesso estudantil.
+            Cadastre as credenciais do seu acesso estudantil.
           </UmbrellaText>
         </View>
 
@@ -188,7 +188,7 @@ export default function SignUpScreen() {
 
         <View style={styles.divider} />
 
-        <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.centered}>
+        <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.centeredText}>
           Já possui registro?
         </UmbrellaText>
 
@@ -201,7 +201,7 @@ export default function SignUpScreen() {
       </Card>
 
       <View style={styles.footer}>
-        <UmbrellaText variant="caption" color={Colors.light.textSecondary} style={styles.centered}>
+        <UmbrellaText variant="caption" color={Colors.light.textSecondary} style={styles.centeredText}>
           Políticas Acadêmicas · Termos de Segurança
         </UmbrellaText>
       </View>
@@ -210,8 +210,16 @@ export default function SignUpScreen() {
 }
 
 const styles = StyleSheet.create({
+  headerContainer: {
+    alignItems: 'center', 
+    marginBottom: Spacing.lg,
+  },
   subtitle: {
     marginTop: Spacing.md,
+    textAlign: 'center',
+  },
+  centeredText: {
+    textAlign: 'center', 
   },
   card: {
     gap: Spacing.lg,
@@ -227,11 +235,9 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: Colors.light.outline,
   },
-  centered: {
-    textAlign: 'center',
-  },
   footer: {
     gap: Spacing.xs,
     paddingBottom: Spacing.lg,
+    marginTop: Spacing.lg,
   },
 });

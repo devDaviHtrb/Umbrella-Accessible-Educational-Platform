@@ -8,7 +8,6 @@ export interface CourseApiDto {
   subjectId?: number | null;
   subjectName?: string | null;
   imageUrl?: string | null;
-  studentsCount?: number | null;
 }
 
 export interface CourseDetailApiDto {
@@ -27,14 +26,6 @@ export interface SubjectApiDto {
   name: string;
 }
 
-export interface EnrolledStudentApiDto {
-  id: number;
-  name?: string | null;
-  email?: string | null;
-  neurodivergence?: string | null;
-  avatarUrl?: string | null;
-}
-
 export interface ModuleApiDto {
   id: number;
   name: string;
@@ -44,6 +35,15 @@ export interface ModuleApiDto {
 }
 
 export interface CourseCreateRequest {
+  name: string;
+  description: string;
+  difficulty_level: number;
+  subjectId: number;
+  imageUrl?: string;
+  imagePublicId?: string;
+}
+
+export interface CourseUpdateRequest {
   name: string;
   description: string;
   difficulty_level: number;
@@ -82,10 +82,6 @@ export interface ActivityCreateRequest {
 export interface SubmissionGradeRequest {
   score: number;
   status: string;
-}
-
-export interface AnswerScoreRequest {
-  score: number;
 }
 
 export interface QuestionCreateRequest {

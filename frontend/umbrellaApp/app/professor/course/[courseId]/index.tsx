@@ -108,6 +108,12 @@ export default function ProfessorCourseOverviewScreen() {
           onPress={() => router.push(professorRoutes.materials(course.id))}
         />
         <ActionRow
+          icon="rectangle.stack.fill"
+          title="Aulas Gravadas"
+          subtitle="Envie videoaulas, como conteúdos em Libras, para este curso"
+          onPress={() => router.push(professorRoutes.newRecordedForCourse(course.id))}
+        />
+        <ActionRow
           icon="doc.fill"
           title="Atividades"
           subtitle="Quizzes, entregas e discussões"
@@ -119,12 +125,6 @@ export default function ProfessorCourseOverviewScreen() {
           subtitle="Acompanhe a turma e corrija trabalhos"
           badgeLabel={pending > 0 ? `${pending} para corrigir` : undefined}
           onPress={() => router.push(professorRoutes.students(course.id))}
-        />
-        <ActionRow
-          icon="video.fill"
-          title="Aula ao Vivo"
-          subtitle="Transmita para a turma e converse no chat"
-          onPress={() => router.push(professorRoutes.live(course.id))}
         />
       </View>
     </ScreenContainer>

@@ -33,11 +33,27 @@ export default function CoursesStackLayout() {
         }}
       />
       <Stack.Screen
-        name="class/[lessonId]"
+        name="messages"
         options={{
           headerShown: true,
-          headerTitle: '',
-          headerBackTitle: 'Voltar',
+          headerTitle: 'Mensagens',
+          headerBackTitle: 'Cursos',
+        }}
+      />
+      <Stack.Screen
+        name="chat"
+        options={{
+          headerShown: true,
+          headerTitle: 'Conversa',
+          headerBackTitle: 'Mensagens',
+        }}
+      />
+      <Stack.Screen
+        name="lesson"
+        options={{
+          headerShown: true,
+          headerTitle: 'Aula Gravada',
+          headerBackTitle: 'Aulas',
         }}
       />
       <Stack.Screen

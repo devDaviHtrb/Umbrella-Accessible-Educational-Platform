@@ -1,29 +1,40 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { LessonCard } from '@/components/recorded/lesson-card';
+import { LoadError } from '@/components/professor/load-error';
 import { ScreenContainer } from '@/components/layout/screen-container';
 import { CategoryChip } from '@/components/ui/category-chip';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { SearchInput } from '@/components/ui/search-input';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
-import {
-  ALL_RECORDED_CATEGORY_ID,
-  mockRecordedCategories,
-  mockRecordedLessons,
-} from '@/constants/mock/recorded-classes';
+import { useRecordedLessons } from '@/hooks/api/courses/useRecordedLessons';
+import type { RecordedCategory } from '@/types/recorded-classes';
+
+const ALL_CATEGORY_ID = 'todos';
 
 export default function RecordedClassesScreen() {
-  const [selectedCategory, setSelectedCategory] = useState(ALL_RECORDED_CATEGORY_ID);
+  const { lessons, loading, error, reload } = useRecordedLessons();
+  const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORY_ID);
   const [query, setQuery] = useState('');
+  const [sortByTitle, setSortByTitle] = useState(false);
+
+  const categories = useMemo<RecordedCategory[]>(() => {
+    const byId = new Map<string, string>();
+    lessons.forEach((lesson) => byId.set(lesson.categoryId, lesson.category));
+    return [
+      { id: ALL_CATEGORY_ID, label: 'Todos' },
+      ...Array.from(byId, ([id, label]) => ({ id, label })),
+    ];
+  }, [lessons]);
 
   const filteredLessons = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
 
-    return mockRecordedLessons.filter((lesson) => {
-      const matchesCategory =
-        selectedCategory === ALL_RECORDED_CATEGORY_ID || lesson.categoryId === selectedCategory;
+    const result = lessons.filter((lesson) => {
+      const matchesCategory = selectedCategory === ALL_CATEGORY_ID || lesson.categoryId === selectedCategory;
       const matchesQuery =
         normalizedQuery.length === 0 ||
         lesson.title.toLowerCase().includes(normalizedQuery) ||
@@ -32,39 +43,33 @@ export default function RecordedClassesScreen() {
 
       return matchesCategory && matchesQuery;
     });
-  }, [selectedCategory, query]);
+
+    return sortByTitle ? [...result].sort((a, b) => a.title.localeCompare(b.title, 'pt-BR')) : result;
+  }, [lessons, selectedCategory, query, sortByTitle]);
 
   return (
     <ScreenContainer disableTopInset>
       <View>
         <UmbrellaText variant="display">Aulas Gravadas</UmbrellaText>
         <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.subtitle}>
-          Acesse o histórico completo de lições e revise o conteúdo quando desejar.
+          Revise os vídeos dos módulos dos cursos em que você está matriculado.
         </UmbrellaText>
       </View>
 
-      <SearchInput
-        placeholder="Buscar por título ou tema..."
-        value={query}
-        onChangeText={setQuery}
-      />
+      <SearchInput placeholder="Buscar por título ou tema..." value={query} onChangeText={setQuery} />
 
       <View style={styles.toolbarRow}>
-        <Pressable style={styles.toolbarButton} accessibilityRole="button">
-          <IconSymbol name="line.3.horizontal.decrease" size={16} color={Colors.light.text} />
-          <UmbrellaText variant="bodyMedium">Filtrar</UmbrellaText>
-        </Pressable>
-        <Pressable style={styles.toolbarButton} accessibilityRole="button">
+        <Pressable
+          style={styles.toolbarButton}
+          accessibilityRole="button"
+          onPress={() => setSortByTitle((current) => !current)}>
           <IconSymbol name="arrow.up.arrow.down" size={16} color={Colors.light.text} />
-          <UmbrellaText variant="bodyMedium">Ordenar</UmbrellaText>
+          <UmbrellaText variant="bodyMedium">{sortByTitle ? 'Ordem: A–Z' : 'Ordem: padrão'}</UmbrellaText>
         </Pressable>
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chipRow}>
-        {mockRecordedCategories.map((category) => (
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+        {categories.map((category) => (
           <CategoryChip
             key={category.id}
             label={category.label}
@@ -75,13 +80,35 @@ export default function RecordedClassesScreen() {
       </ScrollView>
 
       <View style={styles.lessonList}>
-        {filteredLessons.length === 0 ? (
+        {loading && lessons.length === 0 ? (
+          <ActivityIndicator color={Colors.light.primary} />
+        ) : error && lessons.length === 0 ? (
+          <LoadError message={error} onRetry={reload} />
+        ) : filteredLessons.length === 0 ? (
           <UmbrellaText variant="body" color={Colors.light.textSecondary}>
-            Nenhuma aula encontrada para essa busca.
+            {lessons.length === 0
+              ? 'Nenhum vídeo disponível nos seus cursos ainda.'
+              : 'Nenhuma aula encontrada para essa busca.'}
           </UmbrellaText>
         ) : (
           filteredLessons.map((lesson) => (
-            <LessonCard key={lesson.id} lesson={lesson} />
+            <LessonCard
+              key={lesson.id}
+              lesson={lesson}
+              onPress={() =>
+                router.push({
+                  pathname: '/courses/lesson',
+                  params: {
+                    title: lesson.title,
+                    description: lesson.description,
+                    url: lesson.url,
+                    category: lesson.category,
+                    moduleTitle: lesson.moduleTitle,
+                    sizeLabel: lesson.sizeLabel,
+                  },
+                })
+              }
+            />
           ))
         )}
       </View>

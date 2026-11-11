@@ -1,6 +1,5 @@
 import { Link } from 'expo-router';
-import { Image } from 'expo-image';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { ImageBackground, Pressable, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -20,16 +19,7 @@ export function CourseCard({ course, isEnrolled }: CourseCardProps) {
     <Link href={`/courses/${course.id}`} asChild>
       <Pressable accessibilityRole="button">
         <Card padded={false}>
-          <View style={[styles.image, { backgroundColor: course.imageTone }]}>
-            {course.imageUrl ? (
-              <Image
-                source={{ uri: course.imageUrl }}
-                style={StyleSheet.absoluteFill}
-                contentFit="cover"
-                transition={150}
-                accessibilityLabel={`Capa do curso ${course.title}`}
-              />
-            ) : null}
+          <CourseCardImage imageUrl={course.imageUrl} imageTone={course.imageTone}>
             <View style={styles.badgeRow}>
               <View style={styles.badge}>
                 <UmbrellaText variant="caption" color={Colors.light.surface} style={styles.badgeText}>
@@ -49,7 +39,7 @@ export function CourseCard({ course, isEnrolled }: CourseCardProps) {
                 <IconSymbol name="chart.line.uptrend.xyaxis" size={16} color={Colors.light.primary} />
               </View>
             ) : null}
-          </View>
+          </CourseCardImage>
 
           <View style={styles.content}>
             <UmbrellaText variant="label" color={Colors.light.primary}>
@@ -72,6 +62,29 @@ export function CourseCard({ course, isEnrolled }: CourseCardProps) {
       </Pressable>
     </Link>
   );
+}
+
+function CourseCardImage({
+  imageUrl,
+  imageTone,
+  children,
+}: {
+  imageUrl?: string;
+  imageTone: string;
+  children: React.ReactNode;
+}) {
+  if (imageUrl) {
+    return (
+      <ImageBackground
+        source={{ uri: imageUrl }}
+        style={[styles.image, { backgroundColor: imageTone }]}
+        imageStyle={styles.imageRadius}>
+        {children}
+      </ImageBackground>
+    );
+  }
+
+  return <View style={[styles.image, { backgroundColor: imageTone }]}>{children}</View>;
 }
 
 function CourseCardFooter({ footer }: { footer: Course['footer'] }) {
@@ -112,6 +125,11 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: Radius.lg,
     borderTopRightRadius: Radius.lg,
     justifyContent: 'flex-start',
+    overflow: 'hidden',
+  },
+  imageRadius: {
+    borderTopLeftRadius: Radius.lg,
+    borderTopRightRadius: Radius.lg,
   },
   badgeRow: {
     flexDirection: 'row',

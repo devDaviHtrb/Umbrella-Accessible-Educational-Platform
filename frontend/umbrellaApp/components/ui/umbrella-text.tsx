@@ -34,7 +34,7 @@ export function UmbrellaText({ variant = 'body', color, style, children, ...rest
     Typography[variant],
     { color: color ?? Colors.light.text },
     style,
-  ]);
+  ]) ?? {};
 
   const resolved = {
     ...flat,

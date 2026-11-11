@@ -1,11 +1,19 @@
-import { forwardRef, useMemo } from 'react';
-import { ScrollView, StyleSheet, View, type ScrollViewProps } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { forwardRef, useMemo } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  View,
+  type ScrollViewProps,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { createReadAloudRegistry, ReadAloudContext } from '@/components/layout/read-aloud';
-import { ReadAloudButton } from '@/components/layout/read-aloud-button';
-import { Colors, Spacing } from '@/constants/theme';
-import { usePreferences } from '@/hooks/preferences/preferencesContext';
+import {
+  createReadAloudRegistry,
+  ReadAloudContext,
+} from "@/components/layout/read-aloud";
+import { ReadAloudButton } from "@/components/layout/read-aloud-button";
+import { Colors, Spacing } from "@/constants/theme";
+import { usePreferences } from "@/hooks/preferences/preferencesContext";
 
 export type ScreenContainerProps = ScrollViewProps & {
   header?: React.ReactNode;
@@ -13,8 +21,19 @@ export type ScreenContainerProps = ScrollViewProps & {
   disableTopInset?: boolean;
 };
 
-export const ScreenContainer = forwardRef<ScrollView, ScreenContainerProps>(function ScreenContainer(
-  { header, footer, disableTopInset = false, children, contentContainerStyle, style, ...rest },
+export const ScreenContainer = forwardRef<
+  ScrollView,
+  ScreenContainerProps
+>(function ScreenContainer(
+  {
+    header,
+    footer,
+    disableTopInset = false,
+    children,
+    contentContainerStyle,
+    style,
+    ...rest
+  },
   ref,
 ) {
   const insets = useSafeAreaInsets();
@@ -30,7 +49,8 @@ export const ScreenContainer = forwardRef<ScrollView, ScreenContainerProps>(func
             paddingTop: disableTopInset ? 0 : insets.top,
             backgroundColor: translate(Colors.light.background),
           },
-        ]}>
+        ]}
+      >
         {header}
         <ScrollView
           ref={ref}
@@ -41,12 +61,16 @@ export const ScreenContainer = forwardRef<ScrollView, ScreenContainerProps>(func
             contentContainerStyle,
           ]}
           showsVerticalScrollIndicator={false}
-          {...rest}>
+          {...rest}
+        >
           {children}
         </ScrollView>
         {footer}
         {preferences.textToSpeech ? (
-          <ReadAloudButton registry={registry} bottomOffset={footer ? Spacing.xxxl * 3 : insets.bottom} />
+          <ReadAloudButton
+            registry={registry}
+            bottomOffset={footer ? Spacing.xxxl * 3 : insets.bottom}
+          />
         ) : null}
       </View>
     </ReadAloudContext.Provider>

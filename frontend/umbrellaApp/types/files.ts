@@ -15,4 +15,5 @@ export type FileDropzoneProps = {
   files: PickedFile[];
   onChange: (files: PickedFile[]) => void;
   disabled?: boolean;
+  maxFiles?: number;
 };
