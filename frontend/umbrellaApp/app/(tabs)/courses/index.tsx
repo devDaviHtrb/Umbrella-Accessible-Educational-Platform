@@ -1,17 +1,16 @@
-import { Link, useFocusEffect } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { useCallback, useRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
+import { ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
 
 import { AppHeader } from '@/components/layout/app-header';
 import { ScreenContainer } from '@/components/layout/screen-container';
 import { SectionHeader } from '@/components/layout/section-header';
 import { CourseCard } from '@/components/courses/course-card';
-import { Card } from '@/components/ui/card';
+import { ShortcutRow } from '@/components/courses/shortcut-row';
 import { CategoryChip } from '@/components/ui/category-chip';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { SearchInput } from '@/components/ui/search-input';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import { useCourses } from '@/hooks/api/courses/useCourse';
 
 export default function CoursesScreen() {
@@ -83,22 +82,19 @@ export default function CoursesScreen() {
         </ScrollView>
       </View>
 
-      <Link href="/courses/recorded" asChild>
-        <Pressable accessibilityRole="button">
-          <Card style={styles.recordedRow}>
-            <View style={styles.recordedIcon}>
-              <IconSymbol name="rectangle.stack.fill" size={18} color={Colors.light.primary} />
-            </View>
-            <View style={styles.recordedText}>
-              <UmbrellaText variant="bodyMedium">Aulas Gravadas</UmbrellaText>
-              <UmbrellaText variant="caption" color={Colors.light.textSecondary}>
-                Reveja o conteúdo das suas aulas quando quiser
-              </UmbrellaText>
-            </View>
-            <IconSymbol name="chevron.right" size={18} color={Colors.light.textSecondary} />
-          </Card>
-        </Pressable>
-      </Link>
+      <ShortcutRow
+        href="/courses/recorded"
+        icon="rectangle.stack.fill"
+        title="Aulas Gravadas"
+        subtitle="Reveja o conteúdo das suas aulas quando quiser"
+      />
+
+      <ShortcutRow
+        href="/courses/messages"
+        icon="bubble.left.and.bubble.right"
+        title="Mensagens"
+        subtitle="Converse com instrutores e com a turma dos seus cursos"
+      />
 
       <View style={styles.courseList}>
         {filteredCourses.length === 0 && !loading ? (
@@ -122,22 +118,6 @@ const styles = StyleSheet.create({
   chipRow: {
     gap: Spacing.sm,
     paddingRight: Spacing.lg,
-  },
-  recordedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  recordedIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.light.secondaryFixed,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  recordedText: {
-    flex: 1,
   },
   courseList: {
     gap: Spacing.lg,

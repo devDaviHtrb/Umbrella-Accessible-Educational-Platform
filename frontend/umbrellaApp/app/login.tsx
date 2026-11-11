@@ -65,15 +65,15 @@ export default function LoginScreen() {
   }
 
   return (
-    <ScreenContainer header={<AppHeader />}>
-      <View>
-        <UmbrellaText variant="display">
-          Bem-vindo à{'\n'}
+    <ScreenContainer header={<AppHeader centered />}>
+      <View style={styles.headerContainer}>
+        <UmbrellaText variant="display" style={styles.centeredText}>
+          Bem-vindo à{' '}
           <UmbrellaText variant="display" color={Colors.light.primary}>
             Umbrella.
           </UmbrellaText>
         </UmbrellaText>
-        <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.subtitle}>
+        <UmbrellaText variant="body" color={Colors.light.textSecondary} style={[styles.subtitle, styles.centeredText]}>
           Acesse seu santuário digital para o aprendizado. Projetado para o conforto cognitivo,
           estruturado para o seu sucesso acadêmico.
         </UmbrellaText>
@@ -83,7 +83,7 @@ export default function LoginScreen() {
         <View>
           <UmbrellaText variant="title">Entrar</UmbrellaText>
           <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.cardSubtitle}>
-            Bem-vindo de volta, Estudante. Por favor, insira seus dados.
+           Por favor, insira seus dados.
           </UmbrellaText>
         </View>
 
@@ -142,7 +142,7 @@ export default function LoginScreen() {
 
         <View style={styles.divider} />
 
-        <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.centered}>
+        <UmbrellaText variant="body" color={Colors.light.textSecondary} style={styles.centeredText}>
           Novo na Umbrella?
         </UmbrellaText>
 
@@ -154,10 +154,10 @@ export default function LoginScreen() {
       </Card>
 
       <View style={styles.footer}>
-        <UmbrellaText variant="caption" color={Colors.light.textSecondary} style={styles.centered}>
+        <UmbrellaText variant="caption" color={Colors.light.textSecondary} style={styles.centeredText}>
           Centro de Privacidade · Recursos Acadêmicos · Suporte
         </UmbrellaText>
-        <UmbrellaText variant="caption" color={Colors.light.textSecondary} style={styles.centered}>
+        <UmbrellaText variant="caption" color={Colors.light.textSecondary} style={styles.centeredText}>
           Nó de Acesso Seguro · v2.4.0
         </UmbrellaText>
       </View>
@@ -166,8 +166,16 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
+  headerContainer: {
+    alignItems: 'center', 
+    marginBottom: Spacing.lg,
+  },
   subtitle: {
     marginTop: Spacing.md,
+    textAlign: 'center',
+  },
+  centeredText: {
+    textAlign: 'center', 
   },
   card: {
     gap: Spacing.lg,
@@ -183,11 +191,9 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: Colors.light.outline,
   },
-  centered: {
-    textAlign: 'center',
-  },
   footer: {
     gap: Spacing.xs,
     paddingBottom: Spacing.lg,
+    marginTop: Spacing.lg,
   },
 });

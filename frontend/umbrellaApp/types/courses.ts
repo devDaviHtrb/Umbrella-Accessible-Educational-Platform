@@ -20,17 +20,8 @@ export type Course = {
   footer: CourseFooter;
 };
 
-export type CourseLesson = {
-  id: string;
-  type: 'video' | 'doc';
-  title: string;
-  meta: string;
-};
-
 export type CourseModule = {
   id: string;
   number: string;
   title: string;
-  subtitle: string;
-  lessons: CourseLesson[];
 };

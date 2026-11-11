@@ -47,6 +47,16 @@ public class CourseController {
     }
 
     @PreAuthorize("@securityEvaluator.isCourseOwner(#id, principal)")
+    @PutMapping("/{id}")
+    public ResponseEntity<CourseResponseDto> updateCourse(
+            @PathVariable Long id,
+            @RequestBody @Valid CourseDto courseData) {
+        Courses course = courseService.updateCourse(id, courseData);
+        UserModel creator = courseService.getCourseCreatorById(id);
+        return ResponseEntity.ok(CourseResponseDto.fromEntity(course, creator));
+    }
+
+    @PreAuthorize("@securityEvaluator.isCourseOwner(#id, principal)")
     @DeleteMapping("/{id}")
     public ResponseEntity<GenericResponse> deleteCourse(@PathVariable Long id) {
         return ResponseEntity.ok(courseService.deleteCourse(id));

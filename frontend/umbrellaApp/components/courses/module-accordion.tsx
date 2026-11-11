@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Pressable, StyleSheet, View, ActivityIndicator } from 'react-native';
 
-import { ResourceListItem } from '@/components/courses/resource-list-item';
 import { ModuleMaterialGrid } from '@/components/courses/module-material-grid';
 import { Card } from '@/components/ui/card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -9,7 +8,7 @@ import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import { useActivity, useModuleActivities } from '@/hooks/api/activities/useActivity';
 import { useModuleMaterials } from '@/hooks/api/storage/useModuleMaterials';
-import type { CourseModule, CourseLesson } from '@/types/courses';
+import type { CourseModule } from '@/types/courses';
 import type { ActivityDto } from '@/types/activities';
 import type { ModuleMaterial } from '@/types/materials';
 
@@ -18,7 +17,6 @@ export type ModuleAccordionProps = {
   courseId: string;
   defaultExpanded?: boolean;
   isEnrolled?: boolean;
-  onLessonPress?: (lesson: CourseLesson) => void;
   onActivityPress?: (activity: ActivityDto) => void;
   onMaterialPress?: (material: ModuleMaterial) => void;
 };
@@ -27,13 +25,11 @@ export function ModuleAccordion({
   module,
   defaultExpanded = false,
   isEnrolled = false,
-  onLessonPress,
   onActivityPress,
   onMaterialPress,
   courseId,
 }: ModuleAccordionProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
-  const [activeTab, setActiveTab] = useState<'lessons' | 'materials'>('lessons');
   const { activities, loading: activitiesLoading } = useModuleActivities(module.id);
   const { materials, loading: materialsLoading } = useModuleMaterials(module.id);
   const { getLatestScore } = useActivity();
@@ -70,9 +66,6 @@ export function ModuleAccordion({
           <UmbrellaText variant="bodyMedium" color={expanded ? Colors.light.primary : Colors.light.text}>
             {module.title}
           </UmbrellaText>
-          <UmbrellaText variant="caption" color={Colors.light.textSecondary}>
-            {module.subtitle}
-          </UmbrellaText>
         </View>
 
         <IconSymbol
@@ -98,68 +91,13 @@ export function ModuleAccordion({
             </View>
           ) : (
             <>
-              <View style={styles.tabContainer}>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Aba de Aulas"
-                  onPress={() => setActiveTab('lessons')}
-                  style={[styles.tabButton, activeTab === 'lessons' && styles.tabButtonActive]}>
-                  <IconSymbol
-                    name="play.circle.fill"
-                    size={16}
-                    color={activeTab === 'lessons' ? Colors.light.primary : Colors.light.textSecondary}
-                  />
-                  <UmbrellaText
-                    variant="bodyMedium"
-                    color={activeTab === 'lessons' ? Colors.light.primary : Colors.light.textSecondary}
-                    style={activeTab === 'lessons' ? styles.tabTextActive : styles.tabText}>
-                    Aulas {module.lessons.length > 0 ? `(${module.lessons.length})` : ''}
-                  </UmbrellaText>
-                </Pressable>
-
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Aba de Materiais"
-                  onPress={() => setActiveTab('materials')}
-                  style={[styles.tabButton, activeTab === 'materials' && styles.tabButtonActive]}>
-                  <IconSymbol
-                    name="folder.fill"
-                    size={16}
-                    color={activeTab === 'materials' ? Colors.light.primary : Colors.light.textSecondary}
-                  />
-                  <UmbrellaText
-                    variant="bodyMedium"
-                    color={activeTab === 'materials' ? Colors.light.primary : Colors.light.textSecondary}
-                    style={activeTab === 'materials' ? styles.tabTextActive : styles.tabText}>
-                    Materiais {materials.length > 0 ? `(${materials.length})` : ''}
-                  </UmbrellaText>
-                </Pressable>
-              </View>
-
-              {activeTab === 'lessons' ? (
-                module.lessons.length > 0 ? (
-                  <View style={styles.lessons}>
-                    {module.lessons.map((lesson) => (
-                      <ResourceListItem
-                        key={lesson.id}
-                        lesson={lesson}
-                        onPress={() => onLessonPress?.(lesson)}
-                      />
-                    ))}
-                  </View>
-                ) : (
-                  <View style={styles.emptyTabContent}>
-                    <UmbrellaText variant="caption" color={Colors.light.textSecondary}>
-                      Nenhuma aula cadastrada neste módulo.
-                    </UmbrellaText>
-                  </View>
-                )
+              <UmbrellaText variant="label" color={Colors.light.primary} style={styles.sectionTitle}>
+                MATERIAIS {materials.length > 0 ? `(${materials.length})` : ''}
+              </UmbrellaText>
+              {materialsLoading ? (
+                <ActivityIndicator size="small" color={Colors.light.primary} style={{ marginVertical: Spacing.md }} />
               ) : (
-                materialsLoading ? (
-                  <ActivityIndicator size="small" color={Colors.light.primary} style={{ marginVertical: Spacing.md }} />
-                ) : (
-                  <ModuleMaterialGrid materials={materials} onMaterialPress={onMaterialPress} />
-                )
+                <ModuleMaterialGrid materials={materials} onMaterialPress={onMaterialPress} />
               )}
             </>
           )}
@@ -260,47 +198,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     maxWidth: 280,
   },
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: Colors.light.surfaceContainerLow,
-    borderRadius: Radius.sm,
-    padding: 3,
-    marginBottom: Spacing.md,
-    gap: 4,
-  },
-  tabButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: 6,
-    gap: Spacing.xs,
-  },
-  tabButtonActive: {
-    backgroundColor: Colors.light.surface,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-  },
-  tabText: {
-    fontWeight: '500',
-    fontSize: 13,
-  },
-  tabTextActive: {
-    fontWeight: '700',
-    fontSize: 13,
-  },
-  emptyTabContent: {
-    paddingVertical: Spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  lessons: {
-    gap: Spacing.xs,
+  sectionTitle: {
+    letterSpacing: 0.5,
+    marginBottom: Spacing.xs,
   },
   activitiesSection: {
     marginTop: Spacing.md,

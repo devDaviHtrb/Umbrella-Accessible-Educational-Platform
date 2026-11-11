@@ -51,6 +51,18 @@ export interface StudentAnswerResponseDto {
   score?: number | null;
 }
 
+export interface StudentAnswerUpdateRequest {
+  chosenAlternativeId?: number | null;
+  essayAnswer?: string | null;
+  isCorrect?: boolean | null;
+  score?: number | null;
+}
+
+export interface ActivitySubmissionUpdateRequest {
+  score?: number | null;
+  status?: string | null;
+}
+
 export interface ActivitySubmissionResponseDto {
   id: number;
   score: number;

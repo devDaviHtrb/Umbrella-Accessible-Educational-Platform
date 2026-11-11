@@ -1,8 +1,8 @@
-import { professorActivityTypeOptions, professorMaterialKindOptions, SUBMISSION_STATUS } from '@/constants/professor-options';
+import { materialFileRules } from '@/constants/material-files';
+import { professorActivityTypeOptions, SUBMISSION_STATUS } from '@/constants/professor-options';
 import type { ActivityDto, ActivitySubmissionResponseDto, QuestionDto } from '@/types/activities';
 import type { ModuleMaterial } from '@/types/materials';
 import type {
-  CourseDifficulty,
   MaterialKind,
   ProfessorActivity,
   ProfessorActivityDetail,
@@ -22,10 +22,6 @@ export function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : [];
 }
 
-function toDifficulty(value: number | null | undefined): CourseDifficulty {
-  return value === 2 || value === 3 ? value : 1;
-}
-
 export function mapCourse(dto: CourseApiDto): ProfessorCourse {
   return {
     id: String(dto.id),
@@ -36,9 +32,7 @@ export function mapCourse(dto: CourseApiDto): ProfessorCourse {
     status: 'publicado',
     statusLabel: PUBLISHED_LABEL,
     modulesCount: dto.moduleAmount ?? 0,
-    difficultyLevel: toDifficulty(dto.difficultyLevel),
     imageUrl: dto.imageUrl ?? undefined,
-    studentsCount: dto.studentsCount ?? 0,
   };
 }
 
@@ -52,7 +46,6 @@ export function mapCourseDetail(dto: CourseDetailApiDto): ProfessorCourse {
     status: 'publicado',
     statusLabel: PUBLISHED_LABEL,
     modulesCount: dto.module_amount ?? 0,
-    difficultyLevel: toDifficulty(dto.difficulty_level),
     imageUrl: dto.imageUrl ?? undefined,
   };
 }
@@ -183,7 +176,7 @@ export function mapMaterial(courseId: string, module: ProfessorModule, dto: Modu
     title: dto.title ?? '',
     description: dto.description ?? '',
     kind,
-    kindLabel: professorMaterialKindOptions.find((option) => option.id === kind)?.label ?? kind,
+    kindLabel: materialFileRules[kind].kindLabel,
     url: dto.url ?? '',
     fileSizeLabel: dto.size > 0 ? formatFileSize(dto.size) : undefined,
   };
@@ -233,15 +226,5 @@ export function mapSubmission(
     statusLabel: SUBMISSION_STATUS_LABEL[status],
     submittedAtLabel: formatSubmittedAt(dto.submittedAt),
     grade: status === 'corrigido' ? dto.score : undefined,
-    suggestedGrade: typeof dto.score === 'number' ? dto.score : undefined,
-    answers: (dto.answers ?? []).map((answer) => ({
-      id: String(answer.id),
-      questionId: String(answer.questionId),
-      chosenAlternativeId:
-        answer.chosenAlternativeId != null ? String(answer.chosenAlternativeId) : undefined,
-      essayAnswer: answer.essayAnswer ?? undefined,
-      isCorrect: answer.isCorrect ?? undefined,
-      score: typeof answer.score === 'number' ? answer.score : undefined,
-    })),
   };
 }

@@ -11,6 +11,7 @@ import {
   SettingsSection,
   ToggleRow,
 } from '@/components/settings/settings-controls';
+import { ColorBlindMedia } from '@/components/ui/color-blind-media';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { PrimaryButton } from '@/components/ui/primary-button';
 import { SecondaryButton } from '@/components/ui/secondary-button';
@@ -144,7 +145,9 @@ export function SettingsScreen({ footer }: { footer?: React.ReactNode }) {
         <View style={styles.profileRow}>
           <View style={styles.avatar}>
             {currentAvatarUrl ? (
-              <Image source={{ uri: currentAvatarUrl }} style={styles.avatarImage} />
+              <ColorBlindMedia style={styles.avatarImage}>
+                <Image source={{ uri: currentAvatarUrl }} style={styles.avatarImage} />
+              </ColorBlindMedia>
             ) : (
               <IconSymbol name="person.fill" size={32} color={Colors.light.textSecondary} />
             )}

@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { StyleSheet } from 'react-native';
 
-import { CourseForm } from '@/components/professor/course-form';
+import { CourseForm, type CourseFormSubmit } from '@/components/professor/course-form';
 import { LoadError } from '@/components/professor/load-error';
 import { ScreenContainer } from '@/components/layout/screen-container';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
@@ -10,10 +10,9 @@ import { Colors, Spacing } from '@/constants/theme';
 import { useProfessorCourses } from '@/hooks/api/professor/useProfessorCourses';
 import { useFocusData } from '@/hooks/use-focus-data';
 import { useSubmit } from '@/hooks/use-submit';
-import type { ProfessorCourseInput } from '@/types/professor';
 
 export default function NewCourseScreen() {
-  const { getCategories, createCategory, createCourse } = useProfessorCourses();
+  const { getCategories, createCategory, createCourse, uploadCourseImage } = useProfessorCourses();
   const { data: categories, loading, error: loadError, reload, retry } = useFocusData(getCategories);
 
   async function handleCreateCategory(name: string) {
@@ -23,8 +22,22 @@ export default function NewCourseScreen() {
   }
 
   const { submit, submitting, error } = useSubmit(
-    async (input: ProfessorCourseInput) => {
-      const createdId = await createCourse(input);
+    async (input: CourseFormSubmit) => {
+      let imageUrl: string | undefined;
+      let imagePublicId: string | undefined;
+      if (input.pickedImage) {
+        const uploaded = await uploadCourseImage(input.pickedImage);
+        imageUrl = uploaded.url;
+        imagePublicId = uploaded.publicId;
+      }
+
+      const createdId = await createCourse({
+        title: input.title,
+        description: input.description,
+        categoryId: input.categoryId,
+        imageUrl,
+        imagePublicId,
+      });
       if (createdId) {
         router.replace(professorRoutes.course(createdId));
       } else {

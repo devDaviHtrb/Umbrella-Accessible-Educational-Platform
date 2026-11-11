@@ -9,31 +9,18 @@ export type ProfessorCourse = {
   status: ProfessorCourseStatus;
   statusLabel: string;
   modulesCount: number;
-  difficultyLevel: CourseDifficulty;
-  imageUrl?: string;
   activitiesCount?: number;
   materialsCount?: number;
   pendingSubmissionsCount?: number;
-  studentsCount?: number;
-};
-
-export type CourseDifficulty = 1 | 2 | 3;
-
-export type CourseDifficultyOption = {
-  id: CourseDifficulty;
-  label: string;
+  imageUrl?: string;
 };
 
 export type ProfessorCourseInput = {
   title: string;
   categoryId: string;
   description: string;
-  difficultyLevel: CourseDifficulty;
   imageUrl?: string;
   imagePublicId?: string;
-  imageLocalUri?: string;
-  imageMimeType?: string;
-  imageFileName?: string;
 };
 
 export type ProfessorCategory = {
@@ -166,6 +153,10 @@ export type ProfessorMaterial = {
   fileSizeLabel?: string;
 };
 
+export type ProfessorRecordedLesson = ProfessorMaterial & {
+  courseTitle: string;
+};
+
 export type ProfessorMaterialInput = {
   moduleId: string;
   title: string;
@@ -177,22 +168,7 @@ export type ProfessorMaterialInput = {
   mimeType?: string;
 };
 
-export type ProfessorStudent = {
-  id: string;
-  name: string;
-  email: string;
-};
-
 export type SubmissionStatus = 'pendente' | 'entregue' | 'atrasado' | 'corrigido';
-
-export type StudentAnswer = {
-  id: string;
-  questionId: string;
-  chosenAlternativeId?: string;
-  essayAnswer?: string;
-  isCorrect?: boolean;
-  score?: number;
-};
 
 export type StudentSubmission = {
   id: string;
@@ -208,16 +184,47 @@ export type StudentSubmission = {
   statusLabel: string;
   submittedAtLabel?: string;
   grade?: number;
-  suggestedGrade?: number;
-  answers: StudentAnswer[];
-};
-
-export type QuestionGradeInput = {
-  answerId: string;
-  score: number;
 };
 
 export type GradeSubmissionInput = {
   grade: number;
-  questionGrades: QuestionGradeInput[];
+};
+
+export type SubmissionAnswer = {
+  answerId: string;
+  questionId: string;
+  questionNumber: number;
+  statement: string;
+  kind: QuestionKind | null;
+  points: number;
+  chosenAlternativeId?: string;
+  chosenAlternativeText?: string;
+  correctAlternativeText?: string;
+  essayAnswer?: string;
+  expectedAnswer?: string;
+  isCorrect: boolean;
+  score: number;
+};
+
+export type SubmissionCorrection = {
+  submissionId: string;
+  studentName: string;
+  activityTitle: string;
+  moduleTitle: string;
+  maxScore: number;
+  answers: SubmissionAnswer[];
+};
+
+export type AnswerCorrectionInput = {
+  answerId: string;
+  isCorrect: boolean;
+  score: number;
+};
+
+export type EnrolledStudent = {
+  id: string;
+  name: string;
+  email: string;
+  neurodivergence?: string;
+  avatarUrl?: string;
 };

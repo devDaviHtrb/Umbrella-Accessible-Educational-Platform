@@ -9,7 +9,8 @@ import type { FileDropzoneProps } from '@/types/files';
 import { describeAcceptedFormats } from '@/utils/files';
 import { pickMaterialDocuments } from '@/utils/pick-documents';
 
-export function FileDropzone({ kind, files, onChange, disabled = false }: FileDropzoneProps) {
+export function FileDropzone({ kind, files, onChange, disabled = false, maxFiles }: FileDropzoneProps) {
+  const single = maxFiles === 1;
   const picking = useRef(false);
   const [errors, setErrors] = useState<string[]>([]);
 
@@ -20,11 +21,11 @@ export function FileDropzone({ kind, files, onChange, disabled = false }: FileDr
     setErrors([]);
 
     try {
-      const outcome = await pickMaterialDocuments(kind, files);
+      const outcome = await pickMaterialDocuments(kind, single ? [] : files, !single);
       if (outcome.canceled) return;
 
       setErrors(outcome.errors);
-      if (outcome.accepted.length > 0) onChange([...files, ...outcome.accepted]);
+      if (outcome.accepted.length > 0) onChange(single ? outcome.accepted.slice(0, 1) : [...files, ...outcome.accepted]);
     } catch {
       setErrors(['Não foi possível abrir o seletor de arquivos. Tente novamente.']);
     } finally {

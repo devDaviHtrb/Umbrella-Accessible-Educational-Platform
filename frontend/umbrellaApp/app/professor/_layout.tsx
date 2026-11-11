@@ -40,6 +40,15 @@ export default function ProfessorStackLayout() {
         name="index"
         options={{ headerShown: true, headerTitle: 'Área do Professor', headerBackVisible: false }}
       />
+      <Stack.Screen name="tutor" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="recorded"
+        options={{ headerShown: true, headerTitle: 'Aulas Gravadas', headerBackTitle: 'Cursos' }}
+      />
+      <Stack.Screen
+        name="new-recorded"
+        options={{ headerShown: true, headerTitle: 'Nova Aula Gravada', headerBackTitle: 'Aulas' }}
+      />
       <Stack.Screen name="settings" options={{ headerShown: false }} />
       <Stack.Screen
         name="new-course"
@@ -92,10 +101,6 @@ export default function ProfessorStackLayout() {
       <Stack.Screen
         name="course/[courseId]/edit"
         options={{ headerShown: true, headerTitle: 'Editar Curso', headerBackTitle: 'Curso' }}
-      />
-      <Stack.Screen
-        name="course/[courseId]/live"
-        options={{ headerShown: true, headerTitle: 'Aula ao Vivo', headerBackTitle: 'Curso' }}
       />
     </Stack>
   );

@@ -14,12 +14,13 @@ export type DocumentPickOutcome = {
 export async function pickMaterialDocuments(
   kind: MaterialKind,
   existing: PickedFile[],
+  multiple = true,
 ): Promise<DocumentPickOutcome> {
   const rule = materialFileRules[kind];
 
   const result = await DocumentPicker.getDocumentAsync({
     type: rule.mimeTypes,
-    multiple: true,
+    multiple,
     copyToCacheDirectory: true,
   });
 

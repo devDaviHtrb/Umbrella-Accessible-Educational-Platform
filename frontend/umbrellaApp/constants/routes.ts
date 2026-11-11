@@ -7,6 +7,13 @@ export const studentHomeHref = '/(tabs)' as unknown as Href;
 export const professorRoutes = {
   home: '/professor' as Href,
   newCourse: '/professor/new-course' as Href,
+  tutor: '/professor/tutor' as Href,
+  recorded: '/professor/recorded' as Href,
+  newRecorded: '/professor/new-recorded' as Href,
+  newRecordedForCourse: (courseId: string): Href => ({
+    pathname: '/professor/new-recorded',
+    params: { courseId },
+  }),
   settings: '/professor/settings' as Href,
 
   course: (courseId: string): Href => `/professor/course/${encodeURIComponent(courseId)}` as Href,
@@ -48,10 +55,6 @@ export const professorRoutes = {
   }),
   students: (courseId: string): Href => ({
     pathname: '/professor/course/[courseId]/students',
-    params: { courseId },
-  }),
-  live: (courseId: string): Href => ({
-    pathname: '/professor/course/[courseId]/live',
     params: { courseId },
   }),
 };

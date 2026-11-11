@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
@@ -6,144 +5,128 @@ import { IconSymbol, type IconSymbolName } from '@/components/ui/icon-symbol';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
-import { difficultyLabel } from '@/constants/professor-options';
 import type { ProfessorCourse } from '@/types/professor';
 
 export type ProfessorCourseCardProps = {
   course: ProfessorCourse;
   onPress: () => void;
-  onDeletePress?: () => void;
+  onEditPress?: () => void;
 };
 
 function MetaItem({ icon, label }: { icon: IconSymbolName; label: string }) {
   return (
     <View style={styles.metaItem}>
-      <IconSymbol name={icon} size={14} color={Colors.light.textSecondary} />
-      <UmbrellaText variant="caption" color={Colors.light.textSecondary} numberOfLines={1}>
+      <IconSymbol name={icon} size={16} color={Colors.light.textSecondary} />
+      <UmbrellaText variant="caption" color={Colors.light.textSecondary}>
         {label}
       </UmbrellaText>
     </View>
   );
 }
 
-export function ProfessorCourseCard({ course, onPress, onDeletePress }: ProfessorCourseCardProps) {
+export function ProfessorCourseCard({ course, onPress, onEditPress }: ProfessorCourseCardProps) {
   const pending = course.pendingSubmissionsCount ?? 0;
-  const students = course.studentsCount ?? 0;
 
   return (
-    <Card padded={false} style={styles.card}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`Abrir curso ${course.title}`}
-        onPress={onPress}
-        style={styles.pressable}>
-        <View style={styles.cover}>
-          {course.imageUrl ? (
-            <Image
-              source={{ uri: course.imageUrl }}
-              style={StyleSheet.absoluteFill}
-              contentFit="cover"
-              transition={150}
-              accessibilityLabel={`Capa do curso ${course.title}`}
+    <Card style={styles.card}>
+      <View style={styles.topRow}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Abrir curso ${course.title}`}
+          onPress={onPress}
+          style={styles.main}>
+          <View style={styles.badgeRow}>
+            <StatusBadge
+              label={course.statusLabel}
+              tone={course.status === 'publicado' ? 'teal' : 'neutral'}
             />
-          ) : (
-            <View style={styles.coverFallback}>
-              <IconSymbol name="book.fill" size={28} color={Colors.light.primary} />
-            </View>
-          )}
-
-          {onDeletePress ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Excluir curso ${course.title}`}
-              onPress={onDeletePress}
-              hitSlop={8}
-              style={styles.deleteButton}>
-              <IconSymbol name="trash.fill" size={16} color={Colors.light.surface} />
-            </Pressable>
-          ) : null}
-
-          {pending > 0 ? (
-            <View style={styles.pendingBadge}>
-              <StatusBadge label={String(pending)} tone="primary" />
-            </View>
-          ) : null}
-        </View>
-
-        <View style={styles.body}>
-          <UmbrellaText variant="label" color={Colors.light.primary} numberOfLines={1}>
-            {course.eyebrow || 'Sem categoria'}
-          </UmbrellaText>
-          <UmbrellaText variant="bodyMedium" numberOfLines={2} style={styles.title}>
-            {course.title}
-          </UmbrellaText>
-
-          <View style={styles.metaRow}>
-            <MetaItem
-              icon="person.2.fill"
-              label={students === 1 ? '1 aluno' : `${students} alunos`}
-            />
-            <MetaItem
-              icon="list.bullet"
-              label={course.modulesCount === 1 ? '1 módulo' : `${course.modulesCount} módulos`}
-            />
+            <UmbrellaText variant="label" color={Colors.light.textSecondary}>
+              {course.eyebrow}
+            </UmbrellaText>
           </View>
-          <MetaItem icon="chart.line.uptrend.xyaxis" label={difficultyLabel(course.difficultyLevel)} />
+          <UmbrellaText variant="headline">{course.title}</UmbrellaText>
+          <UmbrellaText variant="caption" color={Colors.light.textSecondary} numberOfLines={2}>
+            {course.description}
+          </UmbrellaText>
+        </Pressable>
+
+        {onEditPress ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Editar curso ${course.title}`}
+            onPress={onEditPress}
+            hitSlop={8}
+            style={styles.editButton}>
+            <IconSymbol name="square.and.pencil" size={18} color={Colors.light.primary} />
+          </Pressable>
+        ) : null}
+      </View>
+
+      <View style={styles.metaRow}>
+        <MetaItem
+          icon="list.bullet"
+          label={course.modulesCount === 1 ? '1 módulo' : `${course.modulesCount} módulos`}
+        />
+        {course.activitiesCount !== undefined ? (
+          <MetaItem
+            icon="doc.fill"
+            label={course.activitiesCount === 1 ? '1 atividade' : `${course.activitiesCount} atividades`}
+          />
+        ) : null}
+      </View>
+
+      {pending > 0 ? (
+        <View style={styles.footerRow}>
+          <StatusBadge
+            label={pending === 1 ? '1 entrega para corrigir' : `${pending} entregas para corrigir`}
+            tone="primary"
+          />
         </View>
-      </Pressable>
+      ) : null}
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    overflow: 'hidden',
+    gap: Spacing.md,
   },
-  pressable: {
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.md,
+  },
+  main: {
     flex: 1,
+    gap: Spacing.sm,
   },
-  cover: {
-    width: '100%',
-    aspectRatio: 16 / 9,
-    backgroundColor: Colors.light.surfaceContainerLow,
-  },
-  coverFallback: {
-    ...StyleSheet.absoluteFill,
+  badgeRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: Spacing.sm,
+  },
+  editButton: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.md,
     backgroundColor: Colors.light.secondaryFixed,
-  },
-  deleteButton: {
-    position: 'absolute',
-    top: Spacing.sm,
-    right: Spacing.sm,
-    width: 30,
-    height: 30,
-    borderRadius: Radius.pill,
-    backgroundColor: 'rgba(17, 24, 28, 0.6)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  pendingBadge: {
-    position: 'absolute',
-    bottom: Spacing.sm,
-    left: Spacing.sm,
-  },
-  body: {
-    padding: Spacing.md,
-    gap: Spacing.xs,
-  },
-  title: {
-    marginBottom: Spacing.xs,
   },
   metaRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: Spacing.md,
+    gap: Spacing.lg,
   },
   metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.xs,
+  },
+  footerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.sm,
   },
 });

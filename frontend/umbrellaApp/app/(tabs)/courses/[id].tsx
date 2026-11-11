@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { StyleSheet, View, ActivityIndicator, Alert, Linking } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Alert } from 'react-native';
 
 import { CourseHero } from '@/components/courses/course-hero';
 import { ModuleAccordion } from '@/components/courses/module-accordion';
@@ -8,14 +8,13 @@ import { ScreenContainer } from '@/components/layout/screen-container';
 import { Card } from '@/components/ui/card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { PrimaryButton } from '@/components/ui/primary-button';
+import { SecondaryButton } from '@/components/ui/secondary-button';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
-import { difficultyLabel } from '@/constants/professor-options';
 import { usePreferences } from '@/hooks/preferences/preferencesContext';
 import { useCourseDetails, useCourses } from '@/hooks/api/courses/useCourse';
-import type { CourseLesson } from '@/types/courses';
 import type { ActivityDto } from '@/types/activities';
-import type { ModuleMaterial } from '@/types/materials';
+import { openMaterial } from '@/utils/open-material';
 
 export default function CourseDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -43,10 +42,6 @@ export default function CourseDetailsScreen() {
     }
   };
 
-  function handleLessonPress(lesson: CourseLesson) {
-    router.push(`/courses/class/${lesson.id}`);
-  }
-
   function handleActivityPress(activity: ActivityDto) {
     router.push({
       pathname: '/courses/activity/[activityId]' as any,
@@ -56,26 +51,6 @@ export default function CourseDetailsScreen() {
         activityId: activity.id,
       },
     });
-  }
-
-  async function handleMaterialPress(material: ModuleMaterial) {
-    if (material.url) {
-      try {
-        const canOpen = await Linking.canOpenURL(material.url);
-        if (canOpen) {
-          await Linking.openURL(material.url);
-        } else {
-          Alert.alert('Material', `Arquivo: ${material.title}\nURL: ${material.url}`);
-        }
-      } catch {
-        Alert.alert('Erro', 'Não foi possível abrir o link do material.');
-      }
-    } else {
-      Alert.alert(
-        material.title,
-        material.description || 'Material disponível para acompanhamento do módulo.'
-      );
-    }
   }
 
   if (detailLoading) {
@@ -121,8 +96,7 @@ export default function CourseDetailsScreen() {
         </View>
 
         <View style={styles.infoList}>
-          <InfoRow label="Nível" value={difficultyLabel(courseDetails.difficulty_level)} />
-          <InfoRow label="Certificação" value="Disponível ao concluir" emphasis />
+          <InfoRow label="Nível" value={`Nível ${courseDetails.difficulty_level ?? 'Iniciante'}`} />
         </View>
 
         <PrimaryButton
@@ -134,6 +108,14 @@ export default function CourseDetailsScreen() {
         <UmbrellaText variant="caption" color={Colors.light.textSecondary} style={styles.ctaCaption}>
           {enrolled ? 'Você está matriculado neste curso' : 'Acesso imediato e vitalício ao conteúdo'}
         </UmbrellaText>
+        {enrolled ? (
+          <SecondaryButton
+            label="Conversa do curso"
+            onPress={() =>
+              router.push({ pathname: '/courses/chat', params: { kind: 'course', id, title: courseDetails.name } })
+            }
+          />
+        ) : null}
       </Card>
 
       <Card tone="muted">
@@ -160,9 +142,8 @@ export default function CourseDetailsScreen() {
             courseId={id}
             defaultExpanded={index === 0}
             isEnrolled={enrolled}
-            onLessonPress={handleLessonPress}
             onActivityPress={handleActivityPress}
-            onMaterialPress={handleMaterialPress}
+            onMaterialPress={openMaterial}
           />
         ))}
       </View>
@@ -170,21 +151,13 @@ export default function CourseDetailsScreen() {
   );
 }
 
-function InfoRow({
-  label,
-  value,
-  emphasis,
-}: {
-  label: string;
-  value: string;
-  emphasis?: boolean;
-}) {
+function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.infoRow}>
       <UmbrellaText variant="body" color={Colors.light.textSecondary}>
         {label}
       </UmbrellaText>
-      <UmbrellaText variant="bodyMedium" color={emphasis ? Colors.light.primary : Colors.light.text}>
+      <UmbrellaText variant="bodyMedium" color={Colors.light.text}>
         {value}
       </UmbrellaText>
     </View>

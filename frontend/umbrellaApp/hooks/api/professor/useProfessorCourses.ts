@@ -9,9 +9,16 @@ import {
   DEFAULT_MODULE_REQUIRED,
   SUBMISSION_STATUS,
 } from '@/constants/professor-options';
-import type { ActivityDto, ActivitySubmissionResponseDto } from '@/types/activities';
+import type {
+  ActivityDto,
+  ActivitySubmissionResponseDto,
+  ActivitySubmissionUpdateRequest,
+  StudentAnswerResponseDto,
+  StudentAnswerUpdateRequest,
+} from '@/types/activities';
 import type { ModuleMaterial } from '@/types/materials';
 import type {
+  AnswerCorrectionInput,
   GradeSubmissionInput,
   MaterialKind,
   ProfessorActivity,
@@ -22,12 +29,15 @@ import type {
   ProfessorCourseInput,
   ProfessorMaterial,
   ProfessorMaterialInput,
+  ProfessorRecordedLesson,
   ProfessorModule,
   ProfessorModuleInput,
   ProfessorQuestion,
   ProfessorQuestionInput,
-  ProfessorStudent,
   StudentSubmission,
+  SubmissionAnswer,
+  SubmissionCorrection,
+  EnrolledStudent,
 } from '@/types/professor';
 import type {
   ActivityCreateRequest,
@@ -35,11 +45,10 @@ import type {
   ActivityUpdateRequest,
   AlternativeCreateRequest,
   AlternativeUpdateRequest,
-  AnswerScoreRequest,
   CourseApiDto,
   CourseCreateRequest,
+  CourseUpdateRequest,
   CourseDetailApiDto,
-  EnrolledStudentApiDto,
   EssayCreateRequest,
   EssayUpdateRequest,
   ModuleApiDto,
@@ -182,18 +191,23 @@ export function useProfessorCourses() {
     [post],
   );
 
+  const deleteCategory = useCallback(
+    async (categoryId: string): Promise<void> => {
+      const response = await del<{ code?: number } | null>(`public/courses/subjects/${categoryId}`);
+      if (response?.code && response.code >= 400) throw new Error('Categoria não excluída');
+    },
+    [del],
+  );
+
   const getCourses = useCallback(async (): Promise<ProfessorCourse[]> => {
     if (!userId) throw new Error('Usuário não identificado.');
 
     const all = asArray<CourseApiDto>(await get('public/courses/list'));
     const owned = await Promise.all(
-      all.map(async (course): Promise<ProfessorCourse | null> => {
+      all.map(async (course) => {
         try {
           const detail = await get<CourseDetailApiDto>(`public/courses/${course.id}`);
-          if (String(detail?.userDto?.id) !== userId) return null;
-
-          // studentsCount already comes from the list endpoint.
-          return mapCourse(course);
+          return String(detail?.userDto?.id) === userId ? mapCourse(course) : null;
         } catch {
           return null;
         }
@@ -204,13 +218,6 @@ export function useProfessorCourses() {
       .filter((course): course is ProfessorCourse => course !== null)
       .sort((a, b) => Number(b.id) - Number(a.id));
   }, [get, userId]);
-
-  const deleteCourse = useCallback(
-    async (courseId: string): Promise<void> => {
-      await del(`public/courses/${courseId}`);
-    },
-    [del],
-  );
 
   const getCourse = useCallback(
     async (courseId: string): Promise<ProfessorCourse | undefined> => {
@@ -255,55 +262,70 @@ export function useProfessorCourses() {
   );
 
   const uploadCourseImage = useCallback(
-    async (input: ProfessorCourseInput): Promise<{ url: string; publicId?: string } | undefined> => {
-      // An already-hosted image (e.g. kept during edit) is sent as-is.
-      if (!input.imageLocalUri) {
-        return input.imageUrl ? { url: input.imageUrl } : undefined;
-      }
-
+    async (asset: { uri: string; fileName?: string | null; mimeType?: string | null }): Promise<{ url: string; publicId?: string }> => {
       const token = await AsyncStorage.getItem('@user_token');
-      const headers: Record<string, string> = {};
-      if (token) headers.Authorization = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
-
-      const name = input.imageFileName ?? 'capa';
-      const mimeType = input.imageMimeType || 'image/jpeg';
+      const uri = asset.uri;
+      const originalName = asset.fileName || uri.split('/').pop() || 'course-cover.jpg';
+      const filename = originalName.includes('.') ? originalName : `${originalName}.jpg`;
+      const extension = /\.(\w+)$/.exec(filename)?.[1];
+      const mimeType = asset.mimeType || (extension ? `image/${extension === 'jpg' ? 'jpeg' : extension}` : 'image/jpeg');
 
       const formData = new FormData();
-      if (input.imageLocalUri.startsWith('blob:') || input.imageLocalUri.startsWith('data:')) {
-        const blob = await (await fetch(input.imageLocalUri)).blob();
-        formData.append('file', blob, name);
+      if (uri.startsWith('blob:') || uri.startsWith('data:')) {
+        const blob = await (await fetch(uri)).blob();
+        formData.append('file', blob, filename);
       } else {
-        formData.append('file', { uri: input.imageLocalUri, name, type: mimeType } as any);
+        formData.append('file', { uri, name: filename, type: mimeType } as any);
       }
       formData.append('resourceType', 'image');
-      formData.append('fileName', input.title || name);
-      formData.append('alternativeText', `Capa do curso ${input.title}`.trim());
+      formData.append('fileName', filename);
+      formData.append('alternativeText', 'Capa do curso');
 
-      const response = await umbrellaApi.post<{ url: string; publicId?: string }>('storage/upload', formData, {
-        headers: { ...headers, 'Content-Type': 'multipart/form-data' },
-        transformRequest: (data) => data,
-      });
-      return { url: response.data.url, publicId: response.data.publicId };
+      const config = {
+        headers: {
+          ...(token ? { Authorization: token.startsWith('Bearer ') ? token : `Bearer ${token}` } : {}),
+          'Content-Type': 'multipart/form-data',
+        },
+        transformRequest: (data: any) => data,
+      };
+
+      const response = await umbrellaApi.post('storage/upload', formData, config);
+      const url: string | undefined = response.data?.url;
+      if (!url) throw new Error('Upload da imagem não retornou URL.');
+      return { url, publicId: response.data?.publicId ?? undefined };
     },
     [],
   );
 
   const createCourse = useCallback(
     async (input: ProfessorCourseInput): Promise<string | undefined> => {
-      const image = await uploadCourseImage(input);
-
       const body: CourseCreateRequest = {
         name: input.title,
         description: input.description,
-        difficulty_level: input.difficultyLevel ?? DEFAULT_COURSE_DIFFICULTY,
+        difficulty_level: DEFAULT_COURSE_DIFFICULTY,
         subjectId: Number(input.categoryId),
-        imageUrl: image?.url,
-        imagePublicId: image?.publicId,
+        imageUrl: input.imageUrl,
+        imagePublicId: input.imagePublicId,
       };
       const created = await post<{ id?: number | string } | null>('public/courses/register', body);
       return created?.id != null ? String(created.id) : undefined;
     },
-    [post, uploadCourseImage],
+    [post],
+  );
+
+  const updateCourse = useCallback(
+    async (courseId: string, input: ProfessorCourseInput): Promise<void> => {
+      const body: CourseUpdateRequest = {
+        name: input.title,
+        description: input.description,
+        difficulty_level: DEFAULT_COURSE_DIFFICULTY,
+        subjectId: Number(input.categoryId),
+        imageUrl: input.imageUrl,
+        imagePublicId: input.imagePublicId,
+      };
+      await put(`public/courses/${courseId}`, body);
+    },
+    [put],
   );
 
   const getModules = useCallback(
@@ -566,32 +588,8 @@ export function useProfessorCourses() {
     [fetchModuleBundles, fetchSubmissions],
   );
 
-  const getStudents = useCallback(
-    async (courseId: string): Promise<ProfessorStudent[]> => {
-      const students = asArray<EnrolledStudentApiDto>(
-        await get(`public/courses/${courseId}/students`).catch(() => []),
-      );
-      return students
-        .map((student) => ({
-          id: String(student.id),
-          name: student.name?.trim() || `Aluno #${student.id}`,
-          email: student.email ?? '',
-        }))
-        .sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
-    },
-    [get],
-  );
-
   const gradeSubmission = useCallback(
     async (courseId: string, submission: StudentSubmission, input: GradeSubmissionInput): Promise<void> => {
-      // Persist the per-question grades first; the backend recomputes the
-      // submission total from these answers.
-      for (const questionGrade of input.questionGrades) {
-        const answerBody: AnswerScoreRequest = { score: questionGrade.score };
-        await put(`public/courses/student-answers/${questionGrade.answerId}`, answerBody);
-      }
-
-      // Mark the submission as graded (and send the total as a safeguard).
       const body: SubmissionGradeRequest = {
         score: input.grade,
         status: SUBMISSION_STATUS.graded,
@@ -602,6 +600,89 @@ export function useProfessorCourses() {
       );
     },
     [put],
+  );
+
+  const getSubmissionCorrection = useCallback(
+    async (courseId: string, submission: StudentSubmission): Promise<SubmissionCorrection> => {
+      const [activity, rawAnswers] = await Promise.all([
+        getActivity(courseId, submission.activityId),
+        get<StudentAnswerResponseDto[]>(`public/courses/submissions/${submission.id}/answers`),
+      ]);
+
+      const answersDto = asArray<StudentAnswerResponseDto>(rawAnswers);
+      const questionsById = new Map((activity?.questions ?? []).map((question) => [question.id, question]));
+
+      const answers: SubmissionAnswer[] = answersDto.map((dto) => {
+        const question = questionsById.get(String(dto.questionId));
+        const chosen = question?.alternatives.find((alt) => alt.id === String(dto.chosenAlternativeId));
+        const correctAlternative = question?.alternatives.find((alt) => alt.correct);
+
+        return {
+          answerId: String(dto.id),
+          questionId: String(dto.questionId),
+          questionNumber: question?.number ?? 0,
+          statement: question?.statement ?? 'Questão',
+          kind: question?.kind ?? null,
+          points: question?.points ?? 0,
+          chosenAlternativeId: dto.chosenAlternativeId != null ? String(dto.chosenAlternativeId) : undefined,
+          chosenAlternativeText: chosen ? `${chosen.letter}) ${chosen.text}` : undefined,
+          correctAlternativeText: correctAlternative ? `${correctAlternative.letter}) ${correctAlternative.text}` : undefined,
+          essayAnswer: dto.essayAnswer ?? undefined,
+          expectedAnswer: question?.essay?.expectedAnswer,
+          isCorrect: dto.isCorrect ?? false,
+          score: dto.score ?? 0,
+        };
+      });
+
+      answers.sort((a, b) => a.questionNumber - b.questionNumber || Number(a.answerId) - Number(b.answerId));
+
+      return {
+        submissionId: submission.id,
+        studentName: submission.studentName,
+        activityTitle: submission.activityTitle,
+        moduleTitle: submission.moduleTitle,
+        maxScore: activity?.maxScore ?? submission.maxScore,
+        answers,
+      };
+    },
+    [get, getActivity],
+  );
+
+  const saveSubmissionCorrection = useCallback(
+    async (courseId: string, submission: StudentSubmission, corrections: AnswerCorrectionInput[]): Promise<void> => {
+      for (const correction of corrections) {
+        const body: StudentAnswerUpdateRequest = {
+          isCorrect: correction.isCorrect,
+          score: correction.score,
+        };
+        await put(`public/courses/student-answers/${correction.answerId}`, body);
+      }
+
+      const total = corrections.reduce((sum, correction) => sum + (correction.score || 0), 0);
+      const body: ActivitySubmissionUpdateRequest = {
+        score: total,
+        status: SUBMISSION_STATUS.graded,
+      };
+      await put(
+        `public/courses/${courseId}/modules/${submission.moduleId}/activities/${submission.activityId}/submissions/${submission.id}`,
+        body,
+      );
+    },
+    [put],
+  );
+
+  const getStudents = useCallback(
+    async (courseId: string): Promise<EnrolledStudent[]> => {
+      const response = await get(`public/courses/${courseId}/students`);
+      return asArray<any>(response).map((student) => ({
+        id: String(student.id),
+        name: student.name ?? 'Aluno sem nome',
+        email: student.email ?? '',
+        neurodivergence: student.neurodivergence ?? undefined,
+        avatarUrl: student.avatarUrl ?? undefined,
+      }));
+    },
+    [get],
   );
 
   const getMaterials = useCallback(
@@ -619,14 +700,20 @@ export function useProfessorCourses() {
     [get, fetchModuleDtos],
   );
 
-  const deleteMaterial = useCallback(
-    async (materialId: string): Promise<void> => {
-      await del(`public/storage/material/${materialId}`);
-    },
-    [del],
-  );
+  const getRecordedLessons = useCallback(async (): Promise<ProfessorRecordedLesson[]> => {
+    const courses = await getCourses();
+    const groups = await Promise.all(
+      courses.map(async (course) => {
+        const materials = await getMaterials(course.id);
+        return materials
+          .filter((material) => material.kind === 'videos')
+          .map((material) => ({ ...material, courseTitle: course.title }));
+      }),
+    );
+    return groups.flat();
+  }, [getCourses, getMaterials]);
 
-  const createMaterial = useCallback(async (input: ProfessorMaterialInput): Promise<void> => {
+  const createMaterial = useCallback(async (input: ProfessorMaterialInput, onProgress?: (percent: number) => void): Promise<void> => {
     const token = await AsyncStorage.getItem('@user_token');
     const headers: Record<string, string> = {};
     if (token) headers.Authorization = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
@@ -654,6 +741,9 @@ export function useProfessorCourses() {
       await umbrellaApi.post('storage/upload', formData, {
         headers: { ...headers, 'Content-Type': 'multipart/form-data' },
         transformRequest: (data) => data,
+        onUploadProgress: (event) => {
+          if (event.total) onProgress?.(Math.round((event.loaded / event.total) * 100));
+        },
       });
     } catch (error: any) {
       console.log('[useProfessorCourses upload]', error.response?.data || error.message);
@@ -664,11 +754,13 @@ export function useProfessorCourses() {
   return {
     getCategories,
     createCategory,
+    deleteCategory,
     getCourses,
     getCourse,
     getCourseBasics,
     createCourse,
-    deleteCourse,
+    updateCourse,
+    uploadCourseImage,
     getModules,
     getModule,
     createModule,
@@ -683,10 +775,12 @@ export function useProfessorCourses() {
     updateQuestion,
     deleteQuestion,
     getSubmissions,
-    getStudents,
     gradeSubmission,
+    getSubmissionCorrection,
+    saveSubmissionCorrection,
+    getStudents,
     getMaterials,
+    getRecordedLessons,
     createMaterial,
-    deleteMaterial,
   };
 }

@@ -1,24 +1,9 @@
-import type {
-  ActivityTypeOption,
-  CourseDifficultyOption,
-  MaterialKindOption,
-  QuestionKindOption,
-} from '@/types/professor';
+import type { ActivityTypeOption, MaterialKindOption, QuestionKindOption } from '@/types/professor';
 
 export const professorActivityTypeOptions: ActivityTypeOption[] = [
   { id: 'quiz', label: 'Quiz' },
   { id: 'entrega', label: 'Entrega' },
 ];
-
-export const professorDifficultyOptions: CourseDifficultyOption[] = [
-  { id: 1, label: 'Iniciante' },
-  { id: 2, label: 'Intermediário' },
-  { id: 3, label: 'Avançado' },
-];
-
-export function difficultyLabel(level: number | null | undefined): string {
-  return professorDifficultyOptions.find((option) => option.id === level)?.label ?? 'Iniciante';
-}
 
 export const professorQuestionKindOptions: QuestionKindOption[] = [
   { id: 'multipla_escolha', label: 'Múltipla escolha' },
@@ -33,7 +18,6 @@ export const professorMaterialKindOptions: MaterialKindOption[] = [
   { id: 'slides', label: 'Slides' },
   { id: 'images', label: 'Imagens' },
   { id: 'spreadsheets', label: 'Planilhas' },
-  { id: 'videos', label: 'Vídeos' },
 ];
 
 export const COURSE_TEXT_MAX_LENGTH = 255;

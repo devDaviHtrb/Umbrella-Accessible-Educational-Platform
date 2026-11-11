@@ -32,7 +32,7 @@ export function buildTabItems(
   });
 }
 
-export type ProfessorBarTab = 'home' | 'settings';
+export type ProfessorBarTab = 'home' | 'tutor' | 'settings';
 
 export function getProfessorBarItems(
   active: ProfessorBarTab,
@@ -42,16 +42,25 @@ export function getProfessorBarItems(
     {
       key: 'home',
       label: 'Cursos',
-      icon: 'graduationcap.fill',
+      icon: TAB_ICON.courses,
       focused: active === 'home',
       onPress: () => {
         if (active !== 'home') navigate(professorRoutes.home);
       },
     },
     {
+      key: 'tutor',
+      label: 'Tutor IA',
+      icon: TAB_ICON.tutor,
+      focused: active === 'tutor',
+      onPress: () => {
+        if (active !== 'tutor') navigate(professorRoutes.tutor);
+      },
+    },
+    {
       key: 'settings',
       label: 'Ajustes',
-      icon: 'gearshape.fill',
+      icon: TAB_ICON.settings,
       focused: active === 'settings',
       onPress: () => {
         if (active !== 'settings') navigate(professorRoutes.settings);
