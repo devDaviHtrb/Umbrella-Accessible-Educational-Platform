@@ -10,7 +10,10 @@ public class CorsConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**") // Aplica para todas as rotas /api/**
-                .allowedOrigins("http://localhost:8081") // Libera o Expo Web
+                .allowedOriginPatterns(
+                        "http://localhost:8081", // Expo Web local
+                        "https://*.trycloudflare.com" // Túnel Cloudflare (apresentação)
+                )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
                 .allowCredentials(true);
