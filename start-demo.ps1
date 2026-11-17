@@ -14,6 +14,11 @@ $FrontEnv    = Join-Path $FrontendDir '.env'
 $Cloudflared = Join-Path $env:USERPROFILE 'cloudflared\cloudflared.exe'
 $LogDir      = Join-Path $env:TEMP 'umbrella-demo-logs'
 
+# --- Conta de professor criada automaticamente (seed) ---
+$ProfName  = 'Professor Demo'
+$ProfEmail = 'professor@umbrella.com'
+$ProfPass  = 'professor123'
+
 New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
 $ApiTunnelBase = Join-Path $LogDir 'api-tunnel'
 $WebTunnelBase = Join-Path $LogDir 'web-tunnel'
@@ -81,6 +86,26 @@ if ($apiReady) {
     Write-Host '   O tunel sera criado mesmo assim; se der 502, aguarde a API terminar de subir.' -ForegroundColor Yellow
 }
 
+# --- Cria a conta de professor automaticamente (banco H2 zera a cada reinicio) ---
+if ($apiReady) {
+    Write-Host '   Criando conta de professor...' -ForegroundColor DarkGray
+    $body = @{
+        name          = $ProfName
+        email         = $ProfEmail
+        password      = $ProfPass
+        neurodivergence = $null
+        role          = 'ROLE_TEACHER'
+    } | ConvertTo-Json
+    try {
+        Invoke-RestMethod -Uri 'http://localhost:8080/api/auth/register' `
+            -Method Post -ContentType 'application/json' -Body $body -TimeoutSec 10 | Out-Null
+        Write-Host '   Conta de professor criada.' -ForegroundColor White
+    } catch {
+        # Se o professor ja existe (email unico), a API retorna erro - tudo bem.
+        Write-Host '   (Professor ja existia ou nao foi possivel criar - seguindo.)' -ForegroundColor DarkGray
+    }
+}
+
 # ============================================================
 # 2) TUNEL DA API
 # ============================================================
@@ -146,6 +171,10 @@ Write-Host ''
 Write-Host "  >> APP (abrir no navegador):" -ForegroundColor Yellow
 Write-Host "     $WebUrl" -ForegroundColor White
 Write-Host ''
+Write-Host "  >> LOGIN DO PROFESSOR (ja criado automaticamente):" -ForegroundColor Yellow
+Write-Host "     Email: $ProfEmail" -ForegroundColor White
+Write-Host "     Senha: $ProfPass" -ForegroundColor White
+Write-Host ''
 Write-Host "  (API publica: $ApiUrl )" -ForegroundColor DarkGray
 Write-Host ''
 Write-Host '  DICAS:' -ForegroundColor DarkGray
@@ -156,6 +185,33 @@ Write-Host ''
 
 # Copia a URL do front pra area de transferencia (facilita colar)
 try { Set-Clipboard -Value $WebUrl; Write-Host '  (A URL do app foi copiada para a area de transferencia.)' -ForegroundColor DarkGray } catch {}
+
+# Salva tudo num arquivo fixo e abre, pra voce nao depender desta janela
+$OutFile = Join-Path $Root 'demo-urls.txt'
+$texto = @"
+==========================================================
+  UMBRELLA - Dados da apresentacao
+  (gerado em $(Get-Date -Format 'dd/MM/yyyy HH:mm'))
+==========================================================
+
+APP (abrir no navegador):
+  $WebUrl
+
+LOGIN DO PROFESSOR:
+  Email: $ProfEmail
+  Senha: $ProfPass
+
+API publica:
+  $ApiUrl
+
+Lembretes:
+- Deixe as janelas abertas durante a gravacao.
+- Banco em memoria: dados somem ao reiniciar a API.
+- Para encerrar tudo: stop-demo.bat
+"@
+Set-Content -Path $OutFile -Value $texto -Encoding UTF8
+Write-Host "  (Os dados tambem foram salvos em: $OutFile)" -ForegroundColor DarkGray
+try { Start-Process notepad.exe $OutFile } catch {}
 
 Write-Host ''
 Read-Host 'Pressione ENTER para fechar esta janela (os servicos continuam rodando)'
