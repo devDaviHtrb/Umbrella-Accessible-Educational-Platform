@@ -1,0 +1,19 @@
+﻿==========================================================
+  UMBRELLA - Dados da apresentacao
+  (gerado em 16/11/2026 23:55)
+==========================================================
+
+APP (abrir no navegador):
+  https://payments-cole-motorcycles-president.trycloudflare.com
+
+LOGIN DO PROFESSOR:
+  Email: professor@umbrella.com
+  Senha: professor123
+
+API publica:
+  https://terrorist-stakeholders-quick-number.trycloudflare.com
+
+Lembretes:
+- Deixe as janelas abertas durante a gravacao.
+- Banco em memoria: dados somem ao reiniciar a API.
+- Para encerrar tudo: stop-demo.bat
