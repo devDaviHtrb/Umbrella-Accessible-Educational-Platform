@@ -113,6 +113,9 @@ libras-player/**/.e2e-out/
 libras-player/**/.expo/
 libras-player/**/tsconfig.tsbuildinfo
 libras-player/.e2e-gen.log
+# Vídeo de amostra do protótipo: excede o limite de 100MB do GitHub.
+libras-player/samples/video.webm
+*.webm
 
 
 node_modules/
