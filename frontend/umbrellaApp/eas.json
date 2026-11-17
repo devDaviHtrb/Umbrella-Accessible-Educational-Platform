@@ -14,8 +14,8 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_UMBRELLA_PUBLIC_API_URL": "https://a8fd-177-141-60-250.ngrok-free.app/api/",
-        "EXPO_PUBLIC_REQUEST_TIME_OUT": "20000"
+        "EXPO_PUBLIC_UMBRELLA_PUBLIC_API_URL": "https://umbrella-api-bw2t.onrender.com/api/",
+        "EXPO_PUBLIC_REQUEST_TIME_OUT": "60000"
       },
       "android": {
         "buildType": "apk"

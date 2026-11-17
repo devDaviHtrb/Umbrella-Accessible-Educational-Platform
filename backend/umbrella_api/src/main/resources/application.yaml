@@ -13,6 +13,9 @@ spring:
       # slightly above file to allow for multipart overhead/extra fields.
       max-file-size: 512MB
       max-request-size: 520MB
+      # Grava o upload em disco já a partir de 2MB (em vez de acumular na RAM).
+      # Essencial no Render free (512MB) para não estourar memória com vídeos.
+      file-size-threshold: 2MB
   datasource:
     url: ${DB_URL}
     username: ${DB_USER}
