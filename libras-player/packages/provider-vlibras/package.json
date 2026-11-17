@@ -1,0 +1,16 @@
+{
+  "name": "@libras/provider-vlibras",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Adaptador AvatarTranslationProvider para a VLibras Translator API auto-hospedada (modo protótipo interno não-produção).",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@libras/pipeline": "0.1.0"
+  }
+}

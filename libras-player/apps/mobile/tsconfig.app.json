@@ -1,0 +1,29 @@
+{
+  // Editor/type-check config for the Expo app shell (App.tsx, demo screen).
+  //
+  // This is intentionally SEPARATE from `tsconfig.json`, which is the
+  // composite project built by `tsc -b` and is scoped to the library barrel in
+  // `src/`. This config is NOT part of the monorepo `build`; it exists so the
+  // Expo-specific files (the app entry, App.tsx, the task 10.2 demo screen)
+  // type-check against React Native / DOM libs without polluting the library
+  // build (which must stay free of app-only entry points).
+  //
+  // Run on demand with: tsc -p tsconfig.app.json --noEmit
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": false,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "allowJs": true,
+    "types": ["react"]
+  },
+  // App shell + the task-10.2 demo screen. `src/demo/DemoScreen.tsx` is checked
+  // here (not by the library `tsc -b`) because it depends on app-only runtime
+  // (expo-asset, RN `fetch`). The player/data/domain sources it transitively
+  // imports are pulled in on demand by the compiler; `src` is included so those
+  // imports resolve under this config's DOM+RN lib settings.
+  "include": ["App.tsx", "index.js", "app.json", "src"]
+}

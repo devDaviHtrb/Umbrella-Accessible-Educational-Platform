@@ -50,8 +50,15 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/api/public/**",
+                                "/error",
                                 "/h2-console/**",
-                                "/ws/**"
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/ws/**",
+                                "/ws-sockjs/**",
+                                // Static VLibras avatar bundle (index.html + Unity assets)
+                                // loaded by the app's WebView; no auth needed.
+                                "/vlibras/**"
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
 
@@ -78,19 +85,12 @@ public class SecurityConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of(
-                "http://127.0.0.1:5500",
-                "http://localhost:5500"
-        ));
+        // CORS liberado para QUALQUER origem. Com allowCredentials(true) o CORS
+        // não aceita "*" em allowedOrigins, então usamos allowedOriginPatterns
+        // com "*" (padrão curinga), que permite qualquer origem.
+        configuration.setAllowedOriginPatterns(List.of("*"));
 
-        configuration.setAllowedMethods(List.of(
-                "GET",
-                "POST",
-                "PUT",
-                "PATCH",
-                "DELETE",
-                "OPTIONS"
-        ));
+        configuration.setAllowedMethods(List.of("*"));
 
         configuration.setAllowedHeaders(List.of("*"));
 

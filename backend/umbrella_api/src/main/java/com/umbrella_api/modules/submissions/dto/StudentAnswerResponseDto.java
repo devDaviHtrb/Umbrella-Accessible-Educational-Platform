@@ -8,7 +8,8 @@ public record StudentAnswerResponseDto(
         Long questionId,
         Long chosenAlternativeId,
         String essayAnswer,
-        Boolean isCorrect) {
+        Boolean isCorrect,
+        Float score) {
     public static StudentAnswerResponseDto fromEntity(StudentAnswers entity) {
         return new StudentAnswerResponseDto(
                 entity.getId(),
@@ -16,6 +17,7 @@ public record StudentAnswerResponseDto(
                 entity.getQuestion() != null ? entity.getQuestion().getId() : null,
                 entity.getChosenAlternative() != null ? entity.getChosenAlternative().getId() : null,
                 entity.getEssayAnswer(),
-                entity.getIsCorrect());
+                entity.getIsCorrect(),
+                entity.getScore());
     }
 }

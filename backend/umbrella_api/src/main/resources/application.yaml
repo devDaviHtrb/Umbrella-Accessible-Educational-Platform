@@ -1,3 +1,7 @@
+# Render (e outras PaaS) injetam a porta via variável PORT; localmente cai em 8080.
+server:
+  port: ${PORT:8080}
+
 spring:
   application:
     name: umbrela_api
@@ -5,12 +9,23 @@ spring:
     active: postgres
   servlet:
     multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
+      # Raised from 10MB to accommodate real course videos (MP4). Keep request
+      # slightly above file to allow for multipart overhead/extra fields.
+      max-file-size: 512MB
+      max-request-size: 520MB
   datasource:
     url: ${DB_URL}
     username: ${DB_USER}
     password: ${DB_PASS}
+    hikari:
+      # O Supabase/Render free pausam por inatividade; dá folga para a 1a conexão
+      # (cold start) sem derrubar o boot, e descarta conexões ociosas.
+      connection-timeout: 30000
+      initialization-fail-timeout: 60000
+      minimum-idle: 0
+      maximum-pool-size: 5
+      idle-timeout: 300000
+      max-lifetime: 1800000
   h2:
     console:
       enabled: true
@@ -35,6 +50,12 @@ cloudinary:
   cloud_name: ${CLOUDINARY_NAME}
   api_key: ${CLOUDINARY_KEY}
   api_secret: ${CLOUDINARY_SECRET}
+
+# Worker Python de geração de legendas (serviço `transformer` do compose).
+transformer:
+  baseUrl: ${TRANSFORMER_BASE_URL:http://transformer:8000}
+  timeoutSeconds: ${TRANSFORMER_TIMEOUT:1800}
+  geminiKey: ${TRANSFORMER_GEMINI_KEY:}
 
 
 logging:

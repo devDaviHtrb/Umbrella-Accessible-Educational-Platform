@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Libras Translation Player",
+    "slug": "libras-translation-player",
+    "owner": "arturregadas",
+    "version": "0.1.0",
+    "orientation": "default",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": false,
+    "assetBundlePatterns": [
+      "assets/vlibras/**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "br.gov.vlibras.translationplayer"
+    },
+    "android": {
+      "package": "br.gov.vlibras.translationplayer",
+      "usesCleartextTraffic": true,
+      "permissions": []
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-dev-client",
+      [
+        "react-native-video",
+        {
+          "enableNotificationControls": false,
+          "enableBackgroundAudio": false
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "53428e90-f85b-49e2-a38a-576218b8d648"
+      }
+    }
+  }
+}

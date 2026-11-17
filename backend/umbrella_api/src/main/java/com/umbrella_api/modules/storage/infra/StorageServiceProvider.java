@@ -40,10 +40,14 @@ public class StorageServiceProvider {
     private final ExtensionExtractor extractor;
     private final ModulesRepository modulesRepository;
     private final UserRepository userRepository;
+    private final SubtitleGenerationService subtitleGenerationService;
+    private final com.umbrella_api.modules.notification.service.NotificationService notificationService;
 
     public StorageServiceProvider(VideoRepository videoRepository, FileDbService fileDbService,
                                   ImageRepository imageRepository, RawRepository rawRepository, FileMetaDataRepository fileRepository,
-                                  ExtensionExtractor extractor, ModulesRepository modulesRepository, UserRepository userRepository) {
+                                  ExtensionExtractor extractor, ModulesRepository modulesRepository, UserRepository userRepository,
+                                  SubtitleGenerationService subtitleGenerationService,
+                                  com.umbrella_api.modules.notification.service.NotificationService notificationService) {
         this.videoRepository = videoRepository;
         this.fileDbService = fileDbService;
         this.imageRepository = imageRepository;
@@ -52,7 +56,26 @@ public class StorageServiceProvider {
         this.extractor = extractor;
         this.modulesRepository = modulesRepository;
         this.userRepository = userRepository;
+        this.subtitleGenerationService = subtitleGenerationService;
+        this.notificationService = notificationService;
 
+    }
+
+    /** Resolve o courseId de um módulo e notifica os alunos sobre o novo material. */
+    private void notifyMaterialUploaded(FileMetaData meta, boolean isVideo, String fileName) {
+        try {
+            if (meta == null || meta.getModule() == null) {
+                return;
+            }
+            Modules module = meta.getModule();
+            Long courseId = module.getCourse() != null ? module.getCourse().getId() : null;
+            if (courseId != null) {
+                notificationService.notifyNewMaterial(courseId, fileName, isVideo, meta.getId());
+            }
+        } catch (Exception e) {
+            // Notificação é best-effort; nunca derruba o upload.
+            System.err.println("[Notification] falha ao notificar material: " + e.getMessage());
+        }
     }
 
     @Transactional
@@ -103,6 +126,7 @@ public class StorageServiceProvider {
                 if (fileMetaData != null) {
                     fileMetaData.setRawFile(entity);
                     fileRepository.save(fileMetaData);
+                    notifyMaterialUploaded(fileMetaData, false, fileName);
                 }
 
             } else if (resourceType.equalsIgnoreCase("image")) {
@@ -127,6 +151,29 @@ public class StorageServiceProvider {
                 if (fileMetaData != null) {
                     fileMetaData.setVideo(entity);
                     fileRepository.save(fileMetaData);
+                    notifyMaterialUploaded(fileMetaData, true, fileName);
+                }
+
+                // Trigger automatic subtitle generation (normal + Libras) for
+                // the uploaded video. Register it to run AFTER this upload
+                // transaction commits, so the async worker sees the persisted
+                // Video row. The call itself is @Async and never blocks or
+                // fails the upload.
+                final Long videoId = entity.getId();
+                if (videoId != null) {
+                    if (org.springframework.transaction.support.TransactionSynchronizationManager
+                            .isSynchronizationActive()) {
+                        org.springframework.transaction.support.TransactionSynchronizationManager
+                                .registerSynchronization(
+                                        new org.springframework.transaction.support.TransactionSynchronization() {
+                                            @Override
+                                            public void afterCommit() {
+                                                subtitleGenerationService.generateForVideo(videoId);
+                                            }
+                                        });
+                    } else {
+                        subtitleGenerationService.generateForVideo(videoId);
+                    }
                 }
             }
 
@@ -147,7 +194,16 @@ public class StorageServiceProvider {
             org.springframework.transaction.interceptor.TransactionAspectSupport
                     .currentTransactionStatus().setRollbackOnly();
 
-            throw new FileStorageException("Failed to save file records in database. Cloud file rolled back.", e);
+            // Propaga a causa raiz na mensagem (ex.: "Invalid api_key ..." do
+            // Cloudinary) para que o erro seja visível no app, não apenas a
+            // mensagem genérica.
+            String rootMsg = e.getMessage();
+            Throwable cause = e.getCause();
+            if (cause != null && cause.getMessage() != null) {
+                rootMsg = cause.getMessage();
+            }
+            throw new FileStorageException(
+                    "Falha ao enviar o arquivo: " + rootMsg, e);
         }
     }
 
@@ -237,6 +293,38 @@ public class StorageServiceProvider {
                 this.delete(realFile);
             }
         }
+    }
+
+    /**
+     * Deletes a single material identified by its FileMetaData id, resolving the
+     * concrete file (Image/Video/RawFile) and removing it from the DB and
+     * Cloudinary. Returns the moduleId the material belonged to (for ownership
+     * checks), or null if not found.
+     */
+    @Transactional
+    public Long deleteFileByMetaId(Long metaId) {
+        FileMetaData meta = fileRepository.findById(metaId).orElse(null);
+        if (meta == null) {
+            return null;
+        }
+
+        Long moduleId = meta.getModule() != null ? meta.getModule().getId() : null;
+
+        StorageFileEntity realFile = null;
+        if (meta.getImage() != null)
+            realFile = meta.getImage();
+        else if (meta.getVideo() != null)
+            realFile = meta.getVideo();
+        else if (meta.getRawFile() != null)
+            realFile = meta.getRawFile();
+
+        if (realFile != null) {
+            this.delete(realFile);
+        } else {
+            fileRepository.delete(meta);
+        }
+
+        return moduleId;
     }
 
     @Transactional(readOnly = true)

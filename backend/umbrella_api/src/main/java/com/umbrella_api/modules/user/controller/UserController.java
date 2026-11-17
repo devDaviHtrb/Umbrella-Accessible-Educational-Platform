@@ -22,6 +22,28 @@ public class UserController {
         this.imageRepository = imageRepository;
     }
 
+    /**
+     * Lista usuários para iniciar conversas no chat. Exclui o próprio usuário.
+     * Antes o app não conseguia listar com quem conversar (só cursos/instrutor).
+     */
+    @GetMapping("/list")
+    public ResponseEntity<java.util.List<UserResponseDto>> listUsers(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        Long meId = userDetails != null && userDetails.getUserModel() != null
+                ? userDetails.getUserModel().getId()
+                : null;
+        java.util.List<UserResponseDto> users = userRepository.findAll().stream()
+                .filter(u -> meId == null || !u.getId().equals(meId))
+                .map(u -> {
+                    String avatarUrl = imageRepository.findTopByUserIdOrderByIdDesc(u.getId())
+                            .map(com.umbrella_api.modules.storage.model.Image::getUrl)
+                            .orElse(null);
+                    return UserResponseDto.fromEntity(u, avatarUrl);
+                })
+                .toList();
+        return ResponseEntity.ok(users);
+    }
+
     /** Returns the profile of the currently authenticated user. */
     @GetMapping("/me")
     public ResponseEntity<UserResponseDto> getMe(@AuthenticationPrincipal CustomUserDetails userDetails) {

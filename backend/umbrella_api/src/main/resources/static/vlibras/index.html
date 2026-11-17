@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<!--
+  Libras avatar WebView bridge page (task 3.2).
+
+  Embeds the official open-source VLibras avatar player
+  (vlibras-player-webjs, Unity/WebGL, LGPL-3.0) redistributed in this
+  directory. See ./NOTICE, ./LICENSE and ./README.md for attribution,
+  source (https://github.com/spbgovbr-vlibras/vlibras-player-webjs),
+  version/commit and the LGPLv3 distribution terms.
+  licenseReviewId: vlibras-player-webjs-LGPLv3-v1.1.0-e10387e
+
+  Boundaries (Requirements 8.2, 15.1, 15.3, 15.4, 15.5):
+    - Loads ONLY the local ./vlibras-player.js bundle and the player's own
+      local ./target/ assets. No third-party scripts.
+    - At runtime the bundled player reaches the official VLibras online
+      services (text->gloss translation and sign dictionary) over HTTPS.
+      Those origins are allow-listed in the CSP below.
+    - Does NOT embed the VLibras Widget or the Hand Talk Plugin.
+    - Does NOT automate the hosted "VLibras Vídeo" service.
+    - Emits NO audio (no <audio>/<video>); the native video player is the
+      sole audio source (Requirement 8.6).
+
+  Message protocol (design.md: AppToWebMessage / WebToAppMessage), carried
+  over the react-native-webview postMessage bridge as JSON strings.
+-->
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <!--
+      Content-Security-Policy for the Unity/WebGL VLibras player.
+
+      The player is a 2018 Unity WebGL build (`UnityLoader.js`): it instantiates
+      its WASM runtime and worker threads from `blob:` URLs and fetches its
+      Unity data (`.unityweb`) and the sign dictionary over HTTPS. A strict CSP
+      (no `blob:` in `script-src`/`worker-src`, no `blob:`/`data:` in
+      `connect-src`) silently blocks that runtime instantiation, which is why
+      the loading bar stalls near the end. This policy therefore allows the
+      `blob:`/`data:`/`unsafe-eval` the engine needs, while still restricting
+      remote origins to `'self'` (the local package server) plus the official
+      VLibras translation/dictionary HTTPS hosts — no third-party scripts, no
+      VLibras Vídeo automation (Requirements 8.2, 15.2–15.5, 17.2).
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self' blob: data:;
+        script-src 'self' blob: 'unsafe-eval' 'unsafe-inline';
+        style-src 'self' 'unsafe-inline';
+        connect-src 'self' blob: data: https://traducao2.vlibras.gov.br https://dicionario2.vlibras.gov.br;
+        img-src 'self' data: blob: https://dicionario2.vlibras.gov.br;
+        media-src 'self' blob:;
+        worker-src 'self' blob:;
+        child-src 'self' blob:;
+        frame-src 'none';
+        object-src 'none';
+      "
+    />
+    <title>VLibras Avatar</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        /* Transparent background so the avatar can overlay the video. The
+           Unity/WebGL canvas may still paint its own clear color. */
+        background: transparent;
+      }
+      /* Avatar wrapper fills the WebView container. */
+      #avatar {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        background: transparent;
+      }
+      /* The player injects a #gameContainer with the Unity canvas inside the
+         wrapper. Make canvas fill and stay transparent where supported. */
+      #avatar #gameContainer,
+      #avatar canvas {
+        width: 100% !important;
+        height: 100% !important;
+        display: block;
+        background: transparent !important;
+      }
+      /* On-screen diagnostics overlay. Hidden by default now that the avatar
+         loads; the diagnostics are still mirrored to the app log via the
+         bridge. Flip `display` back to block (or append ?debug=1 handling) to
+         bring the overlay back while troubleshooting. */
+      #diag {
+        display: none;
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        max-height: 45%;
+        overflow: auto;
+        margin: 0;
+        padding: 4px 6px;
+        font: 11px/1.35 monospace;
+        color: #d7ffd7;
+        background: rgba(0, 0, 0, 0.55);
+        white-space: pre-wrap;
+        z-index: 2147483647;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="avatar"></div>
+    <pre id="diag">VLibras: iniciando…</pre>
+
+    <!-- Local player bundle only. No third-party / remote scripts. -->
+    <script src="./vlibras-player.js"></script>
+    <script>
+      (function () {
+        "use strict";
+
+        // ---- On-screen + app diagnostics --------------------------------
+        var diagEl = document.getElementById("diag");
+        var diagLines = [];
+        function diag(line) {
+          diagLines.push(line);
+          if (diagLines.length > 40) diagLines.shift();
+          if (diagEl) diagEl.textContent = diagLines.join("\n");
+          // Mirror to the app so it shows up in the Metro log too.
+          postToApp({ type: "animation:progress", value: 0, note: line });
+        }
+
+        // ---- WebToApp bridge (web -> app) -------------------------------
+        // react-native-webview exposes window.ReactNativeWebView.postMessage.
+        // Each message is a WebToAppMessage serialized as a JSON string.
+        function postToApp(message) {
+          try {
+            var json = JSON.stringify(message);
+            if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+              window.ReactNativeWebView.postMessage(json);
+            }
+          } catch (e) {
+            // Never throw from the bridge; swallow serialization issues.
+          }
+        }
+
+        function emitError(code, rawMessage) {
+          diag("ERRO " + code + ": " + String(rawMessage));
+          postToApp({ type: "error", code: code, message: String(rawMessage) });
+        }
+
+        // Surface any uncaught error/rejection to the overlay + app.
+        window.onerror = function (message, source, lineno) {
+          emitError("VLIBRAS_PLAYER_ERROR", message + " @" + lineno);
+          return false;
+        };
+        window.addEventListener("unhandledrejection", function (ev) {
+          emitError(
+            "VLIBRAS_PLAYER_ERROR",
+            "unhandledrejection: " + ((ev && ev.reason) || ""),
+          );
+        });
+
+        // ---- Unity blob-Worker decompression workaround ----------------
+        // Unity 2018's UnityLoader.js decompresses the big `.unityweb` assets
+        // (the ~8.5 MB data file and the WASM code) inside a Web Worker that it
+        // builds from a `blob:` URL. On several Android System WebView builds a
+        // Worker created from a blob: URL never runs (or is blocked), so the
+        // decompression callback never fires: the progress bar fills to ~100%
+        // and the avatar hangs forever without emitting "load".
+        //
+        // UnityLoader lets us avoid that: its Compression.decompress reuses a
+        // pre-existing `r.worker` instead of constructing one, as long as the
+        // object exposes the same contract (callbacks{}, nextCallbackId,
+        // postMessage). We seed each decompressor with a SYNCHRONOUS shim that
+        // runs decompress() on the main thread and invokes the callback inline.
+        // Slightly slower to boot, but it actually completes in a WebView.
+        function installSyncDecompressor() {
+          try {
+            var UL = window.UnityLoader;
+            if (!UL || !UL.Compression) return false;
+            var comp = UL.Compression;
+            var seeded = false;
+            ["gzip", "brotli"].forEach(function (name) {
+              var codec = comp[name];
+              if (!codec || codec.__syncSeeded) return;
+              // Build the synchronous shim lazily on first use so we don't pay
+              // the require() cost for a codec that is never exercised.
+              codec.worker = {
+                callbacks: {},
+                nextCallbackId: 0,
+                postMessage: function (msg) {
+                  var cb = this.callbacks[msg.id];
+                  delete this.callbacks[msg.id];
+                  var out;
+                  try {
+                    out = codec.decompress(msg.compressed);
+                  } catch (e) {
+                    emitError(
+                      "WEBVIEW_LOAD_FAILED",
+                      "Falha ao descomprimir asset Unity (" + name + "): " +
+                        ((e && e.message) || e),
+                    );
+                    out = undefined;
+                  }
+                  // Match the engine's expectation: deliver asynchronously so
+                  // the loader's progress/callback ordering is preserved.
+                  setTimeout(function () {
+                    if (typeof cb === "function") cb(out);
+                  }, 0);
+                },
+              };
+              codec.__syncSeeded = true;
+              seeded = true;
+            });
+            // Silence the "configure your web server" console nag.
+            comp.serverSetupWarningEnabled = false;
+            if (seeded) diag("Descompressão Unity forçada p/ main-thread (sem blob Worker).");
+            return seeded;
+          } catch (e) {
+            return false;
+          }
+        }
+
+        // UnityLoader.js is injected lazily by the player bundle, so poll for
+        // it and patch as soon as it appears (and keep trying briefly in case
+        // the codecs are attached a tick later).
+        (function waitForUnityLoader() {
+          var tries = 0;
+          var iv = setInterval(function () {
+            tries += 1;
+            if (installSyncDecompressor() || tries > 200) {
+              clearInterval(iv);
+            }
+          }, 50);
+        })();
+
+        // ---- WebGL / WASM capability check (why Unity may stall) --------
+        (function reportCapabilities() {
+          var webgl = false;
+          try {
+            var c = document.createElement("canvas");
+            webgl = !!(
+              window.WebGLRenderingContext &&
+              (c.getContext("webgl") || c.getContext("experimental-webgl"))
+            );
+          } catch (e) {
+            webgl = false;
+          }
+          var wasm = typeof WebAssembly === "object";
+          diag("WebGL=" + webgl + "  WASM=" + wasm + "  UA=" + navigator.userAgent);
+          if (!webgl) {
+            emitError(
+              "WEBVIEW_LOAD_FAILED",
+              "WebGL indisponível nesta WebView; o avatar Unity não pode renderizar.",
+            );
+          }
+        })();
+
+        // Current cue id, set on each "cue" AppToWebMessage. Re-emitted with
+        // the gloss/animation events so the app can correlate them.
+        var currentCueId = null;
+
+        // ---- Translation queue (anti-overlap) ---------------------------
+        // The bundled player's `translate()` calls `stop()` on any in-flight
+        // animation and starts the new one. So firing a new cue while the
+        // previous sign is still playing CUTS the previous sign — with short
+        // cues and network latency this makes signs overlap/atropelar and the
+        // first sentence can be skipped entirely. We therefore serialize:
+        // translate only when idle, and otherwise remember just the LATEST
+        // pending cue (coalescing — never build an ever-growing backlog that
+        // drifts further behind). When the current sign ends, flush the
+        // pending one.
+        var signing = false; // true while a sign is playing
+        var pendingCue = null; // { id, text } waiting for the current to finish
+
+        var signTimer = null;
+
+        function startTranslate(cueId, text) {
+          currentCueId = cueId != null ? cueId : null;
+          signing = true;
+          // Safety net: if the player never emits animation:end for this sign
+          // (failed translation, missing event), release the queue after a
+          // generous timeout so later cues are not blocked forever.
+          if (signTimer !== null) clearTimeout(signTimer);
+          signTimer = setTimeout(function () {
+            if (signing) {
+              diag("sign timeout — liberando fila");
+              onSignFinished();
+            }
+          }, 20000);
+          try {
+            player.translate(text);
+          } catch (e) {
+            signing = false;
+            emitError("VLIBRAS_PLAYER_ERROR", (e && e.message) || e);
+          }
+        }
+
+        // Called when a sign finishes (gloss:end / animation:end). Flush the
+        // latest pending cue, if any.
+        function onSignFinished() {
+          signing = false;
+          if (signTimer !== null) {
+            clearTimeout(signTimer);
+            signTimer = null;
+          }
+          if (pendingCue !== null) {
+            var next = pendingCue;
+            pendingCue = null;
+            startTranslate(next.id, next.text);
+          }
+        }
+
+        var player = null;
+        var loaded = false;
+        // Remember the last requested speed so we can (re)apply it once the
+        // Unity player is actually ready. A setSpeed that arrives before the
+        // engine finishes loading is otherwise dropped by Unity, leaving the
+        // avatar signing at its default speed.
+        var pendingSpeed = null;
+
+        // Safety timeout: if "load" never fires, report a stall so the app can
+        // fall back instead of spinning forever.
+        var loadTimer = setTimeout(function () {
+          if (!loaded) {
+            emitError(
+              "WEBVIEW_LOAD_TIMEOUT",
+              "O player Unity não sinalizou 'load' em 45s (travado no carregamento).",
+            );
+          }
+        }, 45000);
+
+        // ---- Instantiate the official player ----------------------------
+        try {
+          if (!window.VLibras || typeof window.VLibras.Player !== "function") {
+            emitError("WEBVIEW_LOAD_FAILED", "VLibras.Player bundle not available");
+          } else {
+            diag("Bundle VLibras OK; instanciando player…");
+            // The bundled player accepts { targetPath, translator }. The
+            // avatar is selected after load via changeAvatar(name); the
+            // design's { target: { name, path } } maps to targetPath + a
+            // changeAvatar() call on init.
+            player = new window.VLibras.Player({ targetPath: "./target" });
+
+            var wrapper = document.getElementById("avatar");
+
+            // Subscribe to the player events and re-emit as WebToAppMessage.
+            player.on("load", function () {
+              loaded = true;
+              clearTimeout(loadTimer);
+              diag("Player 'load' OK — avatar pronto.");
+              // Apply any speed that was requested before the engine was ready.
+              if (pendingSpeed !== null) {
+                try {
+                  player.setSpeed(pendingSpeed);
+                  diag("setSpeed aplicado no load: " + pendingSpeed);
+                } catch (e) {
+                  /* ignore */
+                }
+              }
+              postToApp({ type: "load" });
+            });
+            player.on("gloss:start", function () {
+              postToApp({ type: "gloss:start", cueId: currentCueId });
+            });
+            player.on("gloss:end", function () {
+              postToApp({ type: "gloss:end", cueId: currentCueId });
+            });
+            player.on("progress", function (p) {
+              diag("Unity loading " + Math.round((Number(p) || 0) * 100) + "%");
+            });
+            player.on("animation:progress", function (value) {
+              var num = typeof value === "number" ? value : Number(value);
+              postToApp({
+                type: "animation:progress",
+                value: isNaN(num) ? 0 : num,
+              });
+            });
+            player.on("animation:end", function () {
+              postToApp({ type: "animation:end", cueId: currentCueId });
+              // The sign finished playing: release the queue and flush any
+              // pending cue so each sentence is signed fully, in order, without
+              // the next cue cutting it short.
+              onSignFinished();
+            });
+            player.on("error", function (code) {
+              // Don't let a failed sign jam the queue.
+              signing = false;
+              emitError("VLIBRAS_PLAYER_ERROR", code);
+            });
+
+            // Mount the Unity/WebGL avatar into the wrapper.
+            diag("Montando o avatar Unity/WebGL…");
+            player.load(wrapper);
+          }
+        } catch (err) {
+          emitError("WEBVIEW_LOAD_FAILED", (err && err.message) || err);
+        }
+
+        // ---- AppToWeb bridge (app -> web) -------------------------------
+        // react-native-webview delivers injected messages as a 'message'
+        // event. Android fires it on `document`, iOS on `window`; listen on
+        // both. event.data is the JSON string of an AppToWebMessage.
+        function handleAppMessage(event) {
+          if (!event || typeof event.data !== "string") {
+            return;
+          }
+          var msg;
+          try {
+            msg = JSON.parse(event.data);
+          } catch (e) {
+            return; // ignore non-JSON / unrelated messages
+          }
+          if (!msg || typeof msg.type !== "string") {
+            return;
+          }
+
+          try {
+            switch (msg.type) {
+              case "init":
+                // config: AvatarRuntimeConfig { avatarName, defaultSpeed, ... }
+                if (player && msg.config) {
+                  if (msg.config.avatarName) {
+                    player.changeAvatar(msg.config.avatarName);
+                  }
+                  if (typeof msg.config.defaultSpeed === "number") {
+                    player.setSpeed(msg.config.defaultSpeed);
+                  }
+                }
+                break;
+
+              case "cue":
+                // Queue the cue instead of translating immediately: if a sign
+                // is still playing, translating now would cut it short (the
+                // player stops the current animation on every translate()).
+                // Translate right away only when idle; otherwise keep just the
+                // latest pending cue so the avatar finishes the current sign
+                // first, then jumps to the most recent cue (coalescing avoids a
+                // growing backlog that would drift ever further behind).
+                if (player && loaded && typeof msg.text === "string") {
+                  if (signing) {
+                    pendingCue = { id: msg.cueId, text: msg.text };
+                  } else {
+                    startTranslate(msg.cueId, msg.text);
+                  }
+                }
+                break;
+
+              case "pause":
+                if (player) player.pause();
+                break;
+
+              case "stop":
+                // Stop clears the queue and the signing flag so a later cue is
+                // treated as a fresh start (not blocked by a stale "signing").
+                pendingCue = null;
+                signing = false;
+                if (player) player.stop();
+                break;
+
+              case "setSpeed":
+                if (typeof msg.speed === "number") {
+                  // Always remember it; apply now if ready, else on "load".
+                  pendingSpeed = msg.speed;
+                  if (player && loaded) {
+                    player.setSpeed(msg.speed);
+                    diag("setSpeed aplicado: " + msg.speed);
+                  } else {
+                    diag("setSpeed adiado até load: " + msg.speed);
+                  }
+                }
+                break;
+
+              case "changeAvatar":
+                if (player && msg.name) {
+                  player.changeAvatar(msg.name);
+                }
+                break;
+
+              default:
+                // Unknown message types are ignored.
+                break;
+            }
+          } catch (err) {
+            emitError("VLIBRAS_PLAYER_ERROR", (err && err.message) || err);
+          }
+        }
+
+        document.addEventListener("message", handleAppMessage);
+        window.addEventListener("message", handleAppMessage);
+      })();
+    </script>
+  </body>
+</html>

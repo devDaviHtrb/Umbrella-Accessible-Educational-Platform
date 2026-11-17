@@ -67,7 +67,7 @@ public class SubmissionsProvider {
     }
 
     public ActivitySubmissionResponseDto getActivitySubmissionById(Long id) {
-        return activitySubmissionsRepository.findById(id)
+        return activitySubmissionsRepository.findByIdWithUser(id)
                 .map(ActivitySubmissionResponseDto::fromEntity)
                 .orElse(null);
     }
@@ -130,9 +130,35 @@ public class SubmissionsProvider {
             answer.setEssayAnswer(request.essayAnswer());
         if (request.isCorrect() != null)
             answer.setIsCorrect(request.isCorrect());
+        if (request.score() != null)
+            answer.setScore(request.score());
 
         studentAnswersRepository.save(answer);
+
+        recalculateSubmissionScore(answer.getSubmission().getId());
+
         return StudentAnswerResponseDto.fromEntity(answer);
+    }
+
+    /**
+     * Recomputes a submission's total score as the sum of its answers' scores.
+     * Keeps the submission total consistent whenever the teacher adjusts a
+     * per-question grade.
+     */
+    @Transactional
+    public void recalculateSubmissionScore(Long submissionId) {
+        ActivitySubmissions submission = activitySubmissionsRepository.findById(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("Activity submission not found"));
+
+        float total = 0f;
+        for (StudentAnswers answer : studentAnswersRepository.findBySubmissionId(submissionId)) {
+            if (answer.getScore() != null) {
+                total += answer.getScore();
+            }
+        }
+
+        submission.setScore(total);
+        activitySubmissionsRepository.save(submission);
     }
 
     @Transactional
@@ -195,6 +221,7 @@ public class SubmissionsProvider {
                     .chosenAlternative(chosenAlternative)
                     .essayAnswer(answerDto.essayAnswer())
                     .isCorrect(isCorrect)
+                    .score(questionScore)
                     .build();
 
             studentAnswersRepository.save(studentAnswer);

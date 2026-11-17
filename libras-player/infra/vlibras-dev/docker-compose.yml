@@ -1,0 +1,236 @@
+# =============================================================================
+# VLibras Translator API - Local_Dev_Environment
+# =============================================================================
+# !!! AMBIENTE NAO-PRODUCAO / NON-PRODUCTION ENVIRONMENT !!!
+#
+# Stack de desenvolvimento local, isolada, para avaliar a geracao de avatar de
+# Libras em modo `internal-nonproduction-prototype` (Requirements 8.1, 8.2, 9.x).
+#
+# Esta stack:
+#   - NAO deve ser implantada em producao (Requirement 19.4).
+#   - NAO contem credenciais reais nem conteudo sensivel (Requirements 8.2, 9.4).
+#   - Usa uma rede Docker dedicada, isolada da rede de producao (Requirement 9.1).
+#   - Expoe um endpoint de health check para o Provider_Adapter (Requirement 9.3).
+#
+# As imagens oficiais publicas podem nao estar disponiveis e a stack legada
+# (Ubuntu 18.04 / Node.js 10) exige modernizacao/hardening. Por isso os servicos
+# de aplicacao usam `build:` apontando para Dockerfiles que serao detalhados na
+# tarefa 12.2. Este arquivo e sintaticamente valido, mas `docker compose up`
+# so passa a funcionar apos a tarefa 12.2.
+# =============================================================================
+
+name: vlibras-dev
+
+# --- Labels comuns reutilizaveis (marcacao explicita de nao-producao) ---------
+x-nonprod-labels: &nonprod-labels
+  com.vvli.environment: "non-production"
+  com.vvli.usage: "internal-nonproduction-prototype"
+  com.vvli.managed-by: "infra/vlibras-dev"
+  com.vvli.do-not-deploy-to-production: "true"
+
+services:
+  # ---------------------------------------------------------------------------
+  # VLibras Translator API
+  # Base: repositorio publico oficial spbgovbr-vlibras/vlibras-translator-api
+  # Licenca: LGPLv3 (ver README; revisao de direitos exigida - Requirement 18.1).
+  # Expoe o endpoint de health check consumido pelo adaptador (Requirement 9.3).
+  # ---------------------------------------------------------------------------
+  vlibras-translator-api:
+    # TODO(12.2): fornecer Dockerfile modernizando a stack legada (Node 10 -> LTS).
+    #             A imagem oficial (vlibras/translator-api) pode nao estar
+    #             publicamente disponivel; preferimos build reproduzivel local.
+    build:
+      context: ./services/translator-api
+      dockerfile: Dockerfile
+    image: vlibras-dev/translator-api:nonprod
+    restart: unless-stopped
+    labels: *nonprod-labels
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      # Marcacao explicita de ambiente nao-producao (Requirement 9.2).
+      NODE_ENV: "development"
+      VLIBRAS_ENVIRONMENT: "non-production"
+      VLIBRAS_USAGE_MODE: "internal-nonproduction-prototype"
+      # Porta interna do servico HTTP.
+      PORT: "5000"
+      # Endpoint de health check exposto para o Provider_Adapter (Requirement 9.3).
+      HEALTHCHECK_PATH: "/healthz"
+      # Enderecos internos dos servicos de apoio (rede dedicada).
+      MONGO_URI: "mongodb://${MONGO_USER:-vlibras_dev}:${MONGO_PASSWORD:-dev_placeholder_change_me}@mongodb:27017/vlibras_dev?authSource=admin"
+      REDIS_URL: "redis://:${REDIS_PASSWORD:-dev_placeholder_change_me}@redis:6379/0"
+      RABBITMQ_URL: "amqp://${RABBITMQ_USER:-vlibras_dev}:${RABBITMQ_PASSWORD:-dev_placeholder_change_me}@rabbitmq:5672/%2f"
+      # Enderecos internos dos cores de traducao.
+      TEXT_CORE_URL: "http://vlibras-text-core:5001"
+      VIDEO_CORE_URL: "http://vlibras-video-core:5002"
+    ports:
+      # Porta local de desenvolvimento -> porta interna.
+      - "${TRANSLATOR_API_PORT:-5000}:5000"
+    networks:
+      - vlibras-dev-net
+    healthcheck:
+      # Health check consumivel pelo adaptador em http://localhost:5000/healthz
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5000/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  # ---------------------------------------------------------------------------
+  # VLibras Text Core (traducao Portugues -> glosa Libras)
+  # Base: repositorio publico oficial spbgovbr-vlibras/vlibras-translator-text-core
+  # ---------------------------------------------------------------------------
+  vlibras-text-core:
+    # TODO(12.2): fornecer Dockerfile para o Text Core (stack legada).
+    build:
+      context: ./services/text-core
+      dockerfile: Dockerfile
+    image: vlibras-dev/text-core:nonprod
+    restart: unless-stopped
+    labels: *nonprod-labels
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      NODE_ENV: "development"
+      VLIBRAS_ENVIRONMENT: "non-production"
+      VLIBRAS_USAGE_MODE: "internal-nonproduction-prototype"
+      PORT: "5001"
+      MONGO_URI: "mongodb://${MONGO_USER:-vlibras_dev}:${MONGO_PASSWORD:-dev_placeholder_change_me}@mongodb:27017/vlibras_dev?authSource=admin"
+      RABBITMQ_URL: "amqp://${RABBITMQ_USER:-vlibras_dev}:${RABBITMQ_PASSWORD:-dev_placeholder_change_me}@rabbitmq:5672/%2f"
+    expose:
+      - "5001"
+    networks:
+      - vlibras-dev-net
+
+  # ---------------------------------------------------------------------------
+  # VLibras Video Core (geracao/composicao do avatar 3D)
+  # NOTA DE CONFORMIDADE: este core local e usado apenas para o prototipo
+  # auto-hospedado. NAO automatiza o servico publico "VLibras Video"
+  # (Requirement 15.3).
+  # ---------------------------------------------------------------------------
+  vlibras-video-core:
+    # TODO(12.2): fornecer Dockerfile para o Video Core (renderizacao de avatar).
+    build:
+      context: ./services/video-core
+      dockerfile: Dockerfile
+    image: vlibras-dev/video-core:nonprod
+    restart: unless-stopped
+    labels: *nonprod-labels
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: "development"
+      VLIBRAS_ENVIRONMENT: "non-production"
+      VLIBRAS_USAGE_MODE: "internal-nonproduction-prototype"
+      PORT: "5002"
+      REDIS_URL: "redis://:${REDIS_PASSWORD:-dev_placeholder_change_me}@redis:6379/0"
+      RABBITMQ_URL: "amqp://${RABBITMQ_USER:-vlibras_dev}:${RABBITMQ_PASSWORD:-dev_placeholder_change_me}@rabbitmq:5672/%2f"
+    expose:
+      - "5002"
+    networks:
+      - vlibras-dev-net
+
+  # ---------------------------------------------------------------------------
+  # MongoDB (persistencia) - imagem oficial publica, versao fixada.
+  # Credenciais sao placeholders de DEV (nunca reais) - Requirements 8.2, 9.4.
+  # ---------------------------------------------------------------------------
+  mongodb:
+    image: mongo:6.0
+    restart: unless-stopped
+    labels: *nonprod-labels
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: "${MONGO_USER:-vlibras_dev}"
+      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_PASSWORD:-dev_placeholder_change_me}"
+      MONGO_INITDB_DATABASE: "vlibras_dev"
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - vlibras-dev-net
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand({ ping: 1 })' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ---------------------------------------------------------------------------
+  # Redis (cache / filas de trabalho) - imagem oficial publica, versao fixada.
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7.2-alpine
+    restart: unless-stopped
+    labels: *nonprod-labels
+    command:
+      - "redis-server"
+      - "--requirepass"
+      - "${REDIS_PASSWORD:-dev_placeholder_change_me}"
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - vlibras-dev-net
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"${REDIS_PASSWORD:-dev_placeholder_change_me}\" ping | grep -q PONG || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ---------------------------------------------------------------------------
+  # RabbitMQ (mensageria entre API e cores) - imagem oficial publica com UI.
+  # ---------------------------------------------------------------------------
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    restart: unless-stopped
+    labels: *nonprod-labels
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER:-vlibras_dev}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASSWORD:-dev_placeholder_change_me}"
+      RABBITMQ_DEFAULT_VHOST: "/"
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MGMT_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - vlibras-dev-net
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+# -----------------------------------------------------------------------------
+# Rede dedicada e isolada (NAO deve ser conectada a redes de producao).
+# -----------------------------------------------------------------------------
+networks:
+  vlibras-dev-net:
+    name: vlibras-dev-net
+    driver: bridge
+    labels: *nonprod-labels
+
+# -----------------------------------------------------------------------------
+# Volumes locais de desenvolvimento (dados descartaveis).
+# -----------------------------------------------------------------------------
+volumes:
+  mongodb-data:
+    labels: *nonprod-labels
+  redis-data:
+    labels: *nonprod-labels
+  rabbitmq-data:
+    labels: *nonprod-labels

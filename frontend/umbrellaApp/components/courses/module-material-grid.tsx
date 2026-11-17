@@ -1,9 +1,10 @@
-import { Pressable, StyleSheet, View, Linking, Alert } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { IconSymbol, type IconSymbolName } from '@/components/ui/icon-symbol';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
 import type { ModuleMaterial } from '@/types/materials';
+import { openMaterial } from '@/utils/open-material';
 
 export type ModuleMaterialGridProps = {
   materials: ModuleMaterial[];
@@ -74,26 +75,21 @@ function getMaterialIconAndLabel(material: ModuleMaterial): { icon: IconSymbolNa
 }
 
 export function ModuleMaterialGrid({ materials, onMaterialPress }: ModuleMaterialGridProps) {
-  const handlePress = async (material: ModuleMaterial) => {
+  const handlePress = (material: ModuleMaterial) => {
     if (onMaterialPress) {
       onMaterialPress(material);
       return;
     }
-
-    if (material.url) {
-      try {
-        const supported = await Linking.canOpenURL(material.url);
-        if (supported) {
-          await Linking.openURL(material.url);
-        } else {
-          Alert.alert('Aviso', 'Não foi possível abrir o link do material.');
-        }
-      } catch {
-        Alert.alert('Erro', 'Ocorreu um erro ao tentar abrir o arquivo.');
-      }
-    } else {
-      Alert.alert('Informação', `Material: ${material.title}\n${material.description || 'Sem descrição adicional.'}`);
-    }
+    // Fallback: delega ao openMaterial central (vídeo -> player; resto -> navegador).
+    void openMaterial({
+      title: material.title,
+      url: material.url,
+      description: material.description,
+      resourceType: material.resourceType,
+      fileType: material.fileType,
+      videoId: material.videoId,
+      sizeLabel: formatFileSize(material.size),
+    });
   };
 
   if (!materials || materials.length === 0) {

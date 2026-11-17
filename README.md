@@ -1,7 +1,56 @@
 # 🌍 Umbrella
 
-run ->
+## 📁 Estrutura do projeto
+
+Este é o repositório raiz do Umbrella. Tudo está organizado por responsabilidade:
+
 ```
+Umbrella-Accessible-Educational-Platform/   (raiz)
+├── backend/            API Spring Boot (Java 21) + worker de legendas (transformer) + Postgres
+│   └── umbrella_api/
+│       ├── src/                         código Spring
+│       ├── transformer/                 worker Python (Whisper + Gemini) — serviço Docker
+│       ├── src/main/resources/static/vlibras/   bundle do avatar VLibras (servido pelo backend)
+│       └── docker-compose.yml           sobe api + postgres + transformer
+├── frontend/           Apps cliente
+│   ├── umbrellaApp/     App Expo/React Native (aluno e professor) — inclui o player de Libras
+│   └── umbrellaWeb/     Web
+├── docs/               Documentação e diagramas
+├── scripts/            Scripts auxiliares
+└── libras-player/      Protótipo standalone do player de Libras (histórico/referência)
+    ├── apps/mobile/    app Expo original do player
+    ├── packages/       pipeline de processamento (SRT/ffmpeg/manifest)
+    ├── transformer/    versão CLI original do gerador de legendas
+    ├── infra/          docker de desenvolvimento do VLibras
+    └── samples/        video.webm + subtitles.txt (mídia de exemplo)
+```
+
+> O que roda em produção é o **backend/** + **frontend/umbrellaApp**. A pasta
+> **libras-player/** é o protótipo original (de onde o player foi portado) e é
+> mantida apenas como referência — não é necessária para rodar o Umbrella.
+
+## ▶️ Como rodar
+
+### Backend + Postgres + worker de legendas (Docker)
+```
+cd backend/umbrella_api
+docker compose up --build
+```
+Sobe a API (8080), o Postgres (5432) e o worker transformer (8000). A primeira
+build do transformer é demorada (baixa Whisper/torch).
+
+### App (Expo)
+```
+cd frontend/umbrellaApp
+npx expo start           # mesma rede
+npx expo start --tunnel  # acessível de qualquer rede
+```
+Configure `frontend/umbrellaApp/.env` (`EXPO_PUBLIC_UMBRELLA_PUBLIC_API_URL`)
+apontando para a URL do backend (IP local na mesma rede, ou um túnel público).
+
+### Reset completo do backend
+```
+cd backend/umbrella_api
 docker compose down
 docker compose build --no-cache
 docker compose up

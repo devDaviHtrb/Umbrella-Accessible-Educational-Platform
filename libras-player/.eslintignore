@@ -1,0 +1,16 @@
+node_modules
+dist
+coverage
+*.webm
+*.mp4
+
+# Infra prototype stubs are plain CommonJS run inside Docker (no build step).
+infra/vlibras-dev/services/**/stub-server.js
+
+# Vendored official vlibras-player-webjs bundle (LGPLv3, task 3.1).
+# Distributed third-party / minified assets — not subject to project lint rules.
+apps/mobile/assets/vlibras/**
+
+# Dev-only utility scripts (plain Node .mjs, not part of the tsc build).
+apps/mobile/scripts/serve-package.mjs
+apps/mobile/scripts/fix-expo-loading-page.mjs

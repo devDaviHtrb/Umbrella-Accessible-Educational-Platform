@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    // Node package: uses global `fetch`/`URL`/`AbortController`/timers and
+    // `node:crypto`. Declare node types explicitly so compilation does not rely
+    // on fragile ambient hoisting of `@types/node` in the workspace monorepo.
+    "types": ["node"]
+  },
+  "references": [{ "path": "../pipeline" }],
+  "include": ["src"]
+}

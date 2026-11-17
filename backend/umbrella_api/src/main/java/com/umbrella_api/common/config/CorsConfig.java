@@ -9,9 +9,11 @@ public class CorsConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**") // Aplica para todas as rotas /api/**
-                .allowedOrigins("http://localhost:8081") // Libera o Expo Web
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        // CORS liberado para qualquer origem. allowedOriginPatterns("*") é
+        // obrigatório (em vez de allowedOrigins) porque allowCredentials é true.
+        registry.addMapping("/**")
+                .allowedOriginPatterns("*")
+                .allowedMethods("*")
                 .allowedHeaders("*")
                 .allowCredentials(true);
     }

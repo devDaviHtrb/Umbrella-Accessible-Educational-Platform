@@ -2,16 +2,19 @@ import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, FontFamily, Radius, Spacing } from '@/constants/theme';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
 
 export type SearchInputProps = TextInputProps;
 
 export function SearchInput({ style, ...rest }: SearchInputProps) {
+  const { translate, fontScale } = usePreferences();
+
   return (
     <View style={styles.wrapper}>
       <IconSymbol name="magnifyingglass" size={20} color={Colors.light.textSecondary} />
       <TextInput
-        style={[styles.input, style]}
-        placeholderTextColor={Colors.light.textSecondary}
+        style={[styles.input, { fontSize: 15 * fontScale, color: translate(Colors.light.text) }, style]}
+        placeholderTextColor={translate(Colors.light.textSecondary)}
         {...rest}
       />
     </View>

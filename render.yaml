@@ -1,0 +1,61 @@
+# Render Blueprint — backend Java (Spring Boot) do Umbrella.
+# O banco Postgres fica no Supabase; o worker transformer continua local (ngrok).
+#
+# Como usar:
+#   1. Faça push deste arquivo para o GitHub (branch main).
+#   2. No Render: New > Blueprint > selecione o repositório.
+#   3. O Render detecta este render.yaml e cria o Web Service abaixo.
+#   4. Preencha as variáveis marcadas com sync:false (segredos) no painel.
+services:
+  - type: web
+    name: umbrella-api
+    runtime: docker
+    # Dockerfile fica dentro da pasta do backend; o contexto de build é essa pasta.
+    dockerfilePath: ./backend/umbrella_api/dockerfile
+    dockerContext: ./backend/umbrella_api
+    plan: free
+    region: oregon
+    branch: main
+    # Endpoint público e leve (não toca no banco) usado pelo Render para o health check.
+    healthCheckPath: /api/public
+    envVars:
+      # ---- Banco (Supabase) — preencher no painel do Render ----
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASS
+        sync: false
+
+      # ---- JPA ----
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: update
+      - key: SPRING_JPA_SHOW_SQL
+        value: "false"
+
+      # ---- Segurança ----
+      - key: JWT_SECRET
+        sync: false
+
+      # ---- IA (Gemini) do backend / tutor ----
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: IA_MODEL_INSTRUCTIONS
+        value: nothing
+
+      # ---- Worker transformer (continua local via ngrok) ----
+      # Apontar para a URL pública do ngrok que expõe a porta 8000.
+      - key: TRANSFORMER_BASE_URL
+        sync: false
+      - key: TRANSFORMER_TIMEOUT
+        value: "1800"
+      - key: TRANSFORMER_GEMINI_KEY
+        sync: false
+
+      # ---- Cloudinary ----
+      - key: CLOUDINARY_NAME
+        sync: false
+      - key: CLOUDINARY_KEY
+        sync: false
+      - key: CLOUDINARY_SECRET
+        sync: false

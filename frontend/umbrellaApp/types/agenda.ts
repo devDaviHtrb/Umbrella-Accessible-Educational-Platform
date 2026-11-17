@@ -18,21 +18,10 @@ export type AgendaEvent = {
   participantCount?: number;
 };
 
-export type ActiveReminder = {
-  id: string;
-  icon: 'exclamationmark.circle.fill' | 'book.fill';
-  iconTone: 'error' | 'primary';
-  title: string;
-  dueLabel: string;
-  urgent?: boolean;
-  completed?: boolean;
-};
-
 export type NewReminderInput = {
   title: string;
-  date: string; // ISO 8601 date string
+  date: string;
   urgent: boolean;
   type?: EventType;
   description?: string;
-
 };

@@ -25,11 +25,8 @@ export function useIaTutor() {
     const { get, post, del } = useUmbrellaApi();
 
     const getHistory = async (): Promise<Conversation[]> => {
-        // NOTE: URLs must NOT start with '/' — axios ignores baseURL when path starts with '/'
-        const response = await get<any[]>('public/tutor/chats');
-        const chats = response as any[];
-        const conversations = chats.map(mapIaChatToConversation);
-        return conversations.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+        const chats = await get<any[]>('public/tutor/chats');
+        return chats.map(mapIaChatToConversation).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
     };
 
     const startNewConversation = async (title = 'Nova conversa'): Promise<Conversation> => {
@@ -40,15 +37,14 @@ export function useIaTutor() {
 
     const sendMessage = async (conversationId: string, text: string): Promise<Message> => {
         const url = `public/tutor/chat/${conversationId}/ask?ask=${encodeURIComponent(text)}`;
-        const response = await post<string>(url, {});
-        const aiReply = response as string;
+        const aiReply = await post<string>(url, {});
         return {
             id: `ai-${Date.now()}`,
             role: 'ai',
             kind: 'text',
             text: aiReply,
             createdAt: new Date().toISOString(),
-        } as Message;
+        };
     };
 
     const deleteConversation = async (conversationId: string): Promise<void> => {

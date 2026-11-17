@@ -16,8 +16,22 @@ public interface CoursesRepository extends JpaRepository<Courses, Long> {
 
     List<Courses> findBySubjectId(Long subjectId);
 
+    // NOTE: `CAST(:search AS string)` força o tipo texto do parâmetro. Sem o
+    // cast, quando `search` é null o PostgreSQL infere o tipo como `bytea` e
+    // `LOWER(bytea)` falha ("function lower(bytea) does not exist"), quebrando
+    // a listagem de cursos (e, por tabela, o fluxo de criar curso no app).
     @Query("SELECT c FROM Courses c WHERE " +
            "(:subjectId IS NULL OR c.subject.id = :subjectId) AND " +
-           "(:search IS NULL OR LOWER(c.name) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(c.description) LIKE LOWER(CONCAT('%', :search, '%')))")
+           "(CAST(:search AS string) IS NULL " +
+           "  OR LOWER(c.name) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')) " +
+           "  OR LOWER(c.description) LIKE LOWER(CONCAT('%', CAST(:search AS string), '%')))")
     List<Courses> searchCourses(@Param("search") String search, @Param("subjectId") Long subjectId);
+
+    /**
+     * Number of enrolled students (relations that are not the course creator)
+     * grouped by course id, for a batch of courses. Avoids N+1 counting.
+     */
+    @Query("SELECT r.course.id, COUNT(r) FROM CourseUserRelation r " +
+           "WHERE r.course.id IN :courseIds AND r.creator = false GROUP BY r.course.id")
+    List<Object[]> countStudentsByCourseIds(@Param("courseIds") List<Long> courseIds);
 }

@@ -12,7 +12,11 @@ public record FileMetaDataResponseDto(
         Long moduleId,
         String resourceType,
         String url,
-        String fileType
+        String fileType,
+        // Id da entidade Video quando o material é um vídeo (o app usa este id
+        // para buscar as legendas em /video/{videoId}/subtitles). Null caso
+        // contrário.
+        Long videoId
 ) {
     public static FileMetaDataResponseDto fromEntity(FileMetaData meta) {
         if (meta == null)
@@ -21,6 +25,7 @@ public record FileMetaDataResponseDto(
         String resourceType = null;
         String url = null;
         String fileType = null;
+        Long videoId = null;
 
         if (meta.getImage() != null) {
             resourceType = meta.getImage().getResourceType();
@@ -34,6 +39,7 @@ public record FileMetaDataResponseDto(
             resourceType = meta.getVideo().getResourceType();
             url = meta.getVideo().getUrl();
             fileType = "video";
+            videoId = meta.getVideo().getId();
         }
 
         return new FileMetaDataResponseDto(
@@ -45,7 +51,8 @@ public record FileMetaDataResponseDto(
                 meta.getModule() != null ? meta.getModule().getId() : null,
                 resourceType,
                 url,
-                fileType
+                fileType,
+                videoId
         );
     }
 

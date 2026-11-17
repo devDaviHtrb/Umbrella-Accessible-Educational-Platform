@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
 
 export type AITutorHeaderProps = {
   statusLabel: string;
@@ -10,6 +11,7 @@ export type AITutorHeaderProps = {
 };
 
 export function AITutorHeader({ statusLabel, providerBadge, onMenuPress }: AITutorHeaderProps) {
+  const { translate } = usePreferences();
   return (
     <View style={styles.row}>
       <View style={styles.avatar}>
@@ -19,7 +21,7 @@ export function AITutorHeader({ statusLabel, providerBadge, onMenuPress }: AITut
       <View style={styles.textColumn}>
         <UmbrellaText variant="headline">IA Umbrella</UmbrellaText>
         <View style={styles.statusRow}>
-          <View style={styles.statusDot} />
+          <View style={[styles.statusDot, { backgroundColor: translate(Colors.light.tertiary) }]} />
           <UmbrellaText variant="caption" color={Colors.light.textSecondary} style={styles.statusLabel}>
             {statusLabel}
           </UmbrellaText>

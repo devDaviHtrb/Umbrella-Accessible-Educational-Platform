@@ -7,6 +7,11 @@ import type {
   StudentAnswerCorrectionDto,
 } from '@/types/activities';
 
+const activitiesUrl = (moduleId: string | number) => `public/courses/modules/${moduleId}/activities`;
+
+const activityPath = (courseId: string | number, moduleId: string | number, activityId: string | number) =>
+  `public/courses/${courseId}/modules/${moduleId}/activities/${activityId}`;
+
 export function useModuleActivities(moduleId: string | number) {
   const { get } = useUmbrellaApi();
   const [activities, setActivities] = useState<ActivityDto[]>([]);
@@ -20,7 +25,7 @@ export function useModuleActivities(moduleId: string | number) {
     }
     try {
       setLoading(true);
-      const response = await get<ActivityDto[]>(`public/courses/modules/${moduleId}/activities`);
+      const response = await get<ActivityDto[]>(activitiesUrl(moduleId));
       setActivities(Array.isArray(response) ? response : []);
       setError(null);
     } catch (err) {
@@ -33,7 +38,7 @@ export function useModuleActivities(moduleId: string | number) {
 
   useEffect(() => {
     loadActivities();
-  }, [moduleId]);
+  }, [loadActivities]);
 
   return { activities, loading, error, refetch: loadActivities };
 }
@@ -44,7 +49,7 @@ export function useActivityDetail(
   activityId: string | number
 ) {
   const { get, post } = useUmbrellaApi();
-  const { userId: authUserId } = useAuthContext();
+  const { userId } = useAuthContext();
   const [activity, setActivity] = useState<ActivityDto | null>(null);
   const [submissions, setSubmissions] = useState<ActivitySubmissionResponseDto[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -57,18 +62,13 @@ export function useActivityDetail(
     }
     try {
       setLoading(true);
-      const actData = await get<ActivityDto>(`public/courses/activities/${activityId}`);
-      setActivity(actData);
+      const activityData = await get<ActivityDto>(`public/courses/activities/${activityId}`);
+      setActivity(activityData);
 
-      const targetUserId = authUserId;
-      if (targetUserId) {
-        const validModuleId = moduleId || actData?.moduleId || '1';
-        const validCourseId = courseId || '1';
-
-        const subsData = await get<ActivitySubmissionResponseDto[]>(
-          `public/courses/${validCourseId}/modules/${validModuleId}/activities/${activityId}/submissions/users/${targetUserId}`
-        );
-        setSubmissions(Array.isArray(subsData) ? subsData : []);
+      if (userId && courseId) {
+        const path = activityPath(courseId, moduleId || activityData.moduleId, activityId);
+        const submissionsData = await get<ActivitySubmissionResponseDto[]>(`${path}/submissions/users/${userId}`);
+        setSubmissions(Array.isArray(submissionsData) ? submissionsData : []);
       }
       setError(null);
     } catch (err) {
@@ -77,31 +77,25 @@ export function useActivityDetail(
     } finally {
       setLoading(false);
     }
-  }, [courseId, moduleId, activityId, authUserId, get]);
+  }, [courseId, moduleId, activityId, userId, get]);
 
   useEffect(() => {
     loadDetails();
-  }, [courseId, moduleId, activityId, authUserId]);
+  }, [loadDetails]);
 
   const latestSubmission = submissions.length > 0 ? submissions[submissions.length - 1] : null;
   const hasSubmitted = !!latestSubmission;
 
   const submit = async (answers: StudentAnswerCorrectionDto[]) => {
-    const validCourseId = courseId || '1';
-    const validModuleId = moduleId || activity?.moduleId || '1';
-    const validActivityId = activityId || activity?.id;
-
-    if (!validActivityId) {
+    if (!activityId) {
       throw new Error('ID da atividade não encontrado');
     }
 
-    const relativeUrl = `public/courses/${validCourseId}/modules/${validModuleId}/activities/${validActivityId}/submit`;
-    const payload = {
-      activityId: Number(validActivityId),
+    const path = activityPath(courseId, moduleId || activity?.moduleId || '', activityId);
+    const response = await post<ActivitySubmissionResponseDto>(`${path}/submit`, {
+      activityId: Number(activityId),
       answers,
-    };
-
-    const response = await post<ActivitySubmissionResponseDto>(relativeUrl, payload);
+    });
     if (response) {
       setSubmissions((prev) => [...prev, response]);
     }
@@ -110,25 +104,22 @@ export function useActivityDetail(
 
   return {
     activity,
-    submissions,
     latestSubmission,
     hasSubmitted,
     loading,
     error,
     submit,
-    refetch: loadDetails,
   };
 }
 
 export function useActivity() {
-  const { get, post } = useUmbrellaApi();
-  const { userId: authUserId } = useAuthContext();
+  const { get } = useUmbrellaApi();
+  const { userId } = useAuthContext();
 
   const getActivitiesByModuleId = useCallback(
     async (moduleId: string | number): Promise<ActivityDto[]> => {
-      if (!moduleId) return [];
       try {
-        const response = await get<ActivityDto[]>(`public/courses/modules/${moduleId}/activities`);
+        const response = await get<ActivityDto[]>(activitiesUrl(moduleId));
         return Array.isArray(response) ? response : [];
       } catch (err) {
         console.log(`[useActivity] Error fetching activities for module ${moduleId}`, err);
@@ -138,90 +129,38 @@ export function useActivity() {
     [get]
   );
 
-  const getActivityById = useCallback(
-    async (activityId: string | number): Promise<ActivityDto | null> => {
-      if (!activityId) return null;
-      try {
-        const response = await get<ActivityDto>(`public/courses/activities/${activityId}`);
-        return response;
-      } catch (err) {
-        console.log(`[useActivity] Error fetching activity ${activityId}`, err);
-        return null;
-      }
-    },
-    [get]
-  );
-
   const getSubmissionsByUserId = useCallback(
     async (
       courseId: string | number,
       moduleId: string | number,
-      activityId: string | number,
-      userId?: string | number
+      activityId: string | number
     ): Promise<ActivitySubmissionResponseDto[]> => {
-      const targetUserId = userId || authUserId;
-      if (!targetUserId || !activityId) return [];
-
-      const validCourseId = courseId || '1';
-      const validModuleId = moduleId || '1';
+      if (!userId) return [];
 
       try {
         const response = await get<ActivitySubmissionResponseDto[]>(
-          `public/courses/${validCourseId}/modules/${validModuleId}/activities/${activityId}/submissions/users/${targetUserId}`
+          `${activityPath(courseId, moduleId, activityId)}/submissions/users/${userId}`
         );
         return Array.isArray(response) ? response : [];
       } catch (err) {
-        console.log(
-          `[useActivity] Error fetching submissions for activity ${activityId} and user ${targetUserId}`,
-          err
-        );
+        console.log(`[useActivity] Error fetching submissions for activity ${activityId}`, err);
         return [];
       }
     },
-    [get, authUserId]
+    [get, userId]
   );
 
-  const submitActivity = useCallback(
+  const getLatestScore = useCallback(
     async (
       courseId: string | number,
       moduleId: string | number,
-      activityId: string | number,
-      answers: StudentAnswerCorrectionDto[]
-    ): Promise<ActivitySubmissionResponseDto | null> => {
-      const validCourseId = courseId || '1';
-      const validModuleId = moduleId || '1';
-      const validActivityId = activityId;
-
-      const relativeUrl = `public/courses/${validCourseId}/modules/${validModuleId}/activities/${validActivityId}/submit`;
-      const payload = {
-        activityId: Number(validActivityId),
-        answers,
-      };
-
-      try {
-        const response = await post<ActivitySubmissionResponseDto>(relativeUrl, payload);
-        return response;
-      } catch (err: any) {
-        console.log(`[useActivity] Error submitting activity ${validActivityId}`, err.response?.data || err.message);
-        throw err;
-      }
+      activityId: string | number
+    ): Promise<number | null> => {
+      const submissions = await getSubmissionsByUserId(courseId, moduleId, activityId);
+      return submissions.length > 0 ? submissions[submissions.length - 1].score ?? null : null;
     },
-    [post]
+    [getSubmissionsByUserId]
   );
 
-  const getLatestScore = useCallback(async (courseId: string | number, moduleId: string | number, activityId: string | number): Promise<number | null> => {
-    const submissions = await getSubmissionsByUserId(courseId, moduleId, activityId);
-    if (submissions.length === 0) return null;
-    const latest = submissions[submissions.length - 1];
-    return latest.score ?? null;
-  }, [getSubmissionsByUserId]);
-  return {
-    getActivitiesByModuleId,
-    getActivityById,
-    getSubmissionsByUserId,
-    submitActivity,
-    useModuleActivities,
-    useActivityDetail,
-    getLatestScore,
-  };
+  return { getActivitiesByModuleId, getSubmissionsByUserId, getLatestScore };
 }

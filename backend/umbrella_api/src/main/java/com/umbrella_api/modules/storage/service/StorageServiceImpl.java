@@ -80,6 +80,11 @@ public class StorageServiceImpl implements StorageService {
     }
 
     @Override
+    public Long deleteFileByMetaId(Long metaId) {
+        return storageServiceProvider.deleteFileByMetaId(metaId);
+    }
+
+    @Override
     public List<FileMetaDataResponseDto> getFilesByModuleId(Long moduleId) {
         List<FileMetaData> files = storageServiceProvider.getFilesByModuleId(moduleId);
         return FileMetaDataResponseDto.fromEntityList(files);

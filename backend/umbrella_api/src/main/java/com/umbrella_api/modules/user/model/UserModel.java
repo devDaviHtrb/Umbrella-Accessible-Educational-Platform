@@ -54,6 +54,7 @@ public class UserModel {
     @JsonIgnore
     private List<CourseUserRelation> courseUserRelations = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
     private List<Events> createdEvents = new ArrayList<>();

@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View, type PressableProps } from 'react-native';
 import { IconSymbol, type IconSymbolName } from '@/components/ui/icon-symbol';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
 
 export type PrimaryButtonProps = PressableProps & {
   label: string;
@@ -11,10 +12,17 @@ export type PrimaryButtonProps = PressableProps & {
 };
 
 export function PrimaryButton({ label, icon, iconPosition = 'trailing', style, ...rest }: PrimaryButtonProps) {
+  const { translate } = usePreferences();
+
   return (
     <Pressable
       accessibilityRole="button"
-      style={({ pressed }) => [styles.base, pressed && styles.pressed, style as any]}
+      style={({ pressed }) => [
+        styles.base,
+        { backgroundColor: translate(Colors.light.primary) },
+        pressed && styles.pressed,
+        style as any,
+      ]}
       {...rest}>
       <View style={styles.content}>
         {icon && iconPosition === 'leading' ? (
@@ -33,7 +41,6 @@ export function PrimaryButton({ label, icon, iconPosition = 'trailing', style, .
 
 const styles = StyleSheet.create({
   base: {
-    backgroundColor: Colors.light.primary,
     borderRadius: Radius.pill,
     paddingVertical: Spacing.md + 2,
     alignItems: 'center',

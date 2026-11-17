@@ -20,6 +20,21 @@ import jakarta.validation.ConstraintViolationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+        private static final org.slf4j.Logger log =
+                        org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+        /** Catch-all: loga o stack completo de qualquer erro não mapeado (ex.: o
+         * 500 do upload) para aparecer em `docker logs`, e devolve a mensagem. */
+        @ExceptionHandler(Exception.class)
+        public ResponseEntity<ExceptionResponse> handleUnexpected(Exception ex) {
+                log.error("Unhandled exception", ex);
+                ExceptionResponse error = new ExceptionResponse(
+                                "Internal Server Error",
+                                ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName(),
+                                HttpStatus.INTERNAL_SERVER_ERROR.value());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+        }
+
         @ExceptionHandler(EntityNotFoundException.class)
         public ResponseEntity<ExceptionResponse> handleNotFound(EntityNotFoundException ex) {
                 ExceptionResponse error = new ExceptionResponse(
@@ -58,6 +73,7 @@ public class GlobalExceptionHandler {
 
         @ExceptionHandler(IllegalStateException.class)
         public ResponseEntity<ExceptionResponse> handleIllegalState(IllegalStateException ex) {
+                log.error("IllegalStateException", ex);
                 ExceptionResponse error = new ExceptionResponse(
                                 "Internal Server Error",
                                 ex.getMessage(),
@@ -67,6 +83,7 @@ public class GlobalExceptionHandler {
 
         @ExceptionHandler(FileStorageException.class)
         public ResponseEntity<ExceptionResponse> handleFileStorageError(FileStorageException ex) {
+                log.error("FileStorageException", ex);
                 ExceptionResponse error = new ExceptionResponse(
                                 "File storage system error",
                                 ex.getMessage(),

@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { useUmbrellaApi } from '../core/useUmbrellaApi';
-import { useAuthContext } from '@/hooks/api/auth/authContext';
 import type {
   EventPostRequestDto,
   EventPutRequestDto,
@@ -10,27 +9,18 @@ import type {
   EventStatus,
 } from '@/types/schedule';
 
-
 export function useSchedule() {
   const { post, get, put, patch, del } = useUmbrellaApi();
-  const { userId: authUserId } = useAuthContext();
-
 
   const createEvent = useCallback(
-    async (dto: EventPostRequestDto) => {
-
-      const response = await post<Events>('schedule', dto);
-      return response;
-    },
+    (dto: EventPostRequestDto) => post<Events>('schedule', dto),
     [post]
   );
-
 
   const getAllEvents = useCallback(async (): Promise<ScheduleGetRequestDto[]> => {
     const data = await get<ScheduleGetRequestDto[]>('schedule');
     return Array.isArray(data) ? data : [];
   }, [get]);
-
 
   const personalizeEvent = useCallback(
     async (
@@ -50,7 +40,6 @@ export function useSchedule() {
     },
     [patch]
   );
-
 
   const deleteEvent = useCallback(
     async (eventId: number | string) => {

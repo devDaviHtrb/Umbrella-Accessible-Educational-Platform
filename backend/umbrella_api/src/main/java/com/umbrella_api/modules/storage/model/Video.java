@@ -19,8 +19,8 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @SuperBuilder
-@NoArgsConstructor // Exigido pelo Hibernate
-@AllArgsConstructor // Exigido pelo @SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Video extends BaseFileEntity {
 
     @Column(nullable = false)
@@ -39,13 +39,13 @@ public class Video extends BaseFileEntity {
     public void setFile(FileMetaData file) {
         this.fileMetaData = file;
     }
-      
+
     public static Video create(FileUploadResponse data, FileMetaData meta) {
         return Video.builder()
-            .fileDbId(data.publicId())
-            .url(data.url())
-            .duration(data.duration())
-            .fileMetaData(meta)
-            .build(); 
+                .fileDbId(data.publicId())
+                .url(data.url())
+                .duration(data.duration())
+                .fileMetaData(meta)
+                .build();
     }
 }

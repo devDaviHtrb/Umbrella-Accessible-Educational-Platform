@@ -1,11 +1,11 @@
 import { StyleSheet, View } from 'react-native';
 
+import { Avatar } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
-import { Colors, Radius, Spacing } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import type { ActiveModule } from '@/types/painel';
 
 export type ModuleCardProps = {
@@ -18,9 +18,7 @@ export function ModuleCard({ module }: ModuleCardProps) {
   return (
     <Card style={isNewTask ? styles.accentBorder : undefined}>
       <View style={styles.topRow}>
-        <View style={styles.iconCircle}>
-          <IconSymbol name={module.icon} size={22} color={Colors.light.primary} />
-        </View>
+        <Avatar uri={module.imageUrl} name={module.title} size={40} shape="rounded" fallbackIcon={module.icon} />
         <StatusBadge
           label={module.statusLabel}
           tone={module.status === 'em-andamento' ? 'teal' : 'neutral'}
@@ -57,14 +55,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: Spacing.md,
-  },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.md,
-    backgroundColor: Colors.light.secondaryFixed,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   title: {
     marginBottom: Spacing.xs,

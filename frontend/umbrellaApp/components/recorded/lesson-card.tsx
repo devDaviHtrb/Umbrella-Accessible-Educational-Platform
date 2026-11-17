@@ -15,10 +15,11 @@ export function LessonCard({ lesson, onPress }: LessonCardProps) {
   return (
     <Pressable accessibilityRole="button" onPress={onPress}>
       <Card padded={false}>
-        <View style={[styles.image, { backgroundColor: lesson.imageTone }]}>
+        <View style={styles.image}>
+          <IconSymbol name="play.fill" size={28} color={Colors.light.surface} />
           <View style={styles.durationBadge}>
             <UmbrellaText variant="caption" color={Colors.light.surface}>
-              {lesson.durationLabel}
+              {lesson.sizeLabel}
             </UmbrellaText>
           </View>
         </View>
@@ -42,14 +43,14 @@ export function LessonCard({ lesson, onPress }: LessonCardProps) {
 
           <View style={styles.footerRow}>
             <View style={styles.footerItem}>
-              <IconSymbol name="calendar" size={14} color={Colors.light.textSecondary} />
-              <UmbrellaText variant="label" color={Colors.light.textSecondary}>
-                {lesson.dateLabel}
+              <IconSymbol name="book.fill" size={14} color={Colors.light.textSecondary} />
+              <UmbrellaText variant="label" color={Colors.light.textSecondary} numberOfLines={1}>
+                {lesson.moduleTitle}
               </UmbrellaText>
             </View>
             <View style={styles.footerItem}>
               <UmbrellaText variant="label" color={Colors.light.primary}>
-                Assistir agora
+                Ver aula
               </UmbrellaText>
               <IconSymbol name="arrow.right" size={14} color={Colors.light.primary} />
             </View>
@@ -65,10 +66,14 @@ const styles = StyleSheet.create({
     height: 160,
     borderTopLeftRadius: Radius.lg,
     borderTopRightRadius: Radius.lg,
-    justifyContent: 'flex-end',
-    alignItems: 'flex-end',
+    backgroundColor: Colors.light.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   durationBadge: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
     margin: Spacing.md,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,

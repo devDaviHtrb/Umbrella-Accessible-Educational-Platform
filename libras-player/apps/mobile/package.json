@@ -1,0 +1,36 @@
+{
+  "name": "@libras/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Aplicativo React Native (Expo): player nativo que reproduz o pacote de tradução (variante original) com o avatar de Libras ao vivo numa WebView.",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "node scripts/fix-expo-loading-page.mjs",
+    "fix:loading-page": "node scripts/fix-expo-loading-page.mjs",
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "expo:doctor": "expo-doctor",
+    "expo:config": "expo config --type public",
+    "build": "tsc -b",
+    "clean": "tsc -b --clean"
+  },
+  "dependencies": {
+    "@libras/pipeline": "0.1.0",
+    "expo": "~52.0.0",
+    "expo-asset": "~11.0.5",
+    "expo-dev-client": "~5.0.20",
+    "expo-status-bar": "~2.0.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-native": "0.76.9",
+    "react-native-video": "6.8.2",
+    "react-native-web": "~0.19.13",
+    "react-native-webview": "13.12.5"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@types/react": "18.3.12"
+  }
+}

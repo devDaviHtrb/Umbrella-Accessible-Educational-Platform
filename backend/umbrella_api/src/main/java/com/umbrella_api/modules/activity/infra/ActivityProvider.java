@@ -26,13 +26,16 @@ public class ActivityProvider {
     private final AlternativesRepository alternativesRepository;
     private final EssaysRepository essaysRepository;
     private final CourseService courseService;
+    private final com.umbrella_api.modules.notification.service.NotificationService notificationService;
 
-    public ActivityProvider(ActivitiesRepository activitiesRepository, QuestionsRepository questionsRepository, AlternativesRepository alternativesRepository, EssaysRepository essaysRepository, CourseService courseService) {
+    public ActivityProvider(ActivitiesRepository activitiesRepository, QuestionsRepository questionsRepository, AlternativesRepository alternativesRepository, EssaysRepository essaysRepository, CourseService courseService,
+                            com.umbrella_api.modules.notification.service.NotificationService notificationService) {
         this.activitiesRepository = activitiesRepository;
         this.questionsRepository = questionsRepository;
         this.alternativesRepository = alternativesRepository;
         this.essaysRepository = essaysRepository;
         this.courseService = courseService;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -48,6 +51,18 @@ public class ActivityProvider {
                 .build();
 
         activitiesRepository.save(activity);
+
+        // Notifica os alunos do curso sobre a nova atividade (best-effort).
+        try {
+            Long courseId = moduleOpt != null && moduleOpt.getCourse() != null
+                    ? moduleOpt.getCourse().getId() : null;
+            if (courseId != null) {
+                notificationService.notifyNewActivity(courseId, activity.getTitle(), activity.getId());
+            }
+        } catch (Exception e) {
+            System.err.println("[Notification] falha ao notificar atividade: " + e.getMessage());
+        }
+
         return activity;
     }
 

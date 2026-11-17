@@ -1,6 +1,8 @@
 import { Pressable, StyleSheet, type PressableProps } from 'react-native';
+
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
 
 export type SecondaryButtonVariant = 'outline' | 'filled' | 'onDark';
 
@@ -10,8 +12,18 @@ export type SecondaryButtonProps = PressableProps & {
 };
 
 export function SecondaryButton({ label, variant = 'outline', style, ...rest }: SecondaryButtonProps) {
+  const { translate } = usePreferences();
+
   const variantStyle =
-    variant === 'outline' ? styles.outline : variant === 'filled' ? styles.filled : styles.onDark;
+    variant === 'outline'
+      ? {
+          backgroundColor: translate(Colors.light.surface),
+          borderWidth: 1.5,
+          borderColor: translate(Colors.light.primary),
+        }
+      : variant === 'filled'
+        ? { backgroundColor: translate(Colors.light.secondaryFixed) }
+        : { backgroundColor: translate(Colors.light.surface) };
 
   return (
     <Pressable
@@ -31,17 +43,6 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  outline: {
-    backgroundColor: Colors.light.surface,
-    borderWidth: 1.5,
-    borderColor: Colors.light.primary,
-  },
-  filled: {
-    backgroundColor: Colors.light.secondaryFixed,
-  },
-  onDark: {
-    backgroundColor: Colors.light.surface,
   },
   pressed: {
     opacity: 0.7,

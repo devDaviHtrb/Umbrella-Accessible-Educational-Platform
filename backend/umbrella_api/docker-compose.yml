@@ -18,6 +18,26 @@ services:
 
     depends_on:
       - postgres
+      - transformer
+
+    networks:
+      - spring-network
+
+  # Worker Python (Whisper + Gemini) que gera as legendas normal/Libras.
+  # Imagem separada para não inchar o container Java com torch/whisper.
+  transformer:
+    build:
+      context: ./transformer
+      dockerfile: Dockerfile
+
+    container_name: umbrella_transformer
+
+    env_file:
+      - .env
+
+    ports:
+      # Exposto no host só para testes; o backend o acessa por http://transformer:8000
+      - "8000:8000"
 
     networks:
       - spring-network

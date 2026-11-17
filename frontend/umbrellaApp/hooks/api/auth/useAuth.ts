@@ -1,10 +1,10 @@
 import { useUmbrellaApi } from "../core/useUmbrellaApi";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface RegisterData {
     name: string;
     email: string;
     password: string;
+    neurodivergence: string | null;
 }
 
 export interface AuthResponse {
@@ -55,7 +55,6 @@ function parseAuthError(error: any, type: 'login' | 'register'): AuthError {
         const lowerMessage = rawMessage.toLowerCase();
         const lowerStatus = status.toLowerCase();
 
-        // 1. DataIntegrityViolationException / Unique constraint violation (Email already registered)
         const isConflict =
             code === 409 ||
             lowerStatus.includes('integrity') ||
@@ -64,19 +63,13 @@ function parseAuthError(error: any, type: 'login' | 'register'): AuthError {
             lowerMessage.includes('constraint') ||
             lowerMessage.includes('already exists') ||
             lowerMessage.includes('já existe') ||
-            lowerMessage.includes('users_email_key') ||
-            lowerMessage.includes('email');
+            lowerMessage.includes('users_email_key');
 
-        if (type === 'register' && (isConflict || lowerStatus.includes('integrity'))) {
-            if (lowerMessage.includes('name') || lowerMessage.includes('nome') || lowerMessage.includes('username')) {
-                fieldErrors.name = 'Este nome de usuário já está em uso.';
-            } else {
-                fieldErrors.email = 'Este e-mail já está cadastrado.';
-            }
-            return new AuthError('Usuário ou e-mail já cadastrado.', fieldErrors, code);
+        if (type === 'register' && isConflict) {
+            fieldErrors.email = 'Este e-mail já está cadastrado.';
+            return new AuthError('Este e-mail já está cadastrado.', fieldErrors, code);
         }
 
-        // 2. Validation failed (MethodArgumentNotValidException / ConstraintViolationException)
         if (lowerStatus.includes('validation') || rawMessage.includes(':')) {
             const cleanMessage = rawMessage.replace(/^Validation failed:\s*/i, '');
             const parts = cleanMessage.split(/,\s*(?=[a-zA-Z0-9_]+:)/);
@@ -103,7 +96,6 @@ function parseAuthError(error: any, type: 'login' | 'register'): AuthError {
             }
         }
 
-        // 3. Unauthorized / Bad credentials on login
         if (
             code === 401 ||
             lowerStatus.includes('unauthorized') ||
@@ -115,7 +107,6 @@ function parseAuthError(error: any, type: 'login' | 'register'): AuthError {
             return new AuthError('E-mail ou senha incorretos.', fieldErrors, code);
         }
 
-        // 4. Bad request (IllegalArgumentException) or other custom message
         if (rawMessage) {
             if (lowerMessage.includes('email')) {
                 fieldErrors.email = rawMessage;
@@ -150,45 +141,21 @@ export function useAuth() {
 
     const register = async (data: RegisterData): Promise<AuthResponse> => {
         try {
-            const response = await post<AuthResponse>("auth/register", data);
-            return response;
+            return await post<AuthResponse>("auth/register", data);
         } catch (error: any) {
-            console.log("[useAuth register error]", error.response?.data || error.message);
+            console.log("[useAuth register error]", error.response?.status ?? error.message);
             throw parseAuthError(error, 'register');
         }
     };
 
     const login = async (data: LoginData): Promise<AuthResponse> => {
         try {
-            const response = await post<AuthResponse>("auth/login", data);
-
-            if (response && response.accessToken) {
-                const userData = {
-                    id: String(response.userId),
-                    name: response.name,
-                    email: response.email,
-                    roles: response.roles || [],
-                };
-                await AsyncStorage.setItem("@user_name", response.name);
-                await AsyncStorage.setItem("@user_token", response.accessToken);
-                await AsyncStorage.setItem("@user_data", JSON.stringify(userData));
-            }
-
-            return response;
+            return await post<AuthResponse>("auth/login", data);
         } catch (error: any) {
-            console.log("[useAuth login error]", error.response?.data || error.message);
+            console.log("[useAuth login error]", error.response?.status ?? error.message);
             throw parseAuthError(error, 'login');
         }
     };
 
-    const logout = async () => {
-        try {
-            await AsyncStorage.removeItem("@user_name");
-            await AsyncStorage.removeItem("@user_token");
-        } catch (error) {
-            console.log("Error during logout:", error);
-        }
-    };
-
-    return { register, login, logout };
+    return { register, login };
 }

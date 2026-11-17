@@ -2,6 +2,7 @@ import { Pressable, StyleSheet } from 'react-native';
 
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
 
 export type CategoryChipProps = {
   label: string;
@@ -10,12 +11,19 @@ export type CategoryChipProps = {
 };
 
 export function CategoryChip({ label, selected, onPress }: CategoryChipProps) {
+  const { translate } = usePreferences();
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected }}
       onPress={onPress}
-      style={[styles.chip, selected ? styles.chipSelected : styles.chipUnselected]}>
+      style={[
+        styles.chip,
+        {
+          backgroundColor: translate(selected ? Colors.light.primary : Colors.light.surfaceContainerLow),
+        },
+      ]}>
       <UmbrellaText
         variant="bodyMedium"
         color={selected ? Colors.light.surface : Colors.light.text}>

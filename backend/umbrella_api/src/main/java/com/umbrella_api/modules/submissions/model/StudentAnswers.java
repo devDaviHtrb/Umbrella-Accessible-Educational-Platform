@@ -55,4 +55,8 @@ public class StudentAnswers {
 
     @Column(name = "is_correct")
     private Boolean isCorrect;
+
+    // Points awarded for this answer (set by auto-correction, adjustable by the teacher)
+    @Column(name = "score")
+    private Float score;
 }

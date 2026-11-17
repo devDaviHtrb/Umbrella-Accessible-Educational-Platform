@@ -1,0 +1,6 @@
+# Dependências do worker transformer.
+# Pré-requisito do sistema: ffmpeg (instalado na imagem Docker).
+openai-whisper
+google-genai
+fastapi
+uvicorn[standard]

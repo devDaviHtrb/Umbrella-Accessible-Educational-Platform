@@ -1,0 +1,10 @@
+node_modules
+dist
+coverage
+package-lock.json
+*.webm
+*.mp4
+
+# Pre-existing inputs and tool-managed spec documents
+.kiro/
+subtitles.txt

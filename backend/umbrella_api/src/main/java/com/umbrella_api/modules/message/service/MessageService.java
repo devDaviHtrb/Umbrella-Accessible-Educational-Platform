@@ -3,9 +3,9 @@ package com.umbrella_api.modules.message.service;
 import com.umbrella_api.modules.message.model.MessageModel;
 import com.umbrella_api.modules.message.model.MessageType;
 import com.umbrella_api.modules.message.repository.MessageRepository;
+import com.umbrella_api.modules.notification.service.NotificationService;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import java.lang.reflect.Type;
 import java.time.LocalDateTime;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,13 +14,16 @@ public class MessageService {
 
     private final MessageRepository messageRepository;
     private final SimpMessagingTemplate messagingTemplate;
+    private final NotificationService notificationService;
 
     public MessageService(
             MessageRepository messageRepository,
-            SimpMessagingTemplate messagingTemplate
+            SimpMessagingTemplate messagingTemplate,
+            NotificationService notificationService
     ) {
         this.messageRepository = messageRepository;
         this.messagingTemplate = messagingTemplate;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -63,11 +66,20 @@ public class MessageService {
                     "/queue/messages",
                     savedMessage
             );
+            // Notifica o destinatário da mensagem pessoal.
+            notificationService.notifyMessage(
+                    recipientId, senderId, savedMessage.getContent(), savedMessage.getId());
         } else {
             messagingTemplate.convertAndSend(
                     "/topic/group/" + recipientId,
                     savedMessage
             );
+            // Notifica os alunos do curso (exceto o remetente). Aqui recipientId
+            // é o courseId (ver contrato de sendMessage para COURSE).
+            notificationService.notifyCourseStudents(
+                    recipientId, senderId,
+                    com.umbrella_api.modules.notification.model.NotificationType.MESSAGE,
+                    "Nova mensagem no curso", savedMessage.getContent(), savedMessage.getId());
         }
 
         return savedMessage;

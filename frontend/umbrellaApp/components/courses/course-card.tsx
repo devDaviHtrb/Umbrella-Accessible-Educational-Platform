@@ -1,10 +1,11 @@
 import { Link } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { ImageBackground, Pressable, StyleSheet, View } from 'react-native';
 
 import { Card } from '@/components/ui/card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, Radius, Spacing } from '@/constants/theme';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
 import type { Course } from '@/types/courses';
 
 export type CourseCardProps = {
@@ -13,11 +14,12 @@ export type CourseCardProps = {
 };
 
 export function CourseCard({ course, isEnrolled }: CourseCardProps) {
+  const { translate } = usePreferences();
   return (
     <Link href={`/courses/${course.id}`} asChild>
       <Pressable accessibilityRole="button">
         <Card padded={false}>
-          <View style={[styles.image, { backgroundColor: course.imageTone }]}>
+          <CourseCardImage imageUrl={course.imageUrl} imageTone={course.imageTone}>
             <View style={styles.badgeRow}>
               <View style={styles.badge}>
                 <UmbrellaText variant="caption" color={Colors.light.surface} style={styles.badgeText}>
@@ -25,7 +27,7 @@ export function CourseCard({ course, isEnrolled }: CourseCardProps) {
                 </UmbrellaText>
               </View>
               {isEnrolled ? (
-                <View style={[styles.badge, styles.enrolledBadge]}>
+                <View style={[styles.badge, styles.enrolledBadge, { backgroundColor: translate(Colors.light.success) }]}>
                   <UmbrellaText variant="caption" color={Colors.light.surface} style={styles.badgeText}>
                     MATRICULADO
                   </UmbrellaText>
@@ -37,24 +39,28 @@ export function CourseCard({ course, isEnrolled }: CourseCardProps) {
                 <IconSymbol name="chart.line.uptrend.xyaxis" size={16} color={Colors.light.primary} />
               </View>
             ) : null}
-          </View>
+          </CourseCardImage>
 
           <View style={styles.content}>
-            <UmbrellaText variant="label" color={Colors.light.primary}>
-              {course.eyebrow}
-            </UmbrellaText>
             <UmbrellaText variant="headline" style={styles.title}>
               {course.title}
             </UmbrellaText>
-            <UmbrellaText
-              variant="body"
-              color={Colors.light.textSecondary}
-              numberOfLines={2}
-              style={styles.description}>
-              {course.description}
-            </UmbrellaText>
+            {course.description ? (
+              <UmbrellaText
+                variant="body"
+                color={Colors.light.textSecondary}
+                numberOfLines={2}
+                style={styles.description}>
+                {course.description}
+              </UmbrellaText>
+            ) : null}
 
-            <CourseCardFooter footer={course.footer} />
+            <View style={styles.footerRowPrice}>
+              <UmbrellaText variant="label" color={Colors.light.primary}>
+                Ver curso
+              </UmbrellaText>
+              <IconSymbol name="arrow.right" size={16} color={Colors.light.primary} />
+            </View>
           </View>
         </Card>
       </Pressable>
@@ -62,36 +68,27 @@ export function CourseCard({ course, isEnrolled }: CourseCardProps) {
   );
 }
 
-function CourseCardFooter({ footer }: { footer: Course['footer'] }) {
-  if (footer.type === 'rating') {
+function CourseCardImage({
+  imageUrl,
+  imageTone,
+  children,
+}: {
+  imageUrl?: string;
+  imageTone: string;
+  children: React.ReactNode;
+}) {
+  if (imageUrl) {
     return (
-      <View style={styles.footerRow}>
-        <View style={styles.footerItem}>
-          <IconSymbol name="clock.fill" size={14} color={Colors.light.textSecondary} />
-          <UmbrellaText variant="label" color={Colors.light.textSecondary}>
-            {footer.durationLabel}
-          </UmbrellaText>
-        </View>
-        <View style={styles.footerItem}>
-          <IconSymbol name="star.fill" size={14} color={Colors.light.textSecondary} />
-          <UmbrellaText variant="label" color={Colors.light.textSecondary}>
-            {footer.rating.toFixed(1)}
-          </UmbrellaText>
-        </View>
-      </View>
+      <ImageBackground
+        source={{ uri: imageUrl }}
+        style={[styles.image, { backgroundColor: imageTone }]}
+        imageStyle={styles.imageRadius}>
+        {children}
+      </ImageBackground>
     );
   }
 
-  return (
-    <View style={styles.footerRowPrice}>
-      <UmbrellaText
-        variant="bodyMedium"
-        color={footer.free ? Colors.light.primary : Colors.light.text}>
-        {footer.priceLabel}
-      </UmbrellaText>
-      <IconSymbol name="arrow.right" size={16} color={Colors.light.primary} />
-    </View>
-  );
+  return <View style={[styles.image, { backgroundColor: imageTone }]}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
@@ -100,6 +97,11 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: Radius.lg,
     borderTopRightRadius: Radius.lg,
     justifyContent: 'flex-start',
+    overflow: 'hidden',
+  },
+  imageRadius: {
+    borderTopLeftRadius: Radius.lg,
+    borderTopRightRadius: Radius.lg,
   },
   badgeRow: {
     flexDirection: 'row',

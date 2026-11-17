@@ -29,5 +29,7 @@ public interface StorageService {
 
     public void deleteAllFilesByModuleId(Long moduleId);
 
+    public Long deleteFileByMetaId(Long metaId);
+
     public List<FileMetaDataResponseDto> getFilesByModuleId(Long moduleId);
 }

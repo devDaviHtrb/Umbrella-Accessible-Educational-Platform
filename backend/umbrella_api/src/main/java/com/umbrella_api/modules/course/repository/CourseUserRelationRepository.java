@@ -16,6 +16,9 @@ public interface CourseUserRelationRepository extends JpaRepository<CourseUserRe
     @Query("SELECT r.user FROM CourseUserRelation r WHERE r.course.id = :courseId AND r.creator = true")
     public Optional<UserModel> findCreatorByCourseId(@Param("courseId") Long courseId);
 
+    @Query("SELECT r.user FROM CourseUserRelation r WHERE r.course.id = :courseId AND r.creator = false")
+    List<UserModel> findStudentsByCourseId(@Param("courseId") Long courseId);
+
     public void deleteByCourseId(Long courseId);
 
     public void deleteByUserId(Long UserId);

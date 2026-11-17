@@ -1,0 +1,24 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM"],
+    // This app is a React Native (Expo) leaf package. Its source includes RN
+    // `.tsx` components (react-native, react-native-webview, react-native-video)
+    // and browser/DOM APIs used inside the WebView bridge, so the build needs
+    // the React and Node type packages explicitly — ambient hoisting is not
+    // reliable in the workspace monorepo.
+    "types": ["node", "react"],
+    "skipLibCheck": true
+  },
+  "references": [{ "path": "../../packages/pipeline" }],
+  "include": ["src"],
+  // The Expo demo screen (task 10.2) uses app-only runtime deps (expo-asset,
+  // React Native `fetch`) and is type-checked by `tsconfig.app.json`, not the
+  // library `tsc -b`. Keeping it out of the composite build mirrors how
+  // `App.tsx`/`index.js` live at the app root, outside `src`.
+  "exclude": ["src/demo"]
+}

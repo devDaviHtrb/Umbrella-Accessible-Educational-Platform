@@ -1,4 +1,3 @@
-```gitignore
 # =========================
 # OS
 # =========================
@@ -103,5 +102,25 @@ temp/
 *.db
 
 temp.yaml
-```
 backend/umbrella_api/src/main/resources/temp.yaml
+
+# =========================
+# LIBRAS-PLAYER (protótipo standalone)
+# =========================
+libras-player/**/node_modules/
+libras-player/**/dist/
+libras-player/**/.e2e-out/
+libras-player/**/.expo/
+libras-player/**/tsconfig.tsbuildinfo
+libras-player/.e2e-gen.log
+
+
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.DS_Store
+npm-debug.log*
+
+# End-to-end harness output (large generated media + packages).
+.e2e-out/

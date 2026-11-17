@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
 
 import { IconSymbol, type IconSymbolName } from '@/components/ui/icon-symbol';
 import { UmbrellaText } from '@/components/ui/umbrella-text';
 import { Colors, FontFamily, Radius, Spacing } from '@/constants/theme';
+import { usePreferences } from '@/hooks/preferences/preferencesContext';
 
 export type TextFieldProps = TextInputProps & {
   label: string;
@@ -19,8 +21,16 @@ export function TextField({
   onLabelActionPress,
   error,
   style,
+  secureTextEntry,
   ...rest
 }: TextFieldProps) {
+  const { translate, fontScale, preferences } = usePreferences();
+  // Quando é um campo de senha, controlamos a visibilidade localmente e
+  // mostramos um botão de "olho" para revelar/ocultar o que está digitado.
+  const isPassword = secureTextEntry === true;
+  const [revealed, setRevealed] = useState(false);
+  const effectiveSecure = isPassword && !revealed;
+
   return (
     <View style={styles.wrapper}>
       <View style={styles.labelRow}>
@@ -28,7 +38,7 @@ export function TextField({
           {label}
         </UmbrellaText>
         {labelActionText ? (
-          <Pressable onPress={onLabelActionPress} hitSlop={8}>
+          <Pressable accessibilityRole="button" onPress={onLabelActionPress} hitSlop={8}>
             <UmbrellaText variant="label" color={Colors.light.primary}>
               {labelActionText}
             </UmbrellaText>
@@ -40,13 +50,33 @@ export function TextField({
         <TextInput
           style={[
             styles.input,
-            error ? styles.inputError : null,
+            {
+              backgroundColor: translate(Colors.light.surfaceContainerLow),
+              color: translate(Colors.light.text),
+              fontSize: 15 * fontScale,
+            },
+            preferences.highContrast && { borderWidth: 1, borderColor: translate(Colors.light.outline) },
+            error ? { borderWidth: 1, borderColor: translate(Colors.light.error) } : null,
             style,
           ]}
-          placeholderTextColor={Colors.light.textSecondary}
+          placeholderTextColor={translate(Colors.light.textSecondary)}
+          secureTextEntry={effectiveSecure}
           {...rest}
         />
-        {icon ? (
+        {isPassword ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={revealed ? 'Ocultar senha' : 'Mostrar senha'}
+            onPress={() => setRevealed((v) => !v)}
+            hitSlop={10}
+            style={styles.iconButton}>
+            <IconSymbol
+              name={revealed ? 'eye.slash.fill' : 'eye.fill'}
+              size={20}
+              color={error ? Colors.light.error : Colors.light.textSecondary}
+            />
+          </Pressable>
+        ) : icon ? (
           <IconSymbol
             name={icon}
             size={20}
@@ -95,6 +125,11 @@ const styles = StyleSheet.create({
   icon: {
     position: 'absolute',
     right: Spacing.lg,
+  },
+  iconButton: {
+    position: 'absolute',
+    right: Spacing.md,
+    padding: Spacing.xs,
   },
   inputError: {
     borderWidth: 1,

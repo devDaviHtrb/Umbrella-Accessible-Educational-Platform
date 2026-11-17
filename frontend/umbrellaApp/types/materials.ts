@@ -8,4 +8,6 @@ export interface ModuleMaterial {
   resourceType: 'image' | 'raw' | 'video' | string;
   url: string;
   fileType?: string;
+  /** Id da entidade Video (só para materiais de vídeo); usado para legendas. */
+  videoId?: number | string | null;
 }

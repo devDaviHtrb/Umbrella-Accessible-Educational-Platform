@@ -93,6 +93,11 @@ public class CourseServiceImpl implements CourseService {
     }
 
     @Override
+    public List<UserModel> getEnrolledStudents(Long courseId) {
+        return courseProvider.getEnrolledStudents(courseId);
+    }
+
+    @Override
     public GenericResponse deleteUserRelation(Long userId, Long courseId) {
         return courseProvider.deleteUserRelation(userId, courseId);
     }

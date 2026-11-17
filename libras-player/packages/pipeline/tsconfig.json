@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    // The pipeline is a Node package (ffmpeg/ffprobe, fs, crypto, URL, timers).
+    // Declare node types explicitly so compilation does not depend on ambient
+    // hoisting of `@types/node`, which is fragile in a workspace monorepo.
+    "types": ["node"]
+  },
+  "include": ["src"]
+}

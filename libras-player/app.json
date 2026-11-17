@@ -1,0 +1,13 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "53428e90-f85b-49e2-a38a-576218b8d648"
+      }
+    },
+    "owner": "arturregadas",
+    "android": {
+      "package": "com.arturregadas.librastranslationplayer"
+    }
+  }
+}

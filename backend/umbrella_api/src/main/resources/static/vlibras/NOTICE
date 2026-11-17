@@ -1,0 +1,60 @@
+NOTICE — VLibras Player (webjs) embedded bundle
+================================================
+
+This directory embeds the official open-source VLibras sign-language (Libras)
+avatar player, redistributed in accordance with its license.
+
+Component
+---------
+  Name:       vlibras-player-webjs (Unity/WebGL player, package name "vlibras")
+  Version:    1.1.0
+  Source:     https://github.com/spbgovbr-vlibras/vlibras-player-webjs
+  Commit:     e10387e40231476d72168eb8fea15970a64d8462 (branch master, 2024-07-04)
+  Maintainer: Organização VLibras / SPB (https://github.com/spbgovbr-vlibras)
+
+Attribution (contributors listed in the upstream README)
+--------------------------------------------------------
+  * Mateus Pires   <mateuspires@lavid.ufpb.br>
+  * Suanny Fabyne  <suanny@lavid.ufpb.br>
+  * Thiago Filipe  <thiago.filipe@lavid.ufpb.br>
+
+License
+-------
+  GNU Lesser General Public License, Version 3 (LGPL-3.0).
+  The full license text is distributed alongside this file as ./LICENSE.
+  The license notices of the original work are preserved. This embedded copy
+  is redistributed under the LGPLv3; see ./README.md for how the JavaScript
+  bundle was produced and how the component can be replaced to satisfy the
+  LGPLv3 relinking/replacement requirement.
+
+Files in this directory
+-----------------------
+  vlibras-player.js                     JS bundle built from upstream src/ (see README.md)
+  target/UnityLoader.js                 Unity WebGL loader (unmodified upstream asset)
+  target/playerweb.data.unityweb        Unity data (unmodified upstream asset)
+  target/playerweb.wasm.code.unityweb   Unity WASM code (unmodified upstream asset)
+  target/playerweb.wasm.framework.unityweb  Unity WASM framework (unmodified upstream asset)
+  target/playerweb.json                 Unity build descriptor (unmodified upstream asset)
+  LICENSE                               LGPL-3.0 full text (unmodified upstream file)
+
+Online services used at runtime (not bundled here)
+---------------------------------------------------
+  The player renders the avatar live and depends on the VLibras online
+  services for text->gloss translation and the sign dictionary. These are
+  reached over HTTPS at runtime and are NOT part of this redistribution:
+    * Translation: https://traducao2.vlibras.gov.br/translate
+    * Dictionary:  https://dicionario2.vlibras.gov.br/2018.3.1/WEBGL/
+                   https://dicionario2.vlibras.gov.br/static/BUNDLES/2018.3.1/WEBGL/
+  These endpoints are the defaults compiled into the upstream src/config.js of
+  this version. Only cue text is sent to the translation service.
+
+Scope / boundaries
+------------------
+  This app uses ONLY the official vlibras-player-webjs component loaded in a
+  WebView, per its documentation and LGPLv3. It does NOT automate the hosted
+  "VLibras Vídeo" service, and does NOT embed the VLibras Widget or the
+  Hand Talk Plugin.
+
+License review identifier (referenced by AvatarRuntimeConfig.licenseReviewId)
+-----------------------------------------------------------------------------
+  vlibras-player-webjs-LGPLv3-v1.1.0-e10387e

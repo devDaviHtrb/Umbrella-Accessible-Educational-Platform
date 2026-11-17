@@ -1,0 +1,16 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./packages/pipeline"
+    },
+    {
+      "path": "./packages/provider-vlibras"
+    },
+    {
+      "path": "./apps/mobile"
+    }
+  ],
+  "compilerOptions": {},
+  "extends": "expo/tsconfig.base"
+}
