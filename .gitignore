@@ -127,3 +127,5 @@ npm-debug.log*
 
 # End-to-end harness output (large generated media + packages).
 .e2e-out/
+
+.kiro
